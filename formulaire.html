@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Soumission de Point de Livraison</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 30px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h2 { border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-bottom: 20px; color: #333; }
+        label { display: block; margin-top: 15px; font-weight: bold; }
+        input[type="text"], input[type="number"], select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { background-color: #007bff; color: white; padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; margin-top: 20px; width: 100%; font-size: 16px; }
+        button:hover { background-color: #0056b3; }
+        .success { color: green; font-weight: bold; margin-top: 10px; }
+        .error { color: red; font-weight: bold; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h2>Point de Livraison (Nouvelle Commande)</h2>
+    <form id="deliveryForm">
+        <label for="producteur">Producteur :</label>
+        <input type="text" id="producteur" name="Producteur" required placeholder="Ex: Ferme A (Oliviers)">
+
+        <label for="client">Client / Point de Livraison :</label>
+        <input type="text" id="client" name="Client / Point de Livraison" required placeholder="Ex: Épicerie Biologique">
+        
+        <label for="jour">Jour de Livraison :</label>
+        <select id="jour" name="Jour" required>
+            <option value="">Sélectionner...</option>
+            <option value="Lundi">Lundi</option>
+            <option value="Mardi">Mardi</option>
+            <option value="Mercredi">Mercredi</option>
+            <option value="Jeudi">Jeudi</option>
+            <option value="Vendredi">Vendredi</option>
+        </select>
+
+        <label for="volume">Volume (Kg Normalisé) :</label>
+        <input type="number" id="volume" name="Volume (Kg Normalisé)" required min="1" placeholder="Ex: 150">
+
+        <label for="adresse_complete">Adresse Complète :</label>
+        <input type="text" id="adresse_complete" name="Adresse Complète" required placeholder="Ex: 1 Place aux Huiles, 13001, Marseille, FRANCE">
+        
+        <button type="submit">Soumettre la Commande</button>
+        <div id="status"></div>
+    </form>
+</body>
+<script>
+    // NOTE: Ce code JS doit envoyer les données à une API backend pour le géocodage et l'écriture sur GitHub.
+    document.getElementById('deliveryForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        document.getElementById('status').className = '';
+        document.getElementById('status').innerText = 'Envoi et Géocodage en cours...';
+
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => { data[key] = value; });
+
+        // ******************************************************************
+        // IMPORTANT: C'est l'URL de votre fonction cloud (Étape 2)
+        // VOUS DEVEZ REMPLACER CETTE VALEUR PAR L'URL DE VOTRE ENDPOINT.
+        // ******************************************************************
+        const ENDPOINT_URL = 'VOTRE_ENDPOINT_API_ICI'; 
+        
+        fetch(ENDPOINT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw new Error(err.error || 'Erreur inconnue du serveur'); });
+            }
+            return response.json();
+        })
+        .then(result => {
+            if (result.success) {
+                document.getElementById('status').className = 'success';
+                document.getElementById('status').innerText = '✅ Commande enregistrée et prête pour la carte ! (lat: ' + result.lat + ', lon: ' + result.lon + ')';
+                document.getElementById('deliveryForm').reset();
+            } else {
+                document.getElementById('status').className = 'error';
+                document.getElementById('status').innerText = '❌ Erreur: ' + result.error;
+            }
+        })
+        .catch(error => {
+            document.getElementById('status').className = 'error';
+            document.getElementById('status').innerText = '❌ Erreur réseau ou de connexion: ' + error.message;
+            console.error('Erreur:', error);
+        });
+    });
+</script>
+</html>
