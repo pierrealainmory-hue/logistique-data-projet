@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulaire de Livraison - Logistique</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background-color: #f4f7f6; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { color: #2c3e50; margin-bottom: 5px; }
+        .container { display: flex; flex-wrap: wrap; gap: 20px; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .form-section { flex: 1; min-width: 300px; }
+        .map-section { flex: 1; min-width: 300px; }
+        
+        /* Style du formulaire */
+        label { display: block; margin-top: 15px; font-weight: 600; color: #34495e; }
+        input, select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+        input:focus, select:focus { border-color: #3498db; outline: none; }
+        
+        /* Style de la carte */
+        #map { height: 450px; width: 100%; border-radius: 8px; border: 2px solid #eee; }
+        .instruction { font-size: 0.9em; color: #7f8c8d; margin-bottom: 10px; font-style: italic; }
+        
+        /* Bouton et Status */
+        button { background-color: #27ae60; color: white; border: none; padding: 15px 30px; font-size: 16px; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 25px; transition: background 0.3s; font-weight: bold; }
+        button:hover { background-color: #219150; }
+        button:disabled { background-color: #bdc3c7; cursor: not-allowed; }
+        
+        #status { margin-top: 15px; padding: 15px; border-radius: 6px; text-align: center; display: none; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .loading { color: #004085; background-color: #cce5ff; border: 1px solid #b8daff; }
+
+        #coords-display { margin-top: 10px; font-size: 0.85em; color: #666; text-align: right; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>📦 Nouvelle Livraison</h1>
+        <p>Saisissez les détails et cliquez sur la carte pour localiser le client.</p>
+    </div>
+
+    <div class="container">
+        <div class="form-section">
+            <form id="deliveryForm">
+                <label>Nom du Producteur</label>
+                <input type="text" name="Producteur" required placeholder="Ex: Ferme du Val">
+
+                <label>Client / Point de Livraison</label>
+                <input type="text" name="Client / Point de Livraison" required placeholder="Ex: Restaurant Le Gourmet">
+
+                <label>Jour de Livraison</label>
+                <select name="Jour" required>
+                    <option value="" disabled selected>Choisir un jour...</option>
+                    <option value="Lundi">Lundi</option>
+                    <option value="Mardi">Mardi</option>
+                    <option value="Mercredi">Mercredi</option>
+                    <option value="Jeudi">Jeudi</option>
+                    <option value="Vendredi">Vendredi</option>
+                </select>
+
+                <label>Volume (en Kg)</label>
+                <input type="number" name="Volume (Kg Normalisé)" required min="1" placeholder="Ex: 50">
+
+                <input type="hidden" id="lat" name="lat">
+                <input type="hidden" id="lon" name="lon">
+
+                <button type="submit" id="submitBtn">Enregistrer la Commande</button>
+            </form>
+            <div id="status"></div>
+        </div>
+
+        <div class="map-section">
+            <div class="instruction">📍 Cliquez précisément sur le bâtiment de livraison :</div>
+            <div id="map"></div>
+            <div id="coords-display">Coordonnées : En attente...</div>
+        </div>
+    </div>
+
+<script>
+    // --- CONFIGURATION ---
+    // Votre URL Cloud Run (Déjà insérée)
+    const API_URL = "https://update-github-csv-149052175314.europe-west1.run.app/";
+
+    // --- CARTE (Leaflet) ---
+    // Centré par défaut sur la France (Zoom 6). Vous pouvez ajuster si besoin.
+    var map = L.map('map').setView([46.603354, 1.888334], 6);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    var marker;
+
+    // Gestion du clic sur la carte
+    map.on('click', function(e) {
+        var lat = e.latlng.lat.toFixed(6);
+        var lon = e.latlng.lng.toFixed(6);
+
+        // Mise à jour des champs cachés
+        document.getElementById('lat').value = lat;
+        document.getElementById('lon').value = lon;
+
+        // Mise à jour visuelle
+        document.getElementById('coords-display').innerText = `Coordonnées : ${lat}, ${lon}`;
+
+        // Déplacement du marqueur
+        if (marker) {
+            marker.setLatLng(e.latlng);
+        } else {
+            marker = L.marker(e.latlng).addTo(map);
+        }
+    });
+
+    // --- ENVOI DU FORMULAIRE ---
+    document.getElementById('deliveryForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        var statusDiv = document.getElementById('status');
+        var btn = document.getElementById('submitBtn');
+        var lat = document.getElementById('lat').value;
+
+        // Vérification que le point est placé
+        if (!lat) {
+            alert("⚠️ N'oubliez pas de cliquer sur la carte pour indiquer le lieu de livraison !");
+            return;
+        }
+
+        // Affichage état chargement
+        statusDiv.style.display = 'block';
+        statusDiv.className = 'loading';
+        statusDiv.innerText = 'Envoi des données en cours...';
+        btn.disabled = true;
+
+        // Récupération des données
+        var formData = new FormData(this);
+        var data = {};
+        formData.forEach((value, key) => data[key] = value);
+
+        // Envoi vers votre Cloud Function
+        fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                statusDiv.className = 'success';
+                statusDiv.innerText = '✅ Commande enregistrée avec succès sur GitHub !';
+                document.getElementById('deliveryForm').reset(); // Vider le formulaire
+                if (marker) map.removeLayer(marker); // Enlever le marqueur
+                document.getElementById('coords-display').innerText = 'Coordonnées : En attente...';
+                
+                // Masquer le message succès après 5 secondes
+                setTimeout(() => { statusDiv.style.display = 'none'; }, 5000);
+            } else {
+                throw new Error(result.error || "Erreur inconnue");
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            statusDiv.className = 'error';
+            statusDiv.innerText = '❌ Erreur : ' + error.message;
+        })
+        .finally(() => {
+            btn.disabled = false;
+        });
+    });
+</script>
+
+</body>
+</html>
