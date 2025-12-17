@@ -1,106 +1,107 @@
 Producteur,Date de Livraison,Jour,Tournée ID,Ordre d'Arrêt,Client / Point de Livraison,Adresse,Code postal,Ville,Adresse Complète,lat,lon,Volume (Kg Normalisé)
-Ferme A (Oliviers),2025-12-15,Lundi,A-LUN-T1,1,Départ (Ferme A),100 Chemin des Oliviers,13008,Marseille,"100 Chemin des Oliviers,13008,Marseille,FRANCE",43.27872420662535,5.392047530924708,0
-Ferme A (Oliviers),2025-12-15,Lundi,A-LUN-T1,2,Restaurant La Boîte,45 Rue de la République,13002,Marseille,"45 Rue de la République,13002,Marseille,FRANCE",43.24981065791886,5.403605881796117,120
-Ferme A (Oliviers),2025-12-15,Lundi,A-LUN-T1,3,Épicerie Biologique,1 Place aux Huiles,13001,Marseille,"1 Place aux Huiles,13001,Marseille,FRANCE",43.3001323,5.3708193,80
-Ferme A (Oliviers),2025-12-15,Lundi,A-LUN-T1,4,Cantine Scolaire 5ème,5 Avenue du Prado,13008,Marseille,"5 Avenue du Prado,13008,Marseille,FRANCE",43.2933519,5.3717776,200
-Ferme A (Oliviers),2025-12-15,Lundi,A-LUN-T1,5,Grossiste Marché,120 Boulevard National,13003,Marseille,"120 Boulevard National,13003,Marseille,FRANCE",43.2850518,5.3846356,400
-Ferme A (Oliviers),2025-12-15,Lundi,A-LUN-T1,6,Traiteur St-Just,8 Rue du Rouet,13008,Marseille,"8 Rue du Rouet,13008,Marseille,FRANCE",43.3070976,5.3825866,90
-Ferme A (Oliviers),2025-12-15,Lundi,A-LUN-T1,7,Retour (Ferme A),100 Chemin des Oliviers,13008,Marseille,"100 Chemin des Oliviers,13008,Marseille,FRANCE",43.27872420662535,5.392047530924708,0
-Ferme B (Mimosas),2025-12-15,Lundi,B-LUN-T1,1,Départ (Ferme B),5 Chemin des Mimosas,13100,Aix-en-Provence,"5 Chemin des Mimosas,13100,Aix-en-Provence,FRANCE",43.24981065791886,5.403605881796117,0
-Ferme B (Mimosas),2025-12-15,Lundi,B-LUN-T1,2,Restaurant La Rotonde,10 Place de la Rotonde,13100,Aix-en-Provence,"10 Place de la Rotonde,13100,Aix-en-Provence,FRANCE",43.536856,5.453588,180
-Ferme B (Mimosas),2025-12-15,Lundi,B-LUN-T1,3,Marché de la Verrerie,20 Avenue Jean Giono,13100,Aix-en-Provence,"20 Avenue Jean Giono,13100,Aix-en-Provence,FRANCE",43.550308,5.541876,140
-Ferme B (Mimosas),2025-12-15,Lundi,B-LUN-T1,4,Épicerie du Faubourg,1 Rue du Puits,13100,Aix-en-Provence,"1 Rue du Puits,13100,Aix-en-Provence,FRANCE",43.517227,5.435471,350
-Ferme B (Mimosas),2025-12-15,Lundi,B-LUN-T1,5,Client PME Pôle,12 Rue Gay Lussac,13290,Aix-en-Provence,"12 Rue Gay Lussac,13290,Aix-en-Provence,FRANCE",43.531019,5.449141,110
-Ferme B (Mimosas),2025-12-15,Lundi,B-LUN-T1,6,Clinique de l'Étoile,55 Route de Valcros,13540,Aix-en-Provence,"55 Route de Valcros,13540,Aix-en-Provence,FRANCE",43.468227,5.347439,500
-Ferme B (Mimosas),2025-12-15,Lundi,B-LUN-T1,7,Retour (Ferme B),5 Chemin des Mimosas,13100,Aix-en-Provence,"5 Chemin des Mimosas,13100,Aix-en-Provence,FRANCE",43.24981065791887,5.403605881796118,0
-Ferme C (Cigales),2025-12-15,Lundi,C-LUN-T1,1,Départ (Ferme C),20 Route de Cassis,13260,Cassis,"20 Route de Cassis,13260,Cassis,FRANCE",43.245885,5.580318,0
-Ferme C (Cigales),2025-12-15,Lundi,C-LUN-T1,2,Hôtel Les Roches Blanches,9 Avenue des Calanques,13260,Cassis,"9 Avenue des Calanques,13260,Cassis,FRANCE",43.22979665390403,5.543856483524169,90
-Ferme C (Cigales),2025-12-15,Lundi,C-LUN-T1,3,Restaurant Chez Gilbert,Quai des Baux,13260,Cassis,"Quai des Baux,13260,Cassis,FRANCE",43.2112483,5.5292235,130
-Ferme C (Cigales),2025-12-15,Lundi,C-LUN-T1,4,Boulangerie La Farine,5 Rue Dranat,13260,Cassis,"5 Rue Dranat,13260,Cassis,FRANCE",43.21448679960416,5.537609537460396,160
-Ferme C (Cigales),2025-12-15,Lundi,C-LUN-T1,5,Épicerie La Ciotat,15 Avenue du Mugel,13600,La Ciotat,"15 Avenue du Mugel,13600,La Ciotat,FRANCE",43.214875,5.538377,250
-Ferme C (Cigales),2025-12-15,Lundi,C-LUN-T1,6,Marché Aubagne,1 Place Marcel Pagnol,13400,Aubagne,"1 Place Marcel Pagnol,13400,Aubagne,FRANCE",43.16786556285338,5.602394138278168,70
-Ferme C (Cigales),2025-12-15,Lundi,C-LUN-T1,7,Retour (Ferme C),20 Route de Cassis,13260,Cassis,"20 Route de Cassis,13260,Cassis,FRANCE",43.245886,5.580319,0
-Ferme D (St-Victoire),2025-12-15,Lundi,D-LUN-T1,1,Départ (Ferme D),220 Avenue de l'Europe,84300,Cavaillon,"220 Avenue de l'Europe,84300,Cavaillon,FRANCE",43.22979665390403,5.543856483524169,0
-Ferme D (St-Victoire),2025-12-15,Lundi,D-LUN-T1,2,Grossiste Avignon,50 Rue du Rempart Saint-Lazare,84000,Avignon,"50 Rue du Rempart Saint-Lazare,84000,Avignon,FRANCE",43.84727455697192,5.041384886455027,450
-Ferme D (St-Victoire),2025-12-15,Lundi,D-LUN-T1,3,Restaurant Orange,10 Place du Parvis,84100,Orange,"10 Place du Parvis,84100,Orange,FRANCE",43.951942,4.816647,110
-Ferme D (St-Victoire),2025-12-15,Lundi,D-LUN-T1,4,Clinique St-Rémy,10 Boulevard des Alpilles,13210,St-Rémy-de-Pce,"10 Boulevard des Alpilles,13210,St-Rémy-de-Pce,FRANCE",44.133811,4.815958,200
-Ferme D (St-Victoire),2025-12-15,Lundi,D-LUN-T1,5,École Rognonas,10 Avenue du Maréchal Foch,13870,Rognonas,"10 Avenue du Maréchal Foch,13870,Rognonas,FRANCE",43.788871,4.765647,90
-Ferme D (St-Victoire),2025-12-15,Lundi,D-LUN-T1,6,Marché Carpentras,Place du 25 Août,84200,Carpentras,"Place du 25 Août,84200,Carpentras,FRANCE",43.901031,4.804025,150
-Ferme D (St-Victoire),2025-12-15,Lundi,D-LUN-T1,7,Retour (Ferme D),220 Avenue de l'Europe,84300,Cavaillon,"220 Avenue de l'Europe,84300,Cavaillon,FRANCE",43.22979665390403,5.543856483524169,0
-Ferme E (Alpilles),2025-12-15,Lundi,E-LUN-T1,1,Départ (Ferme E),5 Route de Maussane,13520,Maussane-les-Alpilles,"5 Route de Maussane,13520,Maussane-les-Alpilles,FRANCE",43.850281,4.774267,0
-Ferme E (Alpilles),2025-12-15,Lundi,E-LUN-T1,2,Épicerie Les Baux,1 Place de la Mairie,13520,Les Baux-de-Provence,"1 Place de la Mairie,13520,Les Baux-de-Provence,FRANCE",43.72223200992607,4.8016204593118115,50
-Ferme E (Alpilles),2025-12-15,Lundi,E-LUN-T1,3,Restaurant St-Martin,10 Rue du Château,13520,St-Martin-de-Crau,"10 Rue du Château,13520,St-Martin-de-Crau,FRANCE",43.74425,4.79607,120
-Ferme E (Alpilles),2025-12-15,Lundi,E-LUN-T1,4,Grossiste Arles,12 Avenue des Arènes,13200,Arles,"12 Avenue des Arènes,13200,Arles,FRANCE",43.743439,4.794894,300
-Ferme E (Alpilles),2025-12-15,Lundi,E-LUN-T1,5,Client PME Tarascon,50 Avenue de la République,13150,Tarascon,"50 Avenue de la République,13150,Tarascon,FRANCE",43.6778069,4.6294192,100
-Ferme E (Alpilles),2025-12-15,Lundi,E-LUN-T1,6,Supérette Graveson,1 Rue de l'Hôtel de Ville,13690,Graveson,"1 Rue de l'Hôtel de Ville,13690,Graveson,FRANCE",43.80452837340616,4.655591900124736,180
-Ferme E (Alpilles),2025-12-15,Lundi,E-LUN-T1,7,Retour (Ferme E),5 Route de Maussane,13520,Maussane-les-Alpilles,"5 Route de Maussane,13520,Maussane-les-Alpilles,FRANCE",43.850281,4.774267,0
-Ferme A (Oliviers),2025-12-16,Mardi,A-MAR-T2,1,Départ (Ferme A),100 Chemin des Oliviers,13008,Marseille,"100 Chemin des Oliviers,13008,Marseille,FRANCE",43.27872420662536,5.392047530924709,0
-Ferme A (Oliviers),2025-12-16,Mardi,A-MAR-T2,2,Client Zone Franche,50 Rue de Lyon,13015,Marseille,"50 Rue de Lyon,13015,Marseille,FRANCE",43.24981065791886,5.403605881796117,150
-Ferme A (Oliviers),2025-12-16,Mardi,A-MAR-T2,3,Hôtel Les Ports,2 Place de la Joliette,13002,Marseille,"2 Place de la Joliette,13002,Marseille,FRANCE",43.325071,5.367122,100
-Ferme A (Oliviers),2025-12-16,Mardi,A-MAR-T2,4,Marché Quartier Nord,10 Boulevard des Alpes,13014,Marseille,"10 Boulevard des Alpes,13014,Marseille,FRANCE",43.3049207,5.366218295229007,220
-Ferme A (Oliviers),2025-12-16,Mardi,A-MAR-T2,5,Épicerie Noailles,5 Rue du Baignoir,13001,Marseille,"5 Rue du Baignoir,13001,Marseille,FRANCE",43.303689,5.414697,70
-Ferme A (Oliviers),2025-12-16,Mardi,A-MAR-T2,6,Grossiste Aéroport,20 Rue de l'Aéroport,13700,Marignane,"20 Rue de l'Aéroport,13700,Marignane,FRANCE",43.2983607,5.3775524,500
-Ferme A (Oliviers),2025-12-16,Mardi,A-MAR-T2,7,Retour (Ferme A),100 Chemin des Oliviers,13008,Marseille,"100 Chemin des Oliviers,13008,Marseille,FRANCE",43.27872420662537,5.392047530924710,0
-Ferme B (Mimosas),2025-12-16,Mardi,B-MAR-T2,1,Départ (Ferme B),5 Chemin des Mimosas,13100,Aix-en-Provence,"5 Chemin des Mimosas,13100,Aix-en-Provence,FRANCE",43.24981065791888,5.403605881796119,0
-Ferme B (Mimosas),2025-12-16,Mardi,B-MAR-T2,2,Client PME Est,1 Rue des Jardins,13100,Aix-en-Provence,"1 Rue des Jardins,13100,Aix-en-Provence,FRANCE",43.536856,5.453588,100
-Ferme B (Mimosas),2025-12-16,Mardi,B-MAR-T2,3,Clinique Vitrolles,10 Boulevard des Écoles,13127,Vitrolles,"10 Boulevard des Écoles,13127,Vitrolles,FRANCE",43.55017977822688,5.5438074903611145,200
-Ferme B (Mimosas),2025-12-16,Mardi,B-MAR-T2,4,Supermarché Pertuis,5 Avenue des 4 Vents,84120,Pertuis,"5 Avenue des 4 Vents,84120,Pertuis,FRANCE",43.4580426,5.2480265500000005,400
-Ferme B (Mimosas),2025-12-16,Mardi,B-MAR-T2,5,Restaurant Manosque,1 Rue Grande,4100,Manosque,"1 Rue Grande,4100,Manosque,FRANCE",43.69426,5.505317,150
-Ferme B (Mimosas),2025-12-16,Mardi,B-MAR-T2,6,Marché Forcalquier,Place du Bourguet,4300,Forcalquier,"Place du Bourguet,4300,Forcalquier,FRANCE",43.831768,5.7839477,80
-Ferme B (Mimosas),2025-12-16,Mardi,B-MAR-T2,7,Retour (Ferme B),5 Chemin des Mimosas,13100,Aix-en-Provence,"5 Chemin des Mimosas,13100,Aix-en-Provence,FRANCE",43.24981065791889,5.403605881796120,0
-Ferme C (Cigales),2025-12-16,Mardi,C-MAR-T2,1,Départ (Ferme C),20 Route de Cassis,13260,Cassis,"20 Route de Cassis,13260,Cassis,FRANCE",43.245885,5.580318,0
-Ferme C (Cigales),2025-12-16,Mardi,C-MAR-T2,2,Hôtel La Cadière,1 Avenue de Saint-Cyr,83740,La Cadière-d'Azur,"1 Avenue de Saint-Cyr,83740,La Cadière-d'Azur,FRANCE",43.22979665390403,5.543856483524169,110
-Ferme C (Cigales),2025-12-16,Mardi,C-MAR-T2,3,Restaurant Sanary,1 Place des Pêcheurs,83110,Sanary-sur-Mer,"1 Place des Pêcheurs,83110,Sanary-sur-Mer,FRANCE",43.19965771250791,5.747106476209866,140
-Ferme C (Cigales),2025-12-16,Mardi,C-MAR-T2,4,Épicerie Bandol,5 Rue de la Vague,83150,Bandol,"5 Rue de la Vague,83150,Bandol,FRANCE",43.125939,5.791955,210
-Ferme C (Cigales),2025-12-16,Mardi,C-MAR-T2,5,Marché Ollioules,1 Place du Marché,83190,Ollioules,"1 Place du Marché,83190,Ollioules,FRANCE",43.136559,5.754995,90
-Ferme C (Cigales),2025-12-16,Mardi,C-MAR-T2,6,Client PME La Garde,10 Avenue du Dr Roux,83130,La Garde,"10 Avenue du Dr Roux,83130,La Garde,FRANCE",43.140329,5.848916,350
-Ferme C (Cigales),2025-12-16,Mardi,C-MAR-T2,7,Retour (Ferme C),20 Route de Cassis,13260,Cassis,"20 Route de Cassis,13260,Cassis,FRANCE",43.245885,5.580318,0
-Ferme D (St-Victoire),2025-12-16,Mardi,D-MAR-T2,1,Départ (Ferme D),220 Avenue de l'Europe,84300,Cavaillon,"220 Avenue de l'Europe,84300,Cavaillon,FRANCE",43.22979665390403,5.543856483524169,0
-Ferme D (St-Victoire),2025-12-16,Mardi,D-MAR-T2,2,Grossiste Carpentras,500 Route de Carpentras,84200,Carpentras,"500 Route de Carpentras,84200,Carpentras,FRANCE",43.84727455697192,5.041384886455027,500
-Ferme D (St-Victoire),2025-12-16,Mardi,D-MAR-T2,3,Restaurant Vaison,1 Place du Vieux Marché,84110,Vaison-la-Romaine,"1 Place du Vieux Marché,84110,Vaison-la-Romaine,FRANCE",44.04278030369433,5.024652071856862,120
-Ferme D (St-Victoire),2025-12-16,Mardi,D-MAR-T2,4,Clinique Orange,10 Rue du Parvis,84100,Orange,"10 Rue du Parvis,84100,Orange,FRANCE",44.238487,5.070922,180
-Ferme D (St-Victoire),2025-12-16,Mardi,D-MAR-T2,5,École Avignon,10 Avenue Pierre Sémard,84000,Avignon,"10 Avenue Pierre Sémard,84000,Avignon,FRANCE",44.133811,4.815958,90
-Ferme D (St-Victoire),2025-12-16,Mardi,D-MAR-T2,6,Marché L'Isle-sur-la-Sorgue,1 Place de la Liberté,84800,L'Isle-sur-la-Sorgue,"1 Place de la Liberté,84800,L'Isle-sur-la-Sorgue,FRANCE",43.92813701840791,4.842169230471921,250
-Ferme D (St-Victoire),2025-12-16,Mardi,D-MAR-T2,7,Retour (Ferme D),220 Avenue de l'Europe,84300,Cavaillon,"220 Avenue de l'Europe,84300,Cavaillon,FRANCE",43.22979665390403,5.543856483524169,0
-Ferme E (Alpilles),2025-12-16,Mardi,E-MAR-T2,1,Départ (Ferme E),5 Route de Maussane,13520,Maussane-les-Alpilles,"5 Route de Maussane,13520,Maussane-les-Alpilles,FRANCE",43.850281,4.774267,0
-Ferme E (Alpilles),2025-12-16,Mardi,E-MAR-T2,2,Épicerie St-Rémy,5 Avenue des Baux,13210,St-Rémy-de-Provence,"5 Avenue des Baux,13210,St-Rémy-de-Provence,FRANCE",43.72223200992607,4.8016204593118115,60
-Ferme E (Alpilles),2025-12-16,Mardi,E-MAR-T2,3,Restaurant Salon,1 Place des Centuries,13300,Salon-de-Provence,"1 Place des Centuries,13300,Salon-de-Provence,FRANCE",43.7925305407937,4.792282977441252,140
-Ferme E (Alpilles),2025-12-16,Mardi,E-MAR-T2,4,Grossiste Miramas,12 Avenue des Alpilles,13140,Miramas,"12 Avenue des Alpilles,13140,Miramas,FRANCE",43.6400364,5.098014117963387,350
-Ferme E (Alpilles),2025-12-16,Mardi,E-MAR-T2,5,Client PME Pélissanne,50 Rue de la Paix,13330,Pélissanne,"50 Rue de la Paix,13330,Pélissanne,FRANCE",43.58729826839248,4.9949143420466,110
-Ferme E (Alpilles),2025-12-16,Mardi,E-MAR-T2,6,Supérette Fos,1 Rue des Vents,13270,Fos-sur-Mer,"1 Rue des Vents,13270,Fos-sur-Mer,FRANCE",43.633931,5.15628,200
-Ferme E (Alpilles),2025-12-16,Mardi,E-MAR-T2,7,Retour (Ferme E),5 Route de Maussane,13520,Maussane-les-Alpilles,"5 Route de Maussane,13520,Maussane-les-Alpilles,FRANCE",43.850281,4.774267,0
-Ferme A (Oliviers),2025-12-17,Mercredi,A-MER-T3,1,Départ (Ferme A),100 Chemin des Oliviers,13008,Marseille,"100 Chemin des Oliviers,13008,Marseille,FRANCE",43.27872420662538,5.392047530924711,0
-Ferme A (Oliviers),2025-12-17,Mercredi,A-MER-T3,2,Restaurant La Plage,100 Promenade de la Plage,13008,Marseille,"100 Promenade de la Plage,13008,Marseille,FRANCE",43.24981065791886,5.403605881796117,180
-Ferme A (Oliviers),2025-12-17,Mercredi,A-MER-T3,3,Épicerie Cinq Avenues,5 Place des Cinq Avenues,13004,Marseille,"5 Place des Cinq Avenues,13004,Marseille,FRANCE",43.2616598,5.3741535,90
-Ferme A (Oliviers),2025-12-17,Mercredi,A-MER-T3,4,Hôpital Conception,147 Boulevard Baille,13005,Marseille,"147 Boulevard Baille,13005,Marseille,FRANCE",43.233187,5.450826,250
-Ferme A (Oliviers),2025-12-17,Mercredi,A-MER-T3,5,Grossiste Vieux Port,1 Quai du Port,13002,Marseille,"1 Quai du Port,13002,Marseille,FRANCE",43.28875080861554,5.394320535599239,300
-Ferme A (Oliviers),2025-12-17,Mercredi,A-MER-T3,6,Client PME Nord,100 Boulevard du Capitaine Gèze,13014,Marseille,"100 Boulevard du Capitaine Gèze,13014,Marseille,FRANCE",43.295476,5.364208,110
-Ferme A (Oliviers),2025-12-17,Mercredi,A-MER-T3,7,Retour (Ferme A),100 Chemin des Oliviers,13008,Marseille,"100 Chemin des Oliviers,13008,Marseille,FRANCE",43.27872420662539,5.392047530924712,0
-Ferme B (Mimosas),2025-12-17,Mercredi,B-MER-T3,1,Départ (Ferme B),5 Chemin des Mimosas,13100,Aix-en-Provence,"5 Chemin des Mimosas,13100,Aix-en-Provence,FRANCE",43.24981065791890,5.403605881796121,0
-Ferme B (Mimosas),2025-12-17,Mercredi,B-MER-T3,2,Restaurant Rians,1 Place du Marché,83560,Rians,"1 Place du Marché,83560,Rians,FRANCE",43.536856,5.453588,150
-Ferme B (Mimosas),2025-12-17,Mercredi,B-MER-T3,3,Marché Trets,5 Avenue Mirabeau,13530,Trets,"5 Avenue Mirabeau,13530,Trets,FRANCE",43.596728,5.959434,200
-Ferme B (Mimosas),2025-12-17,Mercredi,B-MER-T3,4,Épicerie St Maximin,10 Place Malherbe,83470,Saint-Maximin-la-Sainte-Baume,"10 Place Malherbe,83470,Saint-Maximin-la-Sainte-Baume,FRANCE",43.447475,5.683175,300
-Ferme B (Mimosas),2025-12-17,Mercredi,B-MER-T3,5,Client PME Gardanne,12 Rue de la Fonderie,13120,Gardanne,"12 Rue de la Fonderie,13120,Gardanne,FRANCE",43.453818,5.860663,130
-Ferme B (Mimosas),2025-12-17,Mercredi,B-MER-T3,6,Clinique Éguilles,50 Route de St-Cannat,13510,Éguilles,"50 Route de St-Cannat,13510,Éguilles,FRANCE",43.452816,5.474498,100
-Ferme B (Mimosas),2025-12-17,Mercredi,B-MER-T3,7,Retour (Ferme B),5 Chemin des Mimosas,13100,Aix-en-Provence,"5 Chemin des Mimosas,13100,Aix-en-Provence,FRANCE",43.24981065791891,5.403605881796122,0
-Ferme C (Cigales),2025-12-17,Mercredi,C-MER-T3,1,Départ (Ferme C),20 Route de Cassis,13260,Cassis,"20 Route de Cassis,13260,Cassis,FRANCE",43.245885,5.580318,0
-Ferme C (Cigales),2025-12-17,Mercredi,C-MER-T3,2,Hôtel Le Castellet,300 Route des Hauts,83330,Le Castellet,"300 Route des Hauts,83330,Le Castellet,FRANCE",43.22979665390403,5.543856483524169,150
-Ferme C (Cigales),2025-12-17,Mercredi,C-MER-T3,3,Restaurant Six-Fours,1 Place Jean Jaurès,83140,Six-Fours-les-Plages,"1 Place Jean Jaurès,83140,Six-Fours-les-Plages,FRANCE",43.251210908460294,5.782519910175701,110
-Ferme C (Cigales),2025-12-17,Mercredi,C-MER-T3,4,Épicerie La Seyne,5 Rue de la République,83500,La Seyne-sur-Mer,"5 Rue de la République,83500,La Seyne-sur-Mer,FRANCE",43.093167,5.839124,220
-Ferme C (Cigales),2025-12-17,Mercredi,C-MER-T3,5,Marché Toulon,1 Place de la Liberté,83000,Toulon,"1 Place de la Liberté,83000,Toulon,FRANCE",43.099155,5.882282,80
-Ferme C (Cigales),2025-12-17,Mercredi,C-MER-T3,6,Client PME Hyères,10 Avenue du Maréchal Foch,83400,Hyères,"10 Avenue du Maréchal Foch,83400,Hyères,FRANCE",43.12572805,5.930522918467998,300
-Ferme C (Cigales),2025-12-17,Mercredi,C-MER-T3,7,Retour (Ferme C),20 Route de Cassis,13260,Cassis,"20 Route de Cassis,13260,Cassis,FRANCE",43.245885,5.580318,0
-Ferme D (St-Victoire),2025-12-17,Mercredi,D-MER-T3,1,Départ (Ferme D),220 Avenue de l'Europe,84300,Cavaillon,"220 Avenue de l'Europe,84300,Cavaillon,FRANCE",43.22979665390403,5.543856483524169,0
-Ferme D (St-Victoire),2025-12-17,Mercredi,D-MER-T3,2,Grossiste Sorgues,1 Rue des Primeurs,84700,Sorgues,"1 Rue des Primeurs,84700,Sorgues,FRANCE",43.84727455697192,5.041384886455027,400
-Ferme D (St-Victoire),2025-12-17,Mercredi,D-MER-T3,3,Restaurant Pernes,1 Place Gabriel Moutte,84210,Pernes-les-Fontaines,"1 Place Gabriel Moutte,84210,Pernes-les-Fontaines,FRANCE",44.028582,4.871746,100
-Ferme D (St-Victoire),2025-12-17,Mercredi,D-MER-T3,4,Clinique Apt,100 Boulevard National,84400,Apt,"100 Boulevard National,84400,Apt,FRANCE",43.99839012498799,5.0553685323487025,150
-Ferme D (St-Victoire),2025-12-17,Mercredi,D-MER-T3,5,École Le Thor,5 Rue du Château,84250,Le Thor,"5 Rue du Château,84250,Le Thor,FRANCE",43.87408577569045,5.39590092137747,80
-Ferme D (St-Victoire),2025-12-17,Mercredi,D-MER-T3,6,Marché Monteux,1 Place du Marché,84170,Monteux,"1 Place du Marché,84170,Monteux,FRANCE",43.94518511161027,4.989482070977054,200
-Ferme D (St-Victoire),2025-12-17,Mercredi,D-MER-T3,7,Retour (Ferme D),220 Avenue de l'Europe,84300,Cavaillon,"220 Avenue de l'Europe,84300,Cavaillon,FRANCE",43.22979665390403,5.543856483524169,0
-Ferme E (Alpilles),2025-12-17,Mercredi,E-MER-T3,1,Départ (Ferme E),5 Route de Maussane,13520,Maussane-les-Alpilles,"5 Route de Maussane,13520,Maussane-les-Alpilles,FRANCE",43.850281,4.774267,0
-Ferme E (Alpilles),2025-12-17,Mercredi,E-MER-T3,2,Épicerie Fontvieille,1 Place de la Mairie,13990,Fontvieille,"1 Place de la Mairie,13990,Fontvieille,FRANCE",43.72223200992607,4.8016204593118115,70
-Ferme E (Alpilles),2025-12-17,Mercredi,E-MER-T3,3,Restaurant Eygalières,10 Place du Village,13810,Eygalières,"10 Place du Village,13810,Eygalières,FRANCE",43.725973,4.70448,130
-Ferme E (Alpilles),2025-12-17,Mercredi,E-MER-T3,4,Grossiste Miramas,12 Avenue des Alpilles,13140,Miramas,"12 Avenue des Alpilles,13140,Miramas,FRANCE",43.759576,4.95026,450
-Ferme E (Alpilles),2025-12-17,Mercredi,E-MER-T3,5,Client PME Martigues,50 Rue de la République,13500,Martigues,"50 Rue de la République,13500,Martigues,FRANCE",43.58729826839248,4.9949143420466,100
-Ferme E (Alpilles),2025-12-17,Mercredi,E-MER-T3,6,Supérette Istres,1 Rue des Taillades,13800,Istres,"1 Rue des Taillades,13800,Istres,FRANCE",43.405995039310554,5.054959576059133,160
-Ferme E (Alpilles),2025-12-17,Mercredi,E-MER-T3,7,Retour (Ferme E),5 Route de Maussane,13520,Maussane-les-Alpilles,"5 Route de Maussane,13520,Maussane-les-Alpilles,FRANCE",43.850281,4.774267,0
+Ferme A (Oliviers),2025-12-15,Lundi,A-LUN-T1,1,Départ (Ferme A),100 Chemin des Oliviers,13008.0,Marseille,"100 Chemin des Oliviers,13008,Marseille,FRANCE",43.27872420662535,5.392047530924708,0.0
+Ferme A (Oliviers),2025-12-15,Lundi,A-LUN-T1,2,Restaurant La Boîte,45 Rue de la République,13002.0,Marseille,"45 Rue de la République,13002,Marseille,FRANCE",43.24981065791886,5.403605881796117,120.0
+Ferme A (Oliviers),2025-12-15,Lundi,A-LUN-T1,3,Épicerie Biologique,1 Place aux Huiles,13001.0,Marseille,"1 Place aux Huiles,13001,Marseille,FRANCE",43.3001323,5.3708193,80.0
+Ferme A (Oliviers),2025-12-15,Lundi,A-LUN-T1,4,Cantine Scolaire 5ème,5 Avenue du Prado,13008.0,Marseille,"5 Avenue du Prado,13008,Marseille,FRANCE",43.2933519,5.3717776,200.0
+Ferme A (Oliviers),2025-12-15,Lundi,A-LUN-T1,5,Grossiste Marché,120 Boulevard National,13003.0,Marseille,"120 Boulevard National,13003,Marseille,FRANCE",43.2850518,5.3846356,400.0
+Ferme A (Oliviers),2025-12-15,Lundi,A-LUN-T1,6,Traiteur St-Just,8 Rue du Rouet,13008.0,Marseille,"8 Rue du Rouet,13008,Marseille,FRANCE",43.3070976,5.3825866,90.0
+Ferme A (Oliviers),2025-12-15,Lundi,A-LUN-T1,7,Retour (Ferme A),100 Chemin des Oliviers,13008.0,Marseille,"100 Chemin des Oliviers,13008,Marseille,FRANCE",43.27872420662535,5.392047530924708,0.0
+Ferme B (Mimosas),2025-12-15,Lundi,B-LUN-T1,1,Départ (Ferme B),5 Chemin des Mimosas,13100.0,Aix-en-Provence,"5 Chemin des Mimosas,13100,Aix-en-Provence,FRANCE",43.24981065791886,5.403605881796117,0.0
+Ferme B (Mimosas),2025-12-15,Lundi,B-LUN-T1,2,Restaurant La Rotonde,10 Place de la Rotonde,13100.0,Aix-en-Provence,"10 Place de la Rotonde,13100,Aix-en-Provence,FRANCE",43.536856,5.453588,180.0
+Ferme B (Mimosas),2025-12-15,Lundi,B-LUN-T1,3,Marché de la Verrerie,20 Avenue Jean Giono,13100.0,Aix-en-Provence,"20 Avenue Jean Giono,13100,Aix-en-Provence,FRANCE",43.550308,5.541876,140.0
+Ferme B (Mimosas),2025-12-15,Lundi,B-LUN-T1,4,Épicerie du Faubourg,1 Rue du Puits,13100.0,Aix-en-Provence,"1 Rue du Puits,13100,Aix-en-Provence,FRANCE",43.517227,5.435471,350.0
+Ferme B (Mimosas),2025-12-15,Lundi,B-LUN-T1,5,Client PME Pôle,12 Rue Gay Lussac,13290.0,Aix-en-Provence,"12 Rue Gay Lussac,13290,Aix-en-Provence,FRANCE",43.531019,5.449141,110.0
+Ferme B (Mimosas),2025-12-15,Lundi,B-LUN-T1,6,Clinique de l'Étoile,55 Route de Valcros,13540.0,Aix-en-Provence,"55 Route de Valcros,13540,Aix-en-Provence,FRANCE",43.468227,5.347439,500.0
+Ferme B (Mimosas),2025-12-15,Lundi,B-LUN-T1,7,Retour (Ferme B),5 Chemin des Mimosas,13100.0,Aix-en-Provence,"5 Chemin des Mimosas,13100,Aix-en-Provence,FRANCE",43.24981065791887,5.403605881796118,0.0
+Ferme C (Cigales),2025-12-15,Lundi,C-LUN-T1,1,Départ (Ferme C),20 Route de Cassis,13260.0,Cassis,"20 Route de Cassis,13260,Cassis,FRANCE",43.245885,5.580318,0.0
+Ferme C (Cigales),2025-12-15,Lundi,C-LUN-T1,2,Hôtel Les Roches Blanches,9 Avenue des Calanques,13260.0,Cassis,"9 Avenue des Calanques,13260,Cassis,FRANCE",43.22979665390403,5.543856483524169,90.0
+Ferme C (Cigales),2025-12-15,Lundi,C-LUN-T1,3,Restaurant Chez Gilbert,Quai des Baux,13260.0,Cassis,"Quai des Baux,13260,Cassis,FRANCE",43.2112483,5.5292235,130.0
+Ferme C (Cigales),2025-12-15,Lundi,C-LUN-T1,4,Boulangerie La Farine,5 Rue Dranat,13260.0,Cassis,"5 Rue Dranat,13260,Cassis,FRANCE",43.21448679960416,5.537609537460396,160.0
+Ferme C (Cigales),2025-12-15,Lundi,C-LUN-T1,5,Épicerie La Ciotat,15 Avenue du Mugel,13600.0,La Ciotat,"15 Avenue du Mugel,13600,La Ciotat,FRANCE",43.214875,5.538377,250.0
+Ferme C (Cigales),2025-12-15,Lundi,C-LUN-T1,6,Marché Aubagne,1 Place Marcel Pagnol,13400.0,Aubagne,"1 Place Marcel Pagnol,13400,Aubagne,FRANCE",43.16786556285338,5.602394138278168,70.0
+Ferme C (Cigales),2025-12-15,Lundi,C-LUN-T1,7,Retour (Ferme C),20 Route de Cassis,13260.0,Cassis,"20 Route de Cassis,13260,Cassis,FRANCE",43.245886,5.580319,0.0
+Ferme D (St-Victoire),2025-12-15,Lundi,D-LUN-T1,1,Départ (Ferme D),220 Avenue de l'Europe,84300.0,Cavaillon,"220 Avenue de l'Europe,84300,Cavaillon,FRANCE",43.22979665390403,5.543856483524169,0.0
+Ferme D (St-Victoire),2025-12-15,Lundi,D-LUN-T1,2,Grossiste Avignon,50 Rue du Rempart Saint-Lazare,84000.0,Avignon,"50 Rue du Rempart Saint-Lazare,84000,Avignon,FRANCE",43.84727455697192,5.041384886455027,450.0
+Ferme D (St-Victoire),2025-12-15,Lundi,D-LUN-T1,3,Restaurant Orange,10 Place du Parvis,84100.0,Orange,"10 Place du Parvis,84100,Orange,FRANCE",43.951942,4.816647,110.0
+Ferme D (St-Victoire),2025-12-15,Lundi,D-LUN-T1,4,Clinique St-Rémy,10 Boulevard des Alpilles,13210.0,St-Rémy-de-Pce,"10 Boulevard des Alpilles,13210,St-Rémy-de-Pce,FRANCE",44.133811,4.815958,200.0
+Ferme D (St-Victoire),2025-12-15,Lundi,D-LUN-T1,5,École Rognonas,10 Avenue du Maréchal Foch,13870.0,Rognonas,"10 Avenue du Maréchal Foch,13870,Rognonas,FRANCE",43.788871,4.765647,90.0
+Ferme D (St-Victoire),2025-12-15,Lundi,D-LUN-T1,6,Marché Carpentras,Place du 25 Août,84200.0,Carpentras,"Place du 25 Août,84200,Carpentras,FRANCE",43.901031,4.804025,150.0
+Ferme D (St-Victoire),2025-12-15,Lundi,D-LUN-T1,7,Retour (Ferme D),220 Avenue de l'Europe,84300.0,Cavaillon,"220 Avenue de l'Europe,84300,Cavaillon,FRANCE",43.22979665390403,5.543856483524169,0.0
+Ferme E (Alpilles),2025-12-15,Lundi,E-LUN-T1,1,Départ (Ferme E),5 Route de Maussane,13520.0,Maussane-les-Alpilles,"5 Route de Maussane,13520,Maussane-les-Alpilles,FRANCE",43.850281,4.774267,0.0
+Ferme E (Alpilles),2025-12-15,Lundi,E-LUN-T1,2,Épicerie Les Baux,1 Place de la Mairie,13520.0,Les Baux-de-Provence,"1 Place de la Mairie,13520,Les Baux-de-Provence,FRANCE",43.72223200992607,4.801620459311812,50.0
+Ferme E (Alpilles),2025-12-15,Lundi,E-LUN-T1,3,Restaurant St-Martin,10 Rue du Château,13520.0,St-Martin-de-Crau,"10 Rue du Château,13520,St-Martin-de-Crau,FRANCE",43.74425,4.79607,120.0
+Ferme E (Alpilles),2025-12-15,Lundi,E-LUN-T1,4,Grossiste Arles,12 Avenue des Arènes,13200.0,Arles,"12 Avenue des Arènes,13200,Arles,FRANCE",43.743439,4.794894,300.0
+Ferme E (Alpilles),2025-12-15,Lundi,E-LUN-T1,5,Client PME Tarascon,50 Avenue de la République,13150.0,Tarascon,"50 Avenue de la République,13150,Tarascon,FRANCE",43.6778069,4.6294192,100.0
+Ferme E (Alpilles),2025-12-15,Lundi,E-LUN-T1,6,Supérette Graveson,1 Rue de l'Hôtel de Ville,13690.0,Graveson,"1 Rue de l'Hôtel de Ville,13690,Graveson,FRANCE",43.80452837340616,4.655591900124736,180.0
+Ferme E (Alpilles),2025-12-15,Lundi,E-LUN-T1,7,Retour (Ferme E),5 Route de Maussane,13520.0,Maussane-les-Alpilles,"5 Route de Maussane,13520,Maussane-les-Alpilles,FRANCE",43.850281,4.774267,0.0
+Ferme A (Oliviers),2025-12-16,Mardi,A-MAR-T2,1,Départ (Ferme A),100 Chemin des Oliviers,13008.0,Marseille,"100 Chemin des Oliviers,13008,Marseille,FRANCE",43.27872420662536,5.392047530924709,0.0
+Ferme A (Oliviers),2025-12-16,Mardi,A-MAR-T2,2,Client Zone Franche,50 Rue de Lyon,13015.0,Marseille,"50 Rue de Lyon,13015,Marseille,FRANCE",43.24981065791886,5.403605881796117,150.0
+Ferme A (Oliviers),2025-12-16,Mardi,A-MAR-T2,3,Hôtel Les Ports,2 Place de la Joliette,13002.0,Marseille,"2 Place de la Joliette,13002,Marseille,FRANCE",43.325071,5.367122,100.0
+Ferme A (Oliviers),2025-12-16,Mardi,A-MAR-T2,4,Marché Quartier Nord,10 Boulevard des Alpes,13014.0,Marseille,"10 Boulevard des Alpes,13014,Marseille,FRANCE",43.3049207,5.366218295229007,220.0
+Ferme A (Oliviers),2025-12-16,Mardi,A-MAR-T2,5,Épicerie Noailles,5 Rue du Baignoir,13001.0,Marseille,"5 Rue du Baignoir,13001,Marseille,FRANCE",43.303689,5.414697,70.0
+Ferme A (Oliviers),2025-12-16,Mardi,A-MAR-T2,6,Grossiste Aéroport,20 Rue de l'Aéroport,13700.0,Marignane,"20 Rue de l'Aéroport,13700,Marignane,FRANCE",43.2983607,5.3775524,500.0
+Ferme A (Oliviers),2025-12-16,Mardi,A-MAR-T2,7,Retour (Ferme A),100 Chemin des Oliviers,13008.0,Marseille,"100 Chemin des Oliviers,13008,Marseille,FRANCE",43.27872420662537,5.39204753092471,0.0
+Ferme B (Mimosas),2025-12-16,Mardi,B-MAR-T2,1,Départ (Ferme B),5 Chemin des Mimosas,13100.0,Aix-en-Provence,"5 Chemin des Mimosas,13100,Aix-en-Provence,FRANCE",43.24981065791888,5.403605881796119,0.0
+Ferme B (Mimosas),2025-12-16,Mardi,B-MAR-T2,2,Client PME Est,1 Rue des Jardins,13100.0,Aix-en-Provence,"1 Rue des Jardins,13100,Aix-en-Provence,FRANCE",43.536856,5.453588,100.0
+Ferme B (Mimosas),2025-12-16,Mardi,B-MAR-T2,3,Clinique Vitrolles,10 Boulevard des Écoles,13127.0,Vitrolles,"10 Boulevard des Écoles,13127,Vitrolles,FRANCE",43.55017977822688,5.5438074903611145,200.0
+Ferme B (Mimosas),2025-12-16,Mardi,B-MAR-T2,4,Supermarché Pertuis,5 Avenue des 4 Vents,84120.0,Pertuis,"5 Avenue des 4 Vents,84120,Pertuis,FRANCE",43.4580426,5.2480265500000005,400.0
+Ferme B (Mimosas),2025-12-16,Mardi,B-MAR-T2,5,Restaurant Manosque,1 Rue Grande,4100.0,Manosque,"1 Rue Grande,4100,Manosque,FRANCE",43.69426,5.505317,150.0
+Ferme B (Mimosas),2025-12-16,Mardi,B-MAR-T2,6,Marché Forcalquier,Place du Bourguet,4300.0,Forcalquier,"Place du Bourguet,4300,Forcalquier,FRANCE",43.831768,5.7839477,80.0
+Ferme B (Mimosas),2025-12-16,Mardi,B-MAR-T2,7,Retour (Ferme B),5 Chemin des Mimosas,13100.0,Aix-en-Provence,"5 Chemin des Mimosas,13100,Aix-en-Provence,FRANCE",43.24981065791889,5.40360588179612,0.0
+Ferme C (Cigales),2025-12-16,Mardi,C-MAR-T2,1,Départ (Ferme C),20 Route de Cassis,13260.0,Cassis,"20 Route de Cassis,13260,Cassis,FRANCE",43.245885,5.580318,0.0
+Ferme C (Cigales),2025-12-16,Mardi,C-MAR-T2,2,Hôtel La Cadière,1 Avenue de Saint-Cyr,83740.0,La Cadière-d'Azur,"1 Avenue de Saint-Cyr,83740,La Cadière-d'Azur,FRANCE",43.22979665390403,5.543856483524169,110.0
+Ferme C (Cigales),2025-12-16,Mardi,C-MAR-T2,3,Restaurant Sanary,1 Place des Pêcheurs,83110.0,Sanary-sur-Mer,"1 Place des Pêcheurs,83110,Sanary-sur-Mer,FRANCE",43.19965771250791,5.747106476209866,140.0
+Ferme C (Cigales),2025-12-16,Mardi,C-MAR-T2,4,Épicerie Bandol,5 Rue de la Vague,83150.0,Bandol,"5 Rue de la Vague,83150,Bandol,FRANCE",43.125939,5.791955,210.0
+Ferme C (Cigales),2025-12-16,Mardi,C-MAR-T2,5,Marché Ollioules,1 Place du Marché,83190.0,Ollioules,"1 Place du Marché,83190,Ollioules,FRANCE",43.136559,5.754995,90.0
+Ferme C (Cigales),2025-12-16,Mardi,C-MAR-T2,6,Client PME La Garde,10 Avenue du Dr Roux,83130.0,La Garde,"10 Avenue du Dr Roux,83130,La Garde,FRANCE",43.140329,5.848916,350.0
+Ferme C (Cigales),2025-12-16,Mardi,C-MAR-T2,7,Retour (Ferme C),20 Route de Cassis,13260.0,Cassis,"20 Route de Cassis,13260,Cassis,FRANCE",43.245885,5.580318,0.0
+Ferme D (St-Victoire),2025-12-16,Mardi,D-MAR-T2,1,Départ (Ferme D),220 Avenue de l'Europe,84300.0,Cavaillon,"220 Avenue de l'Europe,84300,Cavaillon,FRANCE",43.22979665390403,5.543856483524169,0.0
+Ferme D (St-Victoire),2025-12-16,Mardi,D-MAR-T2,2,Grossiste Carpentras,500 Route de Carpentras,84200.0,Carpentras,"500 Route de Carpentras,84200,Carpentras,FRANCE",43.84727455697192,5.041384886455027,500.0
+Ferme D (St-Victoire),2025-12-16,Mardi,D-MAR-T2,3,Restaurant Vaison,1 Place du Vieux Marché,84110.0,Vaison-la-Romaine,"1 Place du Vieux Marché,84110,Vaison-la-Romaine,FRANCE",44.04278030369433,5.024652071856862,120.0
+Ferme D (St-Victoire),2025-12-16,Mardi,D-MAR-T2,4,Clinique Orange,10 Rue du Parvis,84100.0,Orange,"10 Rue du Parvis,84100,Orange,FRANCE",44.238487,5.070922,180.0
+Ferme D (St-Victoire),2025-12-16,Mardi,D-MAR-T2,5,École Avignon,10 Avenue Pierre Sémard,84000.0,Avignon,"10 Avenue Pierre Sémard,84000,Avignon,FRANCE",44.133811,4.815958,90.0
+Ferme D (St-Victoire),2025-12-16,Mardi,D-MAR-T2,6,Marché L'Isle-sur-la-Sorgue,1 Place de la Liberté,84800.0,L'Isle-sur-la-Sorgue,"1 Place de la Liberté,84800,L'Isle-sur-la-Sorgue,FRANCE",43.92813701840791,4.842169230471921,250.0
+Ferme D (St-Victoire),2025-12-16,Mardi,D-MAR-T2,7,Retour (Ferme D),220 Avenue de l'Europe,84300.0,Cavaillon,"220 Avenue de l'Europe,84300,Cavaillon,FRANCE",43.22979665390403,5.543856483524169,0.0
+Ferme E (Alpilles),2025-12-16,Mardi,E-MAR-T2,1,Départ (Ferme E),5 Route de Maussane,13520.0,Maussane-les-Alpilles,"5 Route de Maussane,13520,Maussane-les-Alpilles,FRANCE",43.850281,4.774267,0.0
+Ferme E (Alpilles),2025-12-16,Mardi,E-MAR-T2,2,Épicerie St-Rémy,5 Avenue des Baux,13210.0,St-Rémy-de-Provence,"5 Avenue des Baux,13210,St-Rémy-de-Provence,FRANCE",43.72223200992607,4.801620459311812,60.0
+Ferme E (Alpilles),2025-12-16,Mardi,E-MAR-T2,3,Restaurant Salon,1 Place des Centuries,13300.0,Salon-de-Provence,"1 Place des Centuries,13300,Salon-de-Provence,FRANCE",43.7925305407937,4.792282977441252,140.0
+Ferme E (Alpilles),2025-12-16,Mardi,E-MAR-T2,4,Grossiste Miramas,12 Avenue des Alpilles,13140.0,Miramas,"12 Avenue des Alpilles,13140,Miramas,FRANCE",43.6400364,5.098014117963387,350.0
+Ferme E (Alpilles),2025-12-16,Mardi,E-MAR-T2,5,Client PME Pélissanne,50 Rue de la Paix,13330.0,Pélissanne,"50 Rue de la Paix,13330,Pélissanne,FRANCE",43.58729826839248,4.9949143420466,110.0
+Ferme E (Alpilles),2025-12-16,Mardi,E-MAR-T2,6,Supérette Fos,1 Rue des Vents,13270.0,Fos-sur-Mer,"1 Rue des Vents,13270,Fos-sur-Mer,FRANCE",43.633931,5.15628,200.0
+Ferme E (Alpilles),2025-12-16,Mardi,E-MAR-T2,7,Retour (Ferme E),5 Route de Maussane,13520.0,Maussane-les-Alpilles,"5 Route de Maussane,13520,Maussane-les-Alpilles,FRANCE",43.850281,4.774267,0.0
+Ferme A (Oliviers),2025-12-17,Mercredi,A-MER-T3,1,Départ (Ferme A),100 Chemin des Oliviers,13008.0,Marseille,"100 Chemin des Oliviers,13008,Marseille,FRANCE",43.27872420662538,5.392047530924711,0.0
+Ferme A (Oliviers),2025-12-17,Mercredi,A-MER-T3,2,Restaurant La Plage,100 Promenade de la Plage,13008.0,Marseille,"100 Promenade de la Plage,13008,Marseille,FRANCE",43.24981065791886,5.403605881796117,180.0
+Ferme A (Oliviers),2025-12-17,Mercredi,A-MER-T3,3,Épicerie Cinq Avenues,5 Place des Cinq Avenues,13004.0,Marseille,"5 Place des Cinq Avenues,13004,Marseille,FRANCE",43.2616598,5.3741535,90.0
+Ferme A (Oliviers),2025-12-17,Mercredi,A-MER-T3,4,Hôpital Conception,147 Boulevard Baille,13005.0,Marseille,"147 Boulevard Baille,13005,Marseille,FRANCE",43.233187,5.450826,250.0
+Ferme A (Oliviers),2025-12-17,Mercredi,A-MER-T3,5,Grossiste Vieux Port,1 Quai du Port,13002.0,Marseille,"1 Quai du Port,13002,Marseille,FRANCE",43.28875080861554,5.394320535599239,300.0
+Ferme A (Oliviers),2025-12-17,Mercredi,A-MER-T3,6,Client PME Nord,100 Boulevard du Capitaine Gèze,13014.0,Marseille,"100 Boulevard du Capitaine Gèze,13014,Marseille,FRANCE",43.295476,5.364208,110.0
+Ferme A (Oliviers),2025-12-17,Mercredi,A-MER-T3,7,Retour (Ferme A),100 Chemin des Oliviers,13008.0,Marseille,"100 Chemin des Oliviers,13008,Marseille,FRANCE",43.27872420662539,5.392047530924712,0.0
+Ferme B (Mimosas),2025-12-17,Mercredi,B-MER-T3,1,Départ (Ferme B),5 Chemin des Mimosas,13100.0,Aix-en-Provence,"5 Chemin des Mimosas,13100,Aix-en-Provence,FRANCE",43.2498106579189,5.403605881796121,0.0
+Ferme B (Mimosas),2025-12-17,Mercredi,B-MER-T3,2,Restaurant Rians,1 Place du Marché,83560.0,Rians,"1 Place du Marché,83560,Rians,FRANCE",43.536856,5.453588,150.0
+Ferme B (Mimosas),2025-12-17,Mercredi,B-MER-T3,3,Marché Trets,5 Avenue Mirabeau,13530.0,Trets,"5 Avenue Mirabeau,13530,Trets,FRANCE",43.596728,5.959434,200.0
+Ferme B (Mimosas),2025-12-17,Mercredi,B-MER-T3,4,Épicerie St Maximin,10 Place Malherbe,83470.0,Saint-Maximin-la-Sainte-Baume,"10 Place Malherbe,83470,Saint-Maximin-la-Sainte-Baume,FRANCE",43.447475,5.683175,300.0
+Ferme B (Mimosas),2025-12-17,Mercredi,B-MER-T3,5,Client PME Gardanne,12 Rue de la Fonderie,13120.0,Gardanne,"12 Rue de la Fonderie,13120,Gardanne,FRANCE",43.453818,5.860663,130.0
+Ferme B (Mimosas),2025-12-17,Mercredi,B-MER-T3,6,Clinique Éguilles,50 Route de St-Cannat,13510.0,Éguilles,"50 Route de St-Cannat,13510,Éguilles,FRANCE",43.452816,5.474498,100.0
+Ferme B (Mimosas),2025-12-17,Mercredi,B-MER-T3,7,Retour (Ferme B),5 Chemin des Mimosas,13100.0,Aix-en-Provence,"5 Chemin des Mimosas,13100,Aix-en-Provence,FRANCE",43.24981065791891,5.403605881796122,0.0
+Ferme C (Cigales),2025-12-17,Mercredi,C-MER-T3,1,Départ (Ferme C),20 Route de Cassis,13260.0,Cassis,"20 Route de Cassis,13260,Cassis,FRANCE",43.245885,5.580318,0.0
+Ferme C (Cigales),2025-12-17,Mercredi,C-MER-T3,2,Hôtel Le Castellet,300 Route des Hauts,83330.0,Le Castellet,"300 Route des Hauts,83330,Le Castellet,FRANCE",43.22979665390403,5.543856483524169,150.0
+Ferme C (Cigales),2025-12-17,Mercredi,C-MER-T3,3,Restaurant Six-Fours,1 Place Jean Jaurès,83140.0,Six-Fours-les-Plages,"1 Place Jean Jaurès,83140,Six-Fours-les-Plages,FRANCE",43.25121090846029,5.782519910175701,110.0
+Ferme C (Cigales),2025-12-17,Mercredi,C-MER-T3,4,Épicerie La Seyne,5 Rue de la République,83500.0,La Seyne-sur-Mer,"5 Rue de la République,83500,La Seyne-sur-Mer,FRANCE",43.093167,5.839124,220.0
+Ferme C (Cigales),2025-12-17,Mercredi,C-MER-T3,5,Marché Toulon,1 Place de la Liberté,83000.0,Toulon,"1 Place de la Liberté,83000,Toulon,FRANCE",43.099155,5.882282,80.0
+Ferme C (Cigales),2025-12-17,Mercredi,C-MER-T3,6,Client PME Hyères,10 Avenue du Maréchal Foch,83400.0,Hyères,"10 Avenue du Maréchal Foch,83400,Hyères,FRANCE",43.12572805,5.930522918467998,300.0
+Ferme C (Cigales),2025-12-17,Mercredi,C-MER-T3,7,Retour (Ferme C),20 Route de Cassis,13260.0,Cassis,"20 Route de Cassis,13260,Cassis,FRANCE",43.245885,5.580318,0.0
+Ferme D (St-Victoire),2025-12-17,Mercredi,D-MER-T3,1,Départ (Ferme D),220 Avenue de l'Europe,84300.0,Cavaillon,"220 Avenue de l'Europe,84300,Cavaillon,FRANCE",43.22979665390403,5.543856483524169,0.0
+Ferme D (St-Victoire),2025-12-17,Mercredi,D-MER-T3,2,Grossiste Sorgues,1 Rue des Primeurs,84700.0,Sorgues,"1 Rue des Primeurs,84700,Sorgues,FRANCE",43.84727455697192,5.041384886455027,400.0
+Ferme D (St-Victoire),2025-12-17,Mercredi,D-MER-T3,3,Restaurant Pernes,1 Place Gabriel Moutte,84210.0,Pernes-les-Fontaines,"1 Place Gabriel Moutte,84210,Pernes-les-Fontaines,FRANCE",44.028582,4.871746,100.0
+Ferme D (St-Victoire),2025-12-17,Mercredi,D-MER-T3,4,Clinique Apt,100 Boulevard National,84400.0,Apt,"100 Boulevard National,84400,Apt,FRANCE",43.99839012498799,5.055368532348703,150.0
+Ferme D (St-Victoire),2025-12-17,Mercredi,D-MER-T3,5,École Le Thor,5 Rue du Château,84250.0,Le Thor,"5 Rue du Château,84250,Le Thor,FRANCE",43.87408577569045,5.39590092137747,80.0
+Ferme D (St-Victoire),2025-12-17,Mercredi,D-MER-T3,6,Marché Monteux,1 Place du Marché,84170.0,Monteux,"1 Place du Marché,84170,Monteux,FRANCE",43.94518511161027,4.989482070977054,200.0
+Ferme D (St-Victoire),2025-12-17,Mercredi,D-MER-T3,7,Retour (Ferme D),220 Avenue de l'Europe,84300.0,Cavaillon,"220 Avenue de l'Europe,84300,Cavaillon,FRANCE",43.22979665390403,5.543856483524169,0.0
+Ferme E (Alpilles),2025-12-17,Mercredi,E-MER-T3,1,Départ (Ferme E),5 Route de Maussane,13520.0,Maussane-les-Alpilles,"5 Route de Maussane,13520,Maussane-les-Alpilles,FRANCE",43.850281,4.774267,0.0
+Ferme E (Alpilles),2025-12-17,Mercredi,E-MER-T3,2,Épicerie Fontvieille,1 Place de la Mairie,13990.0,Fontvieille,"1 Place de la Mairie,13990,Fontvieille,FRANCE",43.72223200992607,4.801620459311812,70.0
+Ferme E (Alpilles),2025-12-17,Mercredi,E-MER-T3,3,Restaurant Eygalières,10 Place du Village,13810.0,Eygalières,"10 Place du Village,13810,Eygalières,FRANCE",43.725973,4.70448,130.0
+Ferme E (Alpilles),2025-12-17,Mercredi,E-MER-T3,4,Grossiste Miramas,12 Avenue des Alpilles,13140.0,Miramas,"12 Avenue des Alpilles,13140,Miramas,FRANCE",43.759576,4.95026,450.0
+Ferme E (Alpilles),2025-12-17,Mercredi,E-MER-T3,5,Client PME Martigues,50 Rue de la République,13500.0,Martigues,"50 Rue de la République,13500,Martigues,FRANCE",43.58729826839248,4.9949143420466,100.0
+Ferme E (Alpilles),2025-12-17,Mercredi,E-MER-T3,6,Supérette Istres,1 Rue des Taillades,13800.0,Istres,"1 Rue des Taillades,13800,Istres,FRANCE",43.40599503931056,5.054959576059133,160.0
+Ferme E (Alpilles),2025-12-17,Mercredi,E-MER-T3,7,Retour (Ferme E),5 Route de Maussane,13520.0,Maussane-les-Alpilles,"5 Route de Maussane,13520,Maussane-les-Alpilles,FRANCE",43.850281,4.774267,0.0
+ferme de bois colombes,,Lundi,Nouveau,999,client 1,,,,Sélectionné par carte,47.38992,5.053711,50.0
