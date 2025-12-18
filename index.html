@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tournées - V7 (Architecture Stable)</title>
+    <title>Tournées - V8 (Carte Prioritaire)</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
@@ -29,25 +29,13 @@
         .right-panel { flex: 1.5; min-width: 400px; }
         .add-stop-box { background: white; padding: 20px; border-radius: 8px; border-top: 5px solid #1abc9c; margin-bottom: 20px; }
 
-        /* LISTE CORRECTIVE (Empêche l'empilement) */
+        /* LISTE CORRECTIVE */
         #stops-list { list-style: none; padding: 0; margin: 0; max-height: 400px; overflow-y: auto; display: block; }
         .stop-item { 
-            background: white; 
-            padding: 15px; 
-            margin-bottom: 10px; /* Espace vertical */
-            border-radius: 6px; 
-            display: flex; /* Flexbox pour aligner contenu et bouton X */
-            justify-content: space-between; 
-            align-items: center;
-            border-left: 5px solid #bdc3c7; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
-            position: relative; /* Important pour l'affichage */
-            width: 100%;
-            box-sizing: border-box;
+            background: white; padding: 15px; margin-bottom: 10px; border-radius: 6px; 
+            display: flex; justify-content: space-between; align-items: center;
+            border-left: 5px solid #bdc3c7; box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
         }
-        .stop-item div { flex-grow: 1; } /* Le texte prend toute la place dispo */
-
-        /* COULEURS ITEMS */
         .stop-item.type-livraison { border-left-color: #3498db; }
         .stop-item.type-collecte { border-left-color: #9b59b6; }
         .stop-item.type-point-relais { border-left-color: #f39c12; }
@@ -61,202 +49,8 @@
         .btn-add { background: #2980b9; color: white; width: 100%; padding: 12px; border: none; border-radius: 4px; font-weight: bold; margin-top: 10px; cursor: pointer; }
         .btn-save { background: #27ae60; color: white; width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; margin-top: 10px; cursor: pointer; }
 
-        #map { height: 600px; width: 100%; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 20px; }
+        /* MAP AVEC FOND GRIS */
+        #map { height: 600px; width: 100%; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 20px; background-color: #ddd; }
 
         /* SYNTHESE */
-        .synthesis-box { background: #2c3e50; color: white; padding: 20px; border-radius: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .stat-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
-        .total-cost-row { grid-column: span 2; background: #34495e; padding: 15px; border-radius: 6px; display: flex; justify-content: space-between; font-size: 1.2em; border-left: 5px solid #e74c3c; }
-        
-        #debug-console { 
-            position: fixed; bottom: 0; left: 0; right: 0; height: 100px; 
-            background: #222; color: #0f0; font-family: monospace; 
-            padding: 5px; overflow-y: scroll; z-index: 9999; 
-            border-top: 2px solid red; font-size: 11px;
-        }
-    </style>
-</head>
-<body>
-
-    <button class="btn-reset" onclick="hardReset()">🧹 RESET MÉMOIRE (CLIQUEZ ICI SI BUG)</button>
-    <div id="debug-console">CONSOLE V7 (Architecture Stable)<br></div>
-
-    <div class="header-box" id="header-box" onclick="setMapTarget('prod')">
-        <div class="grid-header" onchange="updateProdGlobal()">
-            <div class="form-group"><label>Nom Producteur</label><input type="text" id="prodName" placeholder="Ex: Ferme du Val"></div>
-            <div class="form-group"><label>Jour</label><select id="prodDay"><option>Lundi</option><option>Mardi</option><option>Mercredi</option><option>Jeudi</option><option>Vendredi</option></select></div>
-            
-            <div class="form-group" style="grid-column: span 2;">
-                <label>📍 Adresse Départ (Producteur)</label>
-                <div class="search-bar">
-                    <input type="text" id="prodAddress" placeholder="Adresse..." onfocus="setMapTarget('prod')">
-                    <button class="btn-mini btn-search" onclick="geocodeInput('prod')">🔍</button>
-                    <button class="btn-mini btn-target" id="btn-target-prod">🎯 CIBLE</button>
-                </div>
-            </div>
-
-            <div class="form-group"><label>Tps Prépa (min)</label><input type="number" id="prepTime" value="0"></div>
-            <div class="form-group"><label>Tps Chargement (min)</label><input type="number" id="loadTime" value="30"></div>
-            <div class="form-group"><label>Coût H (€/h)</label><input type="number" id="costHour" value="15"></div>
-            <div class="form-group"><label>Coût Km (€/km)</label><input type="number" id="costKm" value="0.5"></div>
-            <div class="form-group"><label>Véhicule</label><select id="vehicleType"><option value="<3m3">Petit (<3m3)</option><option value=">20m3">Camion (>20m3)</option></select></div>
-            <div class="form-group"><label>Carburant</label><select id="fuelType"><option>Diesel</option><option>Electrique</option></select></div>
-        </div>
-    </div>
-
-    <div class="main-container">
-        <div class="left-panel">
-            <div class="add-stop-box" onclick="setMapTarget('stop')">
-                <h3>➕ Ajouter Arrêt</h3>
-                <div class="form-group">
-                    <label>Adresse Arrêt</label>
-                    <div class="search-bar">
-                        <input type="text" id="stopAddress" placeholder="Adresse..." onfocus="setMapTarget('stop')">
-                        <button class="btn-mini btn-search" onclick="geocodeInput('stop')">🔍</button>
-                        <button class="btn-mini btn-target" id="btn-target-stop">🎯 CIBLE</button>
-                    </div>
-                </div>
-                
-                <div class="form-group"><label>Type</label><select id="stopType"><option>Livraison</option><option>Collecte</option><option>Point Relais</option></select></div>
-                <div class="form-group"><label>Nom Client</label><input type="text" id="stopClient"></div>
-                <div style="display:flex; gap:10px;">
-                    <div class="form-group"><label>Kg</label><input type="number" id="stopWeight"></div>
-                    <div class="form-group"><label>€</label><input type="number" id="stopEuro"></div>
-                </div>
-                <div class="form-group"><label>Min sur place</label><input type="number" id="stopTime" value="15"></div>
-                <button class="btn-add" onclick="addStop()">Valider Arrêt</button>
-            </div>
-            
-            <ul id="stops-list"></ul>
-            <button class="btn-save" id="finalBtn" onclick="sendTournee()">🚀 ENVOYER TOURNÉE</button>
-        </div>
-
-        <div class="right-panel">
-            <div id="map"></div>
-            <div class="synthesis-box">
-                <div class="stat-row"><span>Distance</span><b id="syn-dist">0 km</b></div>
-                <div class="stat-row"><span>Temps Route</span><b id="syn-time">0h00</b></div>
-                <div class="stat-row"><span>Temps Ops</span><b id="syn-ops">0h00</b></div>
-                <div class="total-cost-row"><span>COÛT TOTAL</span><b id="syn-cost-total">0 €</b></div>
-            </div>
-        </div>
-    </div>
-
-<script>
-    function log(msg) {
-        let c = document.getElementById('debug-console');
-        let d = new Date();
-        c.innerHTML += `[${d.toLocaleTimeString()}] ${msg}<br>`;
-        c.scrollTop = c.scrollHeight;
-    }
-
-    function hardReset() {
-        localStorage.removeItem('prod_v7');
-        location.reload();
-    }
-
-    const API_URL = "https://update-github-csv-149052175314.europe-west1.run.app/"; 
-    let map, markersLayer, routeLayer;
-    let stops = [];
-    let activeTarget = 'stop';
-    
-    // VARIABLES GLOBALES DE STOCAGE (Evite le conflit DOM)
-    let PROD_DATA = { lat: null, lon: null, name: "", address: "" };
-    let STOP_TEMP = { lat: null, lon: null, address: "" };
-    
-    let tempMarker = null;
-
-    window.onload = function() {
-        try {
-            map = L.map('map').setView([46.60, 1.88], 6);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: 'OSM' }).addTo(map);
-            markersLayer = L.layerGroup().addTo(map);
-            routeLayer = L.layerGroup().addTo(map);
-            map.on('click', onMapClick);
-            
-            loadProdData();
-            setMapTarget('stop');
-            
-        } catch(e) { log("Erreur Init: " + e); }
-    };
-
-    function setMapTarget(t) {
-        activeTarget = t;
-        document.getElementById('btn-target-prod').classList.toggle('active', t==='prod');
-        document.getElementById('btn-target-stop').classList.toggle('active', t==='stop');
-    }
-
-    // --- GESTION CLICK CARTE & GEOCODE ---
-    function onMapClick(e) {
-        handleCoordinates(e.latlng.lat, e.latlng.lon, "Point Carte");
-        // Reverse Geocoding pour l'affichage
-        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lon}`)
-        .then(r => r.json())
-        .then(data => {
-            let addr = data.display_name || "Point Carte";
-            let prefix = activeTarget === 'prod' ? 'prod' : 'stop';
-            document.getElementById(prefix+'Address').value = addr;
-            
-            // Mise à jour objet global
-            if(activeTarget === 'prod') {
-                PROD_DATA.address = addr;
-                saveProdData();
-            } else {
-                STOP_TEMP.address = addr;
-            }
-        });
-    }
-
-    function geocodeInput(target) {
-        setMapTarget(target);
-        let prefix = target === 'prod' ? 'prod' : 'stop';
-        let q = document.getElementById(prefix+'Address').value;
-        if(q.length < 3) return;
-        
-        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}`)
-        .then(r => r.json())
-        .then(d => {
-            if(d.length > 0) {
-                let lat = parseFloat(d[0].lat); 
-                let lon = parseFloat(d[0].lon);
-                handleCoordinates(lat, lon, d[0].display_name);
-                map.setView([lat, lon], 16);
-            } else alert("Introuvable");
-        });
-    }
-
-    function handleCoordinates(lat, lon, addr) {
-        if(tempMarker) map.removeLayer(tempMarker);
-        let icon = activeTarget === 'prod' ? '🏭' : '📍';
-        tempMarker = L.marker([lat, lon]).addTo(map).bindPopup(icon).openPopup();
-
-        if(activeTarget === 'prod') {
-            PROD_DATA.lat = lat;
-            PROD_DATA.lon = lon;
-            PROD_DATA.address = addr;
-            document.getElementById('prodAddress').value = addr;
-            document.getElementById('prodAddress').classList.add('input-valid');
-            saveProdData();
-            refreshMap(); // Dessine immédiatement le producteur
-        } else {
-            STOP_TEMP.lat = lat;
-            STOP_TEMP.lon = lon;
-            STOP_TEMP.address = addr;
-            document.getElementById('stopAddress').value = addr;
-            document.getElementById('stopAddress').classList.add('input-valid');
-        }
-    }
-
-    // --- AJOUT ARRET ---
-    function addStop() {
-        if(!PROD_DATA.lat) { alert("Veuillez définir le Producteur sur la carte d'abord !"); return; }
-        
-        // On utilise la variable globale STOP_TEMP, pas le DOM qui peut être vide
-        if(!STOP_TEMP.lat) { alert("Veuillez cliquer sur la carte pour localiser l'arrêt !"); return; }
-        
-        let client = document.getElementById('stopClient').value;
-        if(!client) { alert("Nom du client manquant !"); return; }
-        
-        stops.push({
-            client: client,
-            type: document.getElementById('stopType
+        .synthesis-box { background: #2c3e50
