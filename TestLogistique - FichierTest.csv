@@ -119,3 +119,7 @@ TEST,,Lundi,TEST_Lundi_5_144523,2,C2,,,,Pointé Carte,45.71720694385144,4.514694
 TEST,,Lundi,TEST_Lundi_5_144523,3,C3,,,,Pointé Carte,45.63084540868369,4.592285156250001,,,15.0,35.0,15.0,Livraison,Utilitaire Leger,Electrique,15.0,0.5
 TEST,,Lundi,TEST_Lundi_5_144523,4,C4,,,,Pointé Carte,45.58232862028087,4.780426025390626,,,40.0,200.0,15.0,Livraison,Utilitaire Leger,Electrique,15.0,0.5
 TEST,,Lundi,TEST_Lundi_5_144523,5,C5,,,,Pointé Carte,45.63324613981234,5.163574218750001,,,30.0,60.0,15.0,Livraison,Utilitaire Leger,Electrique,15.0,0.5
+TEST,,Mercredi,TEST_Mercredi_3_144652,0,TEST,,,,LYON,45.7578137,4.8320114,,30.0,0.0,0.0,0.0,Départ Dépôt,Utilitaire Leger,Electrique,15.0,0.5
+TEST,,Mercredi,TEST_Mercredi_3_144652,1,C1,,,,Pointé Carte,45.82114340079471,4.931488037109376,,,20.0,50.0,15.0,Livraison,Utilitaire Leger,Electrique,15.0,0.5
+TEST,,Mercredi,TEST_Mercredi_3_144652,2,C2,,,,Pointé Carte,45.87662446792522,4.740600585937501,,,30.0,120.0,15.0,Livraison,Utilitaire Leger,Electrique,15.0,0.5
+TEST,,Mercredi,TEST_Mercredi_3_144652,3,C3,,,,Pointé Carte,45.682198608003404,4.732360839843751,,,30.0,110.0,10.0,Livraison,Utilitaire Leger,Electrique,15.0,0.5
