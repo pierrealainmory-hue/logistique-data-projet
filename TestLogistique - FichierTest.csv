@@ -134,8 +134,13 @@ FERME TRUC,,Lundi,FERME TRUC_Lundi_20251218_1927,3,oihjhvgd,,,,,45.7571457,4.816
 ,,Lundi,_Lundi_20251218_1936,0,,,,,"Cires-lès-Mello, Senlis, Oise, Hauts-de-France, France métropolitaine, 60660, France",49.2571450617294,2.352611206451752,,30.0,0.0,0.0,0.0,Départ Dépôt,<3m3,Diesel,15.0,0.5,5.0
 ,,Lundi,_Lundi_20251218_1936,1,wxcv,,,,,47.93388340388618,0.99042021949769,,,7.0,200.0,,Livraison,<3m3,Diesel,15.0,0.5,
 ,,Lundi,_Lundi_20251218_1936,2,dsfg,,,,,46.711796861672205,3.32050601589935,,,7.0,300.0,,Livraison,<3m3,Diesel,15.0,0.5,
-,,Mardi,_Mardi_20251218_1937,0,,,,,"Cires-lès-Mello, Senlis, Oise, Hauts-de-France, France métropolitaine, 60660, France",49.257145061729396,2.3526112064517517,,30.0,0.0,0.0,0.0,Départ Dépôt,<3m3,Diesel,15.0,0.5,5.0
+,,Mardi,_Mardi_20251218_1937,0,,,,,"Cires-lès-Mello, Senlis, Oise, Hauts-de-France, France métropolitaine, 60660, France",49.2571450617294,2.352611206451752,,30.0,0.0,0.0,0.0,Départ Dépôt,<3m3,Diesel,15.0,0.5,5.0
 ,,Mardi,_Mardi_20251218_1937,1,dcsf,,,,,45.7350081,4.8743164,,,8300.0,300.0,,Livraison,<3m3,Diesel,15.0,0.5,
 ,,Mardi,_Mardi_20251218_1937,2,zeffd,,,,,47.59630555868182,1.044100603122078,,,8300.0,300.0,,Livraison,<3m3,Diesel,15.0,0.5,
 ,,Mardi,_Mardi_20251218_1937,3,ezdfs,,,,,48.34674000951164,-0.2524141101711664,,,8300.0,300.0,,Livraison,<3m3,Diesel,15.0,0.5,
-,,Mardi,_Mardi_20251218_1937,4,ezdfdg,,,,,49.208486467590404,-1.2412520522977502,,,8300.0,300.0,,Livraison,<3m3,Diesel,15.0,0.5,
+,,Mardi,_Mardi_20251218_1937,4,ezdfdg,,,,,49.2084864675904,-1.2412520522977502,,,8300.0,300.0,,Livraison,<3m3,Diesel,15.0,0.5,
+,,Mardi,_Mardi_20251218_1940,0,,,,,"Cires-lès-Mello, Senlis, Oise, Hauts-de-France, France métropolitaine, 60660, France",49.257145061729396,2.3526112064517517,,30.0,0.0,0.0,0.0,Départ Dépôt,<3m3,Diesel,15.0,0.5,5.0
+,,Mardi,_Mardi_20251218_1940,1,zefrdg,,,,,47.939768008255825,1.2092905426392744,,,8300.0,300.0,,Collecte,<3m3,Diesel,15.0,0.5,
+,,Mardi,_Mardi_20251218_1940,2,zedrfdg,,,,,48.83646529846262,0.9725835437910215,,,8300.0,300.0,,Collecte,<3m3,Diesel,15.0,0.5,
+,,Mardi,_Mardi_20251218_1940,3,ezrfdrgs,,,,,48.371391337695286,0.12649062920301102,,,8300.0,300.0,,Collecte,<3m3,Diesel,15.0,0.5,
+,,Mardi,_Mardi_20251218_1940,4,zedrfqdrgs,,,,,48.10790448585488,-0.04923986434019145,,,8300.0,300.0,,Collecte,<3m3,Diesel,15.0,0.5,
