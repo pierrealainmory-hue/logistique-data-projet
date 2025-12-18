@@ -64,9 +64,12 @@
             <div class="form-group" style="grid-column: span 2;">
                 <label>📍 Adresse de Départ (Dépôt)</label>
                 <div class="search-bar">
-                    <input type="text" id="pAddr" placeholder="Cliquez sur 🎯 puis sur la carte">
+                    <input type="text" id="pAddr" placeholder="Tapez une adresse OU cliquez sur 🎯">
+                    <button class="btn-mini" style="background:var(--info)" onclick="searchAddress('prod')">🔍</button>
                     <button class="btn-mini btn-target" id="btn-t-prod" onclick="setMode('prod'); event.stopPropagation();">🎯 CIBLE</button>
                 </div>
+
+
             </div>
             <div class="form-group"><label>📦 Prép. (min)</label><input type="number" id="tPrep" value="30" onchange="updateStats()"></div>
             <div class="form-group"><label>🚚 Charg. (min)</label><input type="number" id="tLoad" value="20" onchange="updateStats()"></div>
@@ -94,7 +97,8 @@
                 <div class="form-group">
                     <label>Localisation</label>
                     <div class="search-bar">
-                        <input type="text" id="sAddr" placeholder="Ciblez sur la carte">
+                        <input type="text" id="sAddr" placeholder="Tapez une adresse OU cliquez sur 🎯">
+                        <button class="btn-mini" style="background:var(--info)" onclick="searchAddress('stop')">🔍</button>
                         <button class="btn-mini btn-target" id="btn-t-stop" onclick="setMode('stop'); event.stopPropagation();">🎯 CIBLE</button>
                     </div>
                 </div>
