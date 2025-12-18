@@ -3,102 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logistique V18 - Stable</title>
+    <title>Simulateur Logistique - V17</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root { --primary: #2c3e50; --accent: #e67e22; --success: #27ae60; --bg: #eaeff2; --danger: #e74c3c; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; background: var(--bg); color: #333; font-size: 13px; }
         
-        /* BANDEAU HAUT */
         .header-band { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; border-top: 6px solid var(--primary); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        
         .main-container { display: flex; gap: 20px; flex-wrap: wrap; }
         .left-panel { flex: 1; min-width: 400px; }
         .right-panel { flex: 1.5; min-width: 400px; }
 
         .card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .active-zone { background: #fffbf0 !important; border: 2px solid var(--accent) !important; }
+        .stop-box { border-left: 6px solid #1abc9c; }
+        .active-zone { background: #fffbf0 !important; border-color: var(--accent) !important; }
 
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
         .form-group label { display: block; font-weight: bold; color: #7f8c8d; margin-bottom: 5px; font-size: 0.8rem; }
         input, select { width: 100%; padding: 8px; border: 1px solid #bdc3c7; border-radius: 6px; box-sizing: border-box; }
         
+        .search-bar { display: flex; gap: 5px; }
         .btn-mini { padding: 8px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; }
-        .btn-target { background: #95a5a6; }
+        .btn-target { background: #95a5a6; min-width: 70px; }
         .btn-target.active { background: var(--accent); }
 
-        #stops-list { list-style: none; padding: 0; }
-        .stop-item { background: white; padding: 10px; margin-bottom: 8px; border-radius: 8px; display: flex; justify-content: space-between; border-left: 5px solid #3498db; }
+        #stops-list { list-style: none; padding: 0; margin: 10px 0; }
+        .stop-item { background: white; padding: 10px; margin-bottom: 8px; border-radius: 8px; display: flex; justify-content: space-between; border-left: 5px solid #3498db; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
-        .res-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .res-item { background: var(--primary); color: white; padding: 10px; border-radius: 8px; text-align: center; }
-        .cost-card { padding: 12px; border-radius: 8px; color: white; text-align: center; flex: 1; }
+        .res-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 15px; }
+        .res-item { background: var(--primary); color: white; padding: 12px; border-radius: 8px; text-align: center; }
+        .res-item b { display: block; font-size: 1.1rem; margin-top: 4px; }
         
-        #map { height: 450px; width: 100%; border-radius: 12px; border: 1px solid #ccc; background: #eee; }
-        .btn-main { background: var(--success); color: white; width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .cost-card { padding: 15px; border-radius: 8px; color: white; text-align: center; flex: 1; }
+        .cost-transport { background: #2980b9; }
+        .cost-human { background: #8e44ad; }
+        .cost-final { background: var(--danger); }
+
+        .ratio-box { grid-column: span 3; background: var(--accent); color: white; padding: 15px; border-radius: 8px; display: flex; justify-content: space-around; align-items: center; }
+
+        #map { height: 450px; width: 100%; border-radius: 12px; border: 1px solid #ccc; background: #ddd; }
+        .btn-main { background: var(--success); color: white; width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.1rem; }
     </style>
 </head>
 <body>
 
-    <button onclick="softReset()" class="btn-mini" style="float:right; background:var(--danger)">🧹 Reset</button>
-    <h2 style="color: var(--primary);">🚛 Simulateur Logistique V18</h2>
+    <button onclick="localStorage.clear(); location.reload();" class="btn-mini" style="float:right; background:var(--danger)">🧹 Reset</button>
+    <h2 style="color: var(--primary); margin-bottom: 15px;">🚛 Simulateur Logistique V17</h2>
 
     <div class="header-band" id="box-prod" onclick="setMode('prod')">
         <div class="grid">
             <div class="form-group" style="grid-column: span 2;">
-                <label>Nom Producteur</label>
-                <input type="text" id="pName" placeholder="Nom de la ferme" onchange="saveAll()">
+                <label>Nom Producteur / Ferme</label>
+                <input type="text" id="pName" placeholder="Ex: Ferme du Soleil" onchange="saveProd()">
             </div>
             <div class="form-group" style="grid-column: span 2;">
-                <label>📍 Départ (Dépôt)</label>
-                <div style="display:flex; gap:5px;">
+                <label>📍 Adresse de Départ (Dépôt)</label>
+                <div class="search-bar">
                     <input type="text" id="pAddr" placeholder="Cliquez sur 🎯 puis sur la carte">
-                    <button class="btn-mini btn-target" id="btn-t-prod">🎯</button>
+                    <button class="btn-mini btn-target" id="btn-t-prod" onclick="setMode('prod'); event.stopPropagation();">🎯 CIBLE</button>
                 </div>
             </div>
-            <div class="form-group"><label>📦 Prép. (min)</label><input type="number" id="tPrep" value="30"></div>
-            <div class="form-group"><label>🚚 Charg. (min)</label><input type="number" id="tLoad" value="20"></div>
-            <div class="form-group"><label>💶 MO (€/h)</label><input type="number" id="cH" value="15"></div>
-            <div class="form-group"><label>⛽ Carb. (€/km)</label><input type="number" id="cK" value="0.5" step="0.1"></div>
-            <div class="form-group"><label>Véhicule</label><select id="vType"><option>Petit</option><option>Moyen</option><option>Grand</option></select></div>
-            <div class="form-group"><label>Énergie</label><select id="fType"><option>Diesel</option><option>Essence</option><option>Électrique</option></select></div>
+            <div class="form-group"><label>📦 Prép. (min)</label><input type="number" id="tPrep" value="30" onchange="updateStats()"></div>
+            <div class="form-group"><label>🚚 Charg. (min)</label><input type="number" id="tLoad" value="20" onchange="updateStats()"></div>
+            <div class="form-group"><label>💶 Main d'Oeuvre (€/h)</label><input type="number" id="cH" value="15" onchange="updateStats()"></div>
+            <div class="form-group"><label>⛽ Carburant (€/km)</label><input type="number" id="cK" value="0.5" step="0.1" onchange="updateStats()"></div>
+            <div class="form-group"><label>Véhicule</label><select id="vType"><option>Petit (<3m³)</option><option>Moyen (3-6m³)</option><option>Grand (6-12m³)</option><option>Poids Lourd</option></select></div>
+            <div class="form-group"><label>Énergie</label><select id="fType"><option>Diesel</option><option>Essence</option><option>Électrique</option><option>GNV</option></select></div>
         </div>
     </div>
 
     <div class="main-container">
         <div class="left-panel">
-            <div class="card" id="box-stop" onclick="setMode('stop')" style="border-left: 6px solid #1abc9c;">
-                <h3>➕ Ajouter un Arrêt</h3>
-                <div class="grid">
-                    <div class="form-group" style="grid-column: span 2;"><label>Client</label><input type="text" id="sClient"></div>
-                    <div class="form-group"><label>Valeur (€)</label><input type="number" id="sEuro" value="0"></div>
-                    <div class="form-group"><label>⏱️ Arrêt (m)</label><input type="number" id="sTime" value="15"></div>
-                </div>
-                <div class="form-group" style="margin-top:10px;">
-                    <label>📍 Lieu</label>
-                    <div style="display:flex; gap:5px;">
+            <div class="card stop-box" id="box-stop" onclick="setMode('stop')">
+                <h3 style="margin:0 0 15px 0;">➕ Ajouter un Arrêt</h3>
+                <div class="form-group">
+                    <label>Localisation</label>
+                    <div class="search-bar">
                         <input type="text" id="sAddr" placeholder="Ciblez sur la carte">
-                        <button class="btn-mini btn-target" id="btn-t-stop">🎯</button>
+                        <button class="btn-mini btn-target" id="btn-t-stop" onclick="setMode('stop'); event.stopPropagation();">🎯 CIBLE</button>
                     </div>
                 </div>
-                <button class="btn-main" style="background:#2980b9;" onclick="addStop()">Ajouter à la tournée</button>
+                <div class="grid" style="margin-top:10px;">
+                    <div class="form-group" style="grid-column: span 2;"><label>Nom Client / Lieu</label><input type="text" id="sClient"></div>
+                    <div class="form-group"><label>Valeur (€)</label><input type="number" id="sEuro" value="0"></div>
+                    <div class="form-group"><label>⏱️ Tps Arrêt (min)</label><input type="number" id="sTime" value="15"></div>
+                </div>
+                <button class="btn-main" style="background:#2980b9; margin-top:15px;" onclick="addStop()">Ajouter à la tournée</button>
             </div>
             <ul id="stops-list"></ul>
-            <button class="btn-main" id="btnSend" onclick="sendData()" disabled>🚀 ENREGISTRER</button>
+            <button class="btn-main" id="btnSend" onclick="sendData()" disabled>🚀 ENREGISTRER LA TOURNÉE</button>
         </div>
 
         <div class="right-panel">
-            <div id="map"></div>
-            <div class="res-grid" style="margin-top:15px;">
-                <div class="res-item"><span>🛣️ Dist.</span><b id="rDist">0 km</b></div>
+            <div id="map" class="card" style="padding:0;"></div>
+            <div class="res-grid">
+                <div class="res-item"><span>🛣️ Distance</span><b id="rDist">0 km</b></div>
                 <div class="res-item"><span>Conduite</span><b id="rTime">0h00</b></div>
-                <div class="res-item"><span>Manut.</span><b id="rOps">0h00</b></div>
-                <div class="cost-card" style="background:#2980b9;"><span>🚛 Transport</span><b id="rCostTrans">0 €</b></div>
-                <div class="cost-card" style="background:#8e44ad;"><span>🤝 Manut.</span><b id="rCostOps">0 €</b></div>
-                <div class="cost-card" style="background:var(--danger);"><span>💰 TOTAL</span><b id="rTotal">0 €</b></div>
-                <div style="grid-column: span 3; background:var(--accent); color:white; padding:10px; border-radius:8px; display:flex; justify-content:space-around;">
-                    <div>Valeur: <b id="rVal">0 €</b></div>
-                    <div>Ratio: <b id="rRatio">0 %</b></div>
+                <div class="res-item"><span>Manutention</span><b id="rOps">0h00</b></div>
+                <div style="grid-column: span 3; display: flex; gap: 10px;">
+                    <div class="cost-card cost-transport"><span>🚛 Transport</span><b id="rCostTrans">0 €</b></div>
+                    <div class="cost-card cost-human"><span>🤝 Manutention</span><b id="rCostOps">0 €</b></div>
+                    <div class="cost-card cost-final"><span>💰 TOTAL</span><b id="rTotal">0 €</b></div>
+                </div>
+                <div class="ratio-box">
+                    <div><span>📦 Valeur</span><b id="rVal" style="font-size:1.5rem;">0 €</b></div>
+                    <div><span>📉 Ratio</span><b id="rRatio" style="font-size:1.5rem;">0 %</b></div>
                 </div>
             </div>
         </div>
@@ -109,10 +118,11 @@
         let map, markers, routeLayer;
         let stops = [];
         let mode = 'stop';
-        let pData = { lat:null, lon:null, addr:"" };
+        let pData = { lat:null, lon:null, addr: "" };
         let sTemp = { lat:null, lon:null };
 
-        window.onload = function() {
+        // Attendre le chargement complet du DOM
+        document.addEventListener('DOMContentLoaded', function() {
             try {
                 map = L.map('map').setView([46.6, 1.88], 6);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
@@ -120,26 +130,16 @@
                 routeLayer = L.layerGroup().addTo(map);
                 map.on('click', onMapClick);
                 
-                // Chargement sécurisé
-                let saved = localStorage.getItem('tournee_mem_v18');
+                let saved = localStorage.getItem('pMem_v17');
                 if(saved) {
-                    let d = JSON.parse(saved);
-                    pData = d.pData || pData;
+                    pData = JSON.parse(saved);
                     document.getElementById('pName').value = pData.name || "";
                     document.getElementById('pAddr').value = pData.addr || "";
+                    updateView();
                 }
                 setMode('stop');
-                updateView();
-            } catch (e) { console.error("Erreur init carte"); }
-        };
-
-        function softReset() {
-            if(confirm("Effacer la tournée en cours ?")) {
-                stops = [];
-                localStorage.removeItem('tournee_mem_v18');
-                location.reload();
-            }
-        }
+            } catch (e) { console.error("Erreur Init :", e); }
+        });
 
         function setMode(m) {
             mode = m;
@@ -150,25 +150,38 @@
         }
 
         function onMapClick(e) {
-            let lat = e.latlng.lat; let lon = e.latlng.lng;
+            let lat = e.latlng.lat;
+            let lon = e.latlng.lng;
+            
+            // Point temporaire visuel
+            markers.clearLayers();
+            if(pData.lat) L.marker([pData.lat, pData.lon], {icon: L.divIcon({html:'🏠', className:''})}).addTo(markers);
+            stops.forEach(s => L.circleMarker([s.lat, s.lon], {radius:8, color:'blue', fillOpacity:1}).addTo(markers));
+            L.circleMarker([lat, lon], {radius:10, color:'orange', weight:3, fillOpacity:0.5}).addTo(markers);
+
             fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
                 .then(r => r.json()).then(d => {
-                    let a = d.display_name || "Lieu sélectionné";
+                    let a = d.display_name || "Point Carte";
                     if(mode === 'prod') {
                         pData = { lat, lon, addr: a, name: document.getElementById('pName').value };
                         document.getElementById('pAddr').value = a;
-                        saveAll();
+                        saveProd();
                     } else {
                         sTemp = { lat, lon };
                         document.getElementById('sAddr').value = a;
                     }
-                    updateView();
                 });
         }
 
+        function saveProd() {
+            pData.name = document.getElementById('pName').value;
+            localStorage.setItem('pMem_v17', JSON.stringify(pData));
+            updateView();
+        }
+
         function addStop() {
-            if(!pData.lat) return alert("Défisissez le Producteur d'abord !");
-            if(!sTemp.lat) return alert("Cliquez sur la carte pour placer l'arrêt.");
+            if(!pData.lat) return alert("Défisissez le Producteur !");
+            if(!sTemp.lat) return alert("Cliquez sur la carte !");
             stops.push({
                 client: document.getElementById('sClient').value || "Client",
                 euro: parseFloat(document.getElementById('sEuro').value) || 0,
@@ -182,19 +195,17 @@
         }
 
         function updateView() {
-            if(!markers) return;
             markers.clearLayers();
-            if(pData.lat) L.marker([pData.lat, pData.lon], {icon: L.divIcon({html:'🏠', className:''})}).addTo(markers);
-            
+            routeLayer.clearLayers();
             let ul = document.getElementById('stops-list');
             ul.innerHTML = "";
+            if(pData.lat) L.marker([pData.lat, pData.lon], {icon: L.divIcon({html:'🏠', className:''})}).addTo(markers);
             stops.forEach((s, i) => {
-                ul.innerHTML += `<li class="stop-item"><span><b>${i+1}.</b> ${s.client}</span><button onclick="stops.splice(${i},1); updateView()" style="color:red; border:none; background:none; cursor:pointer;">✕</button></li>`;
+                ul.innerHTML += `<li class="stop-item"><span><b>${i+1}.</b> ${s.client}</span><button onclick="stops.splice(${i},1); updateView()" style="background:none; border:none; color:red; cursor:pointer;">✕</button></li>`;
                 L.circleMarker([s.lat, s.lon], {radius:8, color:'blue', fillOpacity:1}).addTo(markers);
             });
-            
             if(pData.lat && stops.length > 0) calcRoute();
-            document.getElementById('btnSend').disabled = (stops.length === 0);
+            document.getElementById('btnSend').disabled = stops.length === 0;
         }
 
         function calcRoute() {
@@ -202,7 +213,6 @@
             fetch(`https://router.project-osrm.org/route/v1/driving/${pts.map(p => p.join(',')).join(';')}?overview=full&geometries=geojson`)
                 .then(r => r.json()).then(res => {
                     if(res.code === 'Ok') {
-                        routeLayer.clearLayers();
                         let rData = res.routes[0];
                         L.polyline(rData.geometry.coordinates.map(c => [c[1], c[0]]), {color:'blue', weight:4}).addTo(routeLayer);
                         map.fitBounds(L.featureGroup(markers.getLayers()).getBounds().pad(0.1));
@@ -212,9 +222,13 @@
         }
 
         function updateStats(dist = 0, driveTime = 0) {
-            let totalOps = (parseFloat(document.getElementById('tPrep').value)||0) + (parseFloat(document.getElementById('tLoad').value)||0) + stops.reduce((a, b) => a + b.time, 0);
+            let prep = parseFloat(document.getElementById('tPrep').value) || 0;
+            let load = parseFloat(document.getElementById('tLoad').value) || 0;
+            let sTime = stops.reduce((a, b) => a + b.time, 0);
+            let totalOps = prep + load + sTime;
             let cH = parseFloat(document.getElementById('cH').value) || 15;
             let cK = parseFloat(document.getElementById('cK').value) || 0.5;
+
             let cTrans = (dist * cK) + ((driveTime / 60) * cH);
             let cOps = (totalOps / 60) * cH;
             let total = cTrans + cOps;
@@ -230,12 +244,10 @@
             document.getElementById('rRatio').innerText = val > 0 ? (total/val*100).toFixed(1) + " %" : "0 %";
         }
 
-        function saveAll() {
-            pData.name = document.getElementById('pName').value;
-            localStorage.setItem('tournee_mem_v18', JSON.stringify({pData}));
+        function sendData() {
+            alert("Envoi simulé : Tournée enregistrée !");
+            stops = []; updateView();
         }
-
-        function sendData() { alert("Tournée enregistrée !"); stops = []; updateView(); }
     </script>
 </body>
 </html>
