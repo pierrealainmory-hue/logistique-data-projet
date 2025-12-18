@@ -153,7 +153,7 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        const API = "https://update-github-csv-149052175314.europe-west1.run.app/";
+      const API = "https://update-github-csv-149052175314.europe-west1.run.app/";
         let map, markers, routeLayer;
         let stops = [];
         let mode = 'stop';
@@ -265,11 +265,60 @@
         }
 
         function sendData() {
-            const btn = document.getElementById('btnSend'); btn.disabled = true; btn.innerText = "Envoi...";
-            const payload = { general: { Depot: document.getElementById('pName').value, Jour: document.getElementById('pDay').value, Total: document.getElementById('rTotal').innerText, TempsTotal: document.getElementById('rOps').innerText }, stops: stops };
-            fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-            .then(() => { alert("Sauvegardé !"); stops = []; updateView(); })
-            .finally(() => { btn.disabled = false; btn.innerText = "🚀 Enregistrer la Tournée"; });
+            const btn = document.getElementById('btnSend');
+            btn.disabled = true;
+            btn.innerText = "⏳ Envoi en cours...";
+
+            // On récupère les valeurs numériques propres (sans le symbole €)
+            const payload = {
+                general: {
+                    Depot: document.getElementById('pName').value,
+                    Jour: document.getElementById('pDay').value,
+                    Vehicule: document.getElementById('vType').options[document.getElementById('vType').selectedIndex].text,
+                    Distance_Km: parseFloat(document.getElementById('rDist').innerText),
+                    Temps_Conduite: document.getElementById('rTime').innerText,
+                    Temps_Service: document.getElementById('rOps').innerText,
+                    Frais_Route_Eur: parseFloat(document.getElementById('rCostTrans').innerText),
+                    Frais_Personnel_Eur: parseFloat(document.getElementById('rCostOps').innerText),
+                    Cout_Global_Eur: parseFloat(document.getElementById('rTotal').innerText),
+                    Valeur_Marchandise_Eur: parseFloat(document.getElementById('rVal').innerText),
+                    Ratio_Logistique_Pct: parseFloat(document.getElementById('rRatio').innerText),
+                    Temps_Preparation: parseFloat(document.getElementById('tPrep').value),
+                    Temps_Chargement: parseFloat(document.getElementById('tLoad').value)
+                },
+                stops: stops.map((s, index) => ({
+                    ordre: index + 1,
+                    type: s.icon,
+                    client: s.client,
+                    valeur_eur: s.euro,
+                    temps_sur_place_min: s.time,
+                    latitude: s.lat,
+                    longitude: s.lon
+                }))
+            };
+
+            fetch(API, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(response => {
+                if (!response.ok) throw new Error("Erreur réseau");
+                return response.json();
+            })
+            .then(data => {
+                alert("✅ Tournée enregistrée avec succès !");
+                stops = [];
+                updateView();
+            })
+            .catch(error => {
+                alert("❌ Erreur lors de l'envoi. Vérifiez votre connexion.");
+                console.error(error);
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerText = "🚀 Enregistrer la Tournée";
+            });
         }
     </script>
 </body>
