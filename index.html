@@ -11,7 +11,6 @@
     <style>
         body { font-family: 'Segoe UI', sans-serif; max-width: 1400px; margin: 0 auto; padding: 15px; background: #eaeff2; color: #333; font-size: 14px; }
         
-        /* HEADER */
         .header-box { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-left: 6px solid #2c3e50; }
         .header-title { font-size: 1.5em; color: #2c3e50; margin-bottom: 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         .grid-header { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
@@ -22,34 +21,31 @@
         .input-valid { border-color: #2ecc71 !important; background-color: #e8f8f5 !important; }
         .coords-feedback { font-size: 0.8em; color: #27ae60; font-weight: bold; margin-top: 2px; display: none; }
 
-        /* LAYOUT */
         .main-container { display: flex; gap: 20px; flex-wrap: wrap; }
         .left-panel { flex: 1; min-width: 400px; }
         .right-panel { flex: 1.5; min-width: 400px; display: flex; flex-direction: column; }
         
         .add-stop-box { background: white; padding: 20px; border-radius: 8px; border-top: 5px solid #1abc9c; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         
-        /* BOUTONS & RECHERCHE */
+        /* BOUTONS CIBLAGE ET RECHERCHE */
         .search-bar { display: flex; gap: 5px; margin-bottom: 5px; }
         .btn-mini { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; font-size: 0.9em; white-space: nowrap; }
         .btn-search { background: #8e44ad; }
-        .btn-target { background: #34495e; color: white; }
-        .btn-target.active { background: #e74c3c; animation: pulse 1.5s infinite; }
         
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
-
-        /* LISTE & MAP */
+        /* Boutons Cibles (Actif/Inactif) */
+        .btn-target { background: #95a5a6; color: white; opacity: 0.6; transition: all 0.3s; }
+        .btn-target.active { background: #e74c3c; opacity: 1; transform: scale(1.05); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .btn-gps { background: #e67e22; }
+        
         #stops-list { list-style: none; padding: 0; max-height: 400px; overflow-y: auto; }
         .stop-item { background: white; padding: 10px; margin-bottom: 8px; border-radius: 4px; display: flex; align-items: center; justify-content: space-between; border-left: 4px solid #bdc3c7; }
         .stop-item.type-livraison { border-left-color: #3498db; }
         .stop-item.type-collecte { border-left-color: #9b59b6; }
-        #map { height: 550px; width: 100%; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 20px; }
+        #map { height: 550px; width: 100%; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 20px; cursor: crosshair; }
         
-        /* SYNTHESE */
         .synthesis-box { background: #2c3e50; color: white; padding: 20px; border-radius: 8px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
         .stat-group h4 { margin: 0 0 10px 0; border-bottom: 1px solid #7f8c8d; padding-bottom: 5px; font-size: 0.9em; color: #bdc3c7; }
         .stat-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.95em; }
-        .stat-row b { font-size: 1.1em; }
         .ratio-box { grid-column: span 2; background: #e67e22; padding: 10px; border-radius: 6px; text-align: center; margin-top: 10px; }
         .ratio-box b { font-size: 1.4em; display: block; }
         
@@ -60,7 +56,7 @@
 </head>
 <body>
 
-    <div class="header-box">
+    <div class="header-box" onclick="setMapTarget('prod')">
         <div class="header-title">
             <span>📝 Décrire une Tournée (Producteur)</span>
             <span style="font-size:0.6em; font-weight:normal; background:#ecf0f1; padding:5px 10px; border-radius:15px; color:#7f8c8d;">Données mémorisées</span>
@@ -78,17 +74,17 @@
             <div class="form-group" style="grid-column: span 2;">
                 <label>📍 Adresse de DÉPART (Dépôt)</label>
                 <div class="search-bar">
-                    <input type="text" id="prodAddress" placeholder="Adresse..." onchange="geocodeInput('prod')">
+                    <input type="text" id="prodAddress" placeholder="Adresse..." onfocus="setMapTarget('prod')" onchange="geocodeInput('prod')">
                     <button class="btn-mini btn-search" onclick="geocodeInput('prod')">🔍</button>
-                    <button class="btn-mini btn-target" id="btn-target-prod" onclick="setMapTarget('prod')">🎯 Définir sur Carte</button>
+                    <button class="btn-mini btn-target" id="btn-target-prod" onclick="event.stopPropagation(); setMapTarget('prod')">🎯 CIBLER</button>
+                    <button class="btn-mini btn-gps" onclick="geolocate('prod')">📍 GPS</button>
                 </div>
-                <div id="feedback-prod" class="coords-feedback">📍 Coordonnées récupérées</div>
+                <div id="feedback-prod" class="coords-feedback">✅ Coordonnées OK</div>
                 <input type="hidden" id="prodLat"><input type="hidden" id="prodLon">
             </div>
 
-            <div class="form-group"><label>Temps Préparation Cde (min)</label><input type="number" id="prepTime" value="0"></div>
-            <div class="form-group"><label>Temps Chargement Camion (min)</label><input type="number" id="loadTime" value="30"></div>
-            
+            <div class="form-group"><label>Tps Prépa (min)</label><input type="number" id="prepTime" value="0"></div>
+            <div class="form-group"><label>Tps Chargement (min)</label><input type="number" id="loadTime" value="30"></div>
             <div class="form-group"><label>Coût Main d'Oeuvre (€/h)</label><input type="number" id="costHour" value="15"></div>
             <div class="form-group"><label>Coût Véhicule (€/km)</label><input type="number" id="costKm" value="0.5"></div>
             
@@ -114,8 +110,20 @@
     <div class="main-container">
         
         <div class="left-panel">
-            <div class="add-stop-box">
+            <div class="add-stop-box" onclick="setMapTarget('stop')">
                 <h3>➕ Ajouter un Point d'Arrêt</h3>
+
+                <div class="form-group">
+                    <label>Localisation</label>
+                    <div class="search-bar">
+                        <input type="text" id="stopAddress" placeholder="Adresse..." onfocus="setMapTarget('stop')" onkeypress="if(event.key==='Enter') geocodeInput('stop')">
+                        <button class="btn-mini btn-search" onclick="geocodeInput('stop')">🔍</button>
+                        <button class="btn-mini btn-target" id="btn-target-stop" onclick="event.stopPropagation(); setMapTarget('stop')">🎯 CIBLER</button>
+                    </div>
+                    <div id="feedback-stop" class="coords-feedback">✅ Coordonnées récupérées</div>
+                    <input type="hidden" id="stopLat"><input type="hidden" id="stopLon">
+                </div>
+
                 <div class="form-group">
                     <label>Type d'opération</label>
                     <select id="stopType" style="background:#f0f8ff; font-weight:bold;">
@@ -124,27 +132,16 @@
                     </select>
                 </div>
 
-                <div class="form-group">
-                    <label>Localisation</label>
-                    <div class="search-bar">
-                        <input type="text" id="stopAddress" placeholder="Adresse..." onkeypress="if(event.key==='Enter') geocodeInput('stop')">
-                        <button class="btn-mini btn-search" onclick="geocodeInput('stop')">🔍</button>
-                        <button class="btn-mini btn-target" id="btn-target-stop" onclick="setMapTarget('stop')">🎯 Définir sur Carte</button>
-                    </div>
-                    <div id="feedback-stop" class="coords-feedback">📍 Coordonnées récupérées</div>
-                    <input type="hidden" id="stopLat"><input type="hidden" id="stopLon">
-                </div>
-
                 <div class="form-group"><label>Nom (Client/Lieu)</label><input type="text" id="stopClient" placeholder="Ex: Resto le Gourmet"></div>
                 
                 <div style="display:flex; gap:10px;">
                     <div class="form-group"><label>Poids approx. (kg)</label><input type="number" id="stopWeight" placeholder="Ex: 50"></div>
                     <div class="form-group"><label>Montant approx. (€)</label><input type="number" id="stopEuro" placeholder="Ex: 120"></div>
                 </div>
-                <div class="form-group"><label>Temps d'arrêt (min)</label><input type="number" id="stopTime" value="15"></div>
+                <div class="form-group"><label>Temps d'arrêt estimé (min)</label><input type="number" id="stopTime" value="15"></div>
 
                 <button class="btn-add" onclick="addStop()">Valider cet arrêt</button>
-                <p id="error-msg" style="color:red; display:none; text-align:center;">⚠️ Remplir Nom, Poids et Localiser !</p>
+                <p id="error-msg" style="color:red; display:none; text-align:center; margin-top:5px; font-weight:bold;">⚠️ Erreur : Adresse non validée ou Nom manquant !</p>
             </div>
 
             <div style="background:white; padding:10px; border-radius:8px;">
@@ -191,35 +188,37 @@
     let mapMarkers = [];
     let routeLayer = null;
     let tempMarker = null;
-    let activeTarget = 'stop'; // 'prod' ou 'stop'
     
-    // Init Carte
+    // Initialisation sur 'stop' pour éviter les erreurs
+    let activeTarget = 'stop'; 
+    
     var map = L.map('map').setView([46.60, 1.88], 6);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: 'OSM' }).addTo(map);
 
     // --- LOGIQUE DE CIBLAGE (TARGET) ---
     function setMapTarget(target) {
         activeTarget = target;
-        // Gestion visuelle des boutons
+        // Visuel
         document.getElementById('btn-target-prod').classList.remove('active');
         document.getElementById('btn-target-stop').classList.remove('active');
         document.getElementById('btn-target-' + target).classList.add('active');
     }
 
-    // Initialisation par défaut sur Stop
+    // On initialise le visuel
     setMapTarget('stop');
 
-    // --- GESTION CARTE (CLIC & REVERSE GEOCODING) ---
+    // --- CLIC CARTE ---
     map.on('click', function(e) {
+        // Nettoyage ancien marker temporaire
         if(tempMarker) map.removeLayer(tempMarker);
         
-        // Icône différente selon la cible
-        let iconHtml = activeTarget === 'prod' ? '🏭' : '📍';
+        // Icône
+        let iconChar = activeTarget === 'prod' ? '🏭' : '📍';
         tempMarker = L.marker(e.latlng, {
-            icon: L.divIcon({html: `<div style="font-size:24px;">${iconHtml}</div>`, className: ''})
+            icon: L.divIcon({html: `<div style="font-size:24px;">${iconChar}</div>`, className: ''})
         }).addTo(map);
         
-        // REVERSE GEOCODING
+        // Cible
         let inputId = activeTarget === 'prod' ? 'prodAddress' : 'stopAddress';
         let feedbackId = activeTarget === 'prod' ? 'feedback-prod' : 'feedback-stop';
         let latId = activeTarget === 'prod' ? 'prodLat' : 'stopLat';
@@ -227,27 +226,29 @@
 
         document.getElementById(inputId).value = "⏳ Recherche adresse...";
         
+        // Reverse Geocoding
         fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lon}`)
-        .then(response => response.json())
+        .then(r => r.json())
         .then(data => {
-            let addr = data.display_name || "Point sur Carte";
+            let addr = data.display_name || "Point Carte";
             document.getElementById(inputId).value = addr;
             
             // Stockage Coordonnées
             document.getElementById(latId).value = e.latlng.lat;
             document.getElementById(lonId).value = e.latlng.lon;
             
-            // Feedback Visuel
+            // Feedback
             document.getElementById(inputId).classList.add('input-valid');
             document.getElementById(feedbackId).style.display = 'block';
             
-            // Si c'est le producteur, on lance le calcul de route (si stops existants)
+            // Si c'est producteur, on lance le calcul route tout de suite
             if(activeTarget === 'prod') calculateRoute();
         });
     });
 
-    // Recherche via bouton Loupe
+    // --- RECHERCHE TEXTE ---
     function geocodeInput(target) {
+        setMapTarget(target); // Force le ciblage
         let inputId = target === 'prod' ? 'prodAddress' : 'stopAddress';
         let q = document.getElementById(inputId).value;
         if(q.length < 3) return;
@@ -255,22 +256,33 @@
         fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}`)
         .then(r=>r.json()).then(d=>{
             if(d.length>0) {
-                // On force le mode cible pour que le clic simulé remplisse les bons champs
-                activeTarget = target; 
+                // Simule un clic
                 map.fireEvent('click', {latlng: {lat:d[0].lat, lng:d[0].lon}});
                 map.setView([d[0].lat, d[0].lon], 16);
             } else alert("Adresse introuvable");
         });
     }
 
-    // --- LOGIQUE ARRETS ---
+    // --- GPS ---
+    function geolocate(target) {
+        setMapTarget(target);
+        if(!navigator.geolocation) return;
+        navigator.geolocation.getCurrentPosition(p => {
+            map.fireEvent('click', {latlng: {lat:p.coords.latitude, lng:p.coords.longitude}});
+            map.setView([p.coords.latitude, p.coords.longitude], 16);
+        });
+    }
+
+    // --- AJOUT ARRÊT (VALIDATION) ---
     function addStop() {
         let lat = document.getElementById('stopLat').value;
         let client = document.getElementById('stopClient').value;
         
+        // Vérification stricte
         if(!lat || !client) {
             document.getElementById('error-msg').style.display='block'; return;
         }
+        document.getElementById('error-msg').style.display='none';
         
         stops.push({
             type: document.getElementById('stopType').value,
@@ -283,44 +295,67 @@
             adresse_txt: document.getElementById('stopAddress').value
         });
         
-        // Reset Inputs Arrêt
+        // Reset Inputs
         document.getElementById('stopClient').value = '';
         document.getElementById('stopWeight').value = '';
         document.getElementById('stopEuro').value = '';
+        
+        // Reset Adresse & Marker
         document.getElementById('stopAddress').value = '';
         document.getElementById('stopLat').value = ''; 
         document.getElementById('stopAddress').classList.remove('input-valid');
         document.getElementById('feedback-stop').style.display = 'none';
         
-        if(tempMarker) map.removeLayer(tempMarker);
+        if(tempMarker) {
+            map.removeLayer(tempMarker);
+            tempMarker = null;
+        }
         
         refreshUI();
     }
 
     function refreshUI() {
+        // Nettoyage liste & carte
         let ul = document.getElementById('stops-list');
         ul.innerHTML = "";
         mapMarkers.forEach(m => map.removeLayer(m));
         mapMarkers = [];
         
+        let totalRev = 0;
+
         stops.forEach((s, i) => {
+            totalRev += s.montant;
             let li = document.createElement('li');
             li.className = `stop-item type-${s.type.toLowerCase()}`;
-            li.innerHTML = `<div><strong>${i+1}. ${s.client}</strong> (${s.type})<br><span style="color:#7f8c8d; font-size:0.9em;">~${s.poids}kg | ~${s.montant}€</span></div><button onclick="stops.splice(${i},1); refreshUI();" style="color:red; border:none; background:none; cursor:pointer;">✕</button>`;
+            li.innerHTML = `<div><strong>${i+1}. ${s.client}</strong><br><span style="color:#7f8c8d; font-size:0.9em;">${s.type} | ~${s.poids}kg</span></div><button onclick="removeStop(${i})" style="color:red; border:none; background:none; cursor:pointer;">✕</button>`;
             ul.appendChild(li);
-            let m = L.marker([s.lat, s.lon]).addTo(map).bindPopup(`<b>${i+1}</b> ${s.client}`);
+            
+            // Marker Définitif
+            let color = s.type === 'Livraison' ? '#3498db' : '#9b59b6';
+            let m = L.circleMarker([s.lat, s.lon], {radius: 8, fillColor: color, color: '#fff', weight: 1, fillOpacity: 1})
+                     .bindPopup(`<b>${i+1}</b> ${s.client}`);
+            m.addTo(map);
             mapMarkers.push(m);
         });
 
         document.getElementById('finalBtn').disabled = stops.length === 0;
         calculateRoute(); 
     }
+    
+    function removeStop(i) {
+        stops.splice(i, 1);
+        refreshUI();
+    }
 
     async function calculateRoute() {
         let pLat = document.getElementById('prodLat').value;
         let pLon = document.getElementById('prodLon').value;
         
-        if(!pLat || stops.length === 0) { return; }
+        // On a besoin du départ et d'au moins 1 arrêt
+        if(!pLat || stops.length === 0) { 
+            if(routeLayer) map.removeLayer(routeLayer);
+            return; 
+        }
 
         // Depart -> Stops -> Depart
         let coords = [`${pLon},${pLat}`];
@@ -335,10 +370,10 @@
                 let r = res.routes[0];
                 if(routeLayer) map.removeLayer(routeLayer);
                 let latlngs = r.geometry.coordinates.map(c => [c[1],c[0]]);
-                routeLayer = L.polyline(latlngs, {color:'#2c3e50', weight:5}).addTo(map);
+                routeLayer = L.polyline(latlngs, {color:'#2c3e50', weight:5, opacity:0.7}).addTo(map);
                 map.fitBounds(routeLayer.getBounds().pad(0.1));
 
-                // DONNEES CALCUL
+                // STATS
                 let distKm = r.distance / 1000;
                 let driveTimeMin = r.duration / 60;
                 
@@ -348,7 +383,6 @@
                 
                 let opsTimeMin = prepTime + loadTime + stopsTime;
                 
-                // COUTS
                 let costH = parseFloat(document.getElementById('costHour').value)||0;
                 let costK = parseFloat(document.getElementById('costKm').value)||0;
                 
@@ -356,11 +390,11 @@
                 let costMO = ((driveTimeMin + opsTimeMin) / 60) * costH;
                 let totalCost = costTrans + costMO;
 
-                // REVENUS
+                // REVENUS & RATIO
                 let totalRev = stops.reduce((acc, s) => acc + s.montant, 0);
                 let ratio = totalRev > 0 ? ((totalCost / totalRev) * 100).toFixed(1) : 0;
 
-                // AFFICHAGE
+                // DISPLAY
                 document.getElementById('syn-dist').innerText = distKm.toFixed(1) + " km";
                 document.getElementById('syn-time-drive').innerText = formatTime(driveTimeMin);
                 document.getElementById('syn-time-ops').innerText = formatTime(opsTimeMin);
@@ -384,6 +418,7 @@
     function sendTournee() {
         if(!document.getElementById('prodLat').value) { alert("Adresse Dépôt requise !"); return; }
         if(!document.getElementById('prodName').value) { alert("Nom Producteur requis !"); return; }
+        
         let btn = document.getElementById('finalBtn');
         btn.disabled = true; btn.innerText = "Envoi...";
 
@@ -410,10 +445,16 @@
             body: JSON.stringify(payload)
         })
         .then(r=>r.json()).then(d => {
-            if(d.success) { alert("✅ Tournée enregistrée !"); stops = []; refreshUI(); btn.innerText = "🚀 ENREGISTRER LA TOURNÉE"; } 
+            if(d.success) { 
+                alert("✅ Tournée enregistrée !"); 
+                stops = []; 
+                refreshUI(); 
+                btn.innerText = "🚀 ENREGISTRER LA TOURNÉE"; 
+                btn.disabled = true;
+            } 
             else throw new Error(d.error);
         })
-        .catch(e => { alert("Erreur: " + e.message); btn.disabled = false; });
+        .catch(e => { alert("Erreur: " + e.message); btn.disabled = false; btn.innerText = "🚀 ENREGISTRER LA TOURNÉE"; });
     }
 </script>
 </body>
