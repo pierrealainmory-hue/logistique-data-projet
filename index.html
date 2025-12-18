@@ -3,23 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tournées - V10 (Ciblage Réparé)</title>
+    <title>Tournées - V11 (Chargement Séquentiel)</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     
     <style>
         body { font-family: 'Segoe UI', sans-serif; max-width: 1400px; margin: 0 auto; padding: 15px; background: #eaeff2; color: #333; font-size: 14px; }
         
         /* HEADER & LAYOUT */
-        .btn-reset { background: #c0392b; color: white; padding: 8px; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; float: right; }
-        .header-box { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 6px solid #95a5a6; clear: both; transition: border 0.3s; }
-        /* Bordure active pour montrer qui est sélectionné */
-        .header-box.active-zone { border-left-color: #e67e22; border-left-width: 10px; background: #fffbf0; }
+        .header-box { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 6px solid #95a5a6; transition: border 0.3s; }
+        .header-box.active-zone { border-left-color: #e67e22; background: #fffbf0; }
         .header-box.saved { border-left-color: #27ae60; background: #f0fdf4; }
 
         .add-stop-box { background: white; padding: 20px; border-radius: 8px; border-top: 5px solid #1abc9c; margin-bottom: 20px; transition: border 0.3s; }
-        .add-stop-box.active-zone { border-top-color: #e67e22; border-top-width: 10px; background: #fffbf0; }
+        .add-stop-box.active-zone { border-top-color: #e67e22; background: #fffbf0; }
 
         .grid-header { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
         .form-group label { display: block; font-weight: 700; color: #7f8c8d; margin-bottom: 5px; }
@@ -47,12 +44,12 @@
         .btn-search { background: #8e44ad; }
         .btn-target { background: #95a5a6; opacity: 0.6; }
         .btn-target.active { background: #e67e22; opacity: 1; transform: scale(1.05); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .btn-reset { background: #c0392b; color: white; padding: 8px; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; float: right; }
         .btn-add { background: #2980b9; color: white; width: 100%; padding: 12px; border: none; border-radius: 4px; font-weight: bold; margin-top: 10px; cursor: pointer; }
         .btn-save { background: #27ae60; color: white; width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; margin-top: 10px; cursor: pointer; }
 
-        /* MAP */
-        #map { height: 600px; width: 100%; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 20px; background-color: #ddd; }
-        /* Curseur spécial quand on cible */
+        /* MAP ET CURSEURS */
+        #map { height: 600px; width: 100%; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 20px; background-color: #e5e5e5; }
         .crosshair-cursor { cursor: crosshair !important; }
 
         /* SYNTHESE */
@@ -93,7 +90,6 @@
 
     <div class="main-container">
         <div class="left-panel">
-            
             <div class="add-stop-box" id="box-stop" onclick="setMapTarget('stop')">
                 <h3>➕ Ajouter Arrêt</h3>
                 <div class="form-group">
@@ -134,9 +130,282 @@
         </div>
     </div>
 
-<script>
-    const API_URL = "https://update-github-csv-149052175314.europe-west1.run.app/"; 
-    
-    let map, markersLayer, routeLayer;
-    let stops = [];
-    let activeTarget = 'stop'; //
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script>
+        const API_URL = "https://update-github-csv-149052175314.europe-west1.run.app/"; 
+        
+        let map, markersLayer, routeLayer;
+        let stops = [];
+        let activeTarget = 'stop';
+        
+        let PROD_DATA = { lat: null, lon: null, name: "", address: "" };
+        let STOP_TEMP = { lat: null, lon: null, address: "" };
+        let tempMarker = null;
+
+        // INIT IMMEDIATE
+        try {
+            map = L.map('map').setView([46.60, 1.88], 6);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: 'OSM' }).addTo(map);
+            markersLayer = L.layerGroup().addTo(map);
+            routeLayer = L.layerGroup().addTo(map);
+            map.on('click', onMapClick);
+            
+            // Chargement données
+            loadProdData();
+            setMapTarget('stop');
+        } catch(e) {
+            console.log("Erreur Map Init (Normal si rechargement rapide)");
+        }
+
+        function hardReset() {
+            localStorage.removeItem('prod_v11');
+            location.reload();
+        }
+
+        function setMapTarget(t) {
+            activeTarget = t;
+            // Boutons
+            document.getElementById('btn-target-prod').classList.toggle('active', t==='prod');
+            document.getElementById('btn-target-stop').classList.toggle('active', t==='stop');
+            // Zones
+            document.getElementById('box-prod').classList.toggle('active-zone', t==='prod');
+            document.getElementById('box-stop').classList.toggle('active-zone', t==='stop');
+            // Curseur
+            document.getElementById('map').classList.add('crosshair-cursor');
+        }
+
+        function onMapClick(e) {
+            // Marker temporaire
+            if(tempMarker) map.removeLayer(tempMarker);
+            let icon = activeTarget === 'prod' ? '🏭' : '📍';
+            tempMarker = L.marker(e.latlng).addTo(map).bindPopup(icon).openPopup();
+
+            // Remplissage immédiat
+            let prefix = activeTarget === 'prod' ? 'prod' : 'stop';
+            let input = document.getElementById(prefix+'Address');
+            input.value = `📍 ${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}`;
+            input.classList.add('input-valid');
+
+            // Stockage immédiat
+            if(activeTarget === 'prod') {
+                PROD_DATA.lat = e.latlng.lat;
+                PROD_DATA.lon = e.latlng.lng;
+                refreshMap(); // Ancrage immédiat producteur
+            } else {
+                STOP_TEMP.lat = e.latlng.lat;
+                STOP_TEMP.lon = e.latlng.lng;
+            }
+
+            // Recherche Nom (Optionnelle)
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lng}`)
+            .then(r => r.json())
+            .then(data => {
+                let addr = data.display_name || input.value;
+                input.value = addr;
+                if(activeTarget === 'prod') { PROD_DATA.address = addr; saveProdData(); }
+                else { STOP_TEMP.address = addr; }
+            });
+        }
+
+        function geocodeInput(target) {
+            setMapTarget(target);
+            let prefix = target === 'prod' ? 'prod' : 'stop';
+            let q = document.getElementById(prefix+'Address').value;
+            if(q.length < 3) return;
+            
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}`)
+            .then(r => r.json())
+            .then(d => {
+                if(d.length > 0) {
+                    let lat = parseFloat(d[0].lat); 
+                    let lon = parseFloat(d[0].lon);
+                    onMapClick({latlng: {lat: lat, lng: lon}}); // Simule clic
+                    map.setView([lat, lon], 16);
+                } else alert("Adresse introuvable");
+            });
+        }
+
+        function addStop() {
+            if(!PROD_DATA.lat) { alert("D'abord, définissez le Producteur !"); setMapTarget('prod'); return; }
+            if(!STOP_TEMP.lat) { alert("Cliquez sur la carte pour poser l'arrêt !"); return; }
+            
+            let client = document.getElementById('stopClient').value;
+            if(!client) { alert("Nom du client ?"); return; }
+            
+            stops.push({
+                client: client,
+                type: document.getElementById('stopType').value,
+                poids: parseFloat(document.getElementById('stopWeight').value)||0,
+                montant: parseFloat(document.getElementById('stopEuro').value)||0,
+                time: parseFloat(document.getElementById('stopTime').value)||15,
+                lat: STOP_TEMP.lat,
+                lon: STOP_TEMP.lon,
+                addr: document.getElementById('stopAddress').value
+            });
+            
+            // Reset
+            STOP_TEMP = { lat: null, lon: null, address: "" };
+            document.getElementById('stopClient').value = '';
+            document.getElementById('stopAddress').value = '';
+            document.getElementById('stopAddress').classList.remove('input-valid');
+            if(tempMarker) map.removeLayer(tempMarker);
+            
+            refreshMap();
+        }
+
+        function refreshMap() {
+            markersLayer.clearLayers();
+            routeLayer.clearLayers();
+            let ul = document.getElementById('stops-list');
+            ul.innerHTML = "";
+
+            // Producteur
+            if(PROD_DATA.lat) {
+                L.marker([PROD_DATA.lat, PROD_DATA.lon], {
+                    icon: L.divIcon({html: '<div style="font-size:32px;">🏭</div>', className: ''})
+                }).addTo(markersLayer);
+            }
+
+            // Arrêts
+            stops.forEach((s, i) => {
+                let color = s.type === 'Livraison' ? '#3498db' : (s.type === 'Point Relais' ? '#f39c12' : '#9b59b6');
+                
+                ul.innerHTML += `<li class="stop-item" style="border-left-color:${color}">
+                    <div><b>${i+1}. ${s.client}</b> <small>(${s.type})</small><br>
+                    <span>${s.poids}kg | ${s.montant}€</span></div>
+                    <button type="button" onclick="stops.splice(${i},1); refreshMap()" style="color:red;border:none;background:none;cursor:pointer;font-size:1.2em;">✕</button>
+                </li>`;
+                
+                L.circleMarker([s.lat, s.lon], {radius:8, color:color, fillColor:color, fillOpacity:1}).addTo(markersLayer);
+            });
+
+            // Route
+            if(PROD_DATA.lat && stops.length > 0) calculateRoute();
+            else updateTotals(0, 0);
+        }
+
+        function calculateRoute() {
+            let coords = [[PROD_DATA.lon, PROD_DATA.lat]];
+            stops.forEach(s => coords.push([s.lon, s.lat]));
+            coords.push([PROD_DATA.lon, PROD_DATA.lat]);
+            
+            // Vol d'oiseau
+            let rawDist = 0;
+            let linePoints = [[PROD_DATA.lat, PROD_DATA.lon]];
+            for(let i=0; i<coords.length-1; i++) {
+                rawDist += getDist(coords[i][1], coords[i][0], coords[i+1][1], coords[i+1][0]);
+                linePoints.push([coords[i+1][1], coords[i+1][0]]);
+            }
+            
+            let estDist = rawDist * 1.3;
+            let estTime = (estDist / 50) * 60;
+            updateTotals(estDist, estTime);
+            
+            let poly = L.polyline(linePoints, {color:'red', dashArray:'5,5'}).addTo(routeLayer);
+            map.fitBounds(poly.getBounds());
+
+            // OSRM
+            let strCoords = coords.map(c => c.join(',')).join(';');
+            fetch(`https://router.project-osrm.org/route/v1/driving/${strCoords}?overview=full&geometries=geojson`)
+            .then(r => r.json())
+            .then(res => {
+                if(res.code === 'Ok') {
+                    routeLayer.clearLayers();
+                    let latlngs = res.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+                    L.polyline(latlngs, {color:'blue', weight:4}).addTo(routeLayer);
+                    updateTotals(res.routes[0].distance/1000, res.routes[0].duration/60);
+                }
+            });
+        }
+
+        function updateTotals(dist, driveTime) {
+            let load = parseFloat(document.getElementById('loadTime').value)||0;
+            let prep = parseFloat(document.getElementById('prepTime').value)||0;
+            let stopsT = stops.reduce((a, b) => a + b.time, 0);
+            let opsTime = load + prep + stopsT;
+            let totalTime = driveTime + opsTime;
+            
+            let cH = parseFloat(document.getElementById('costHour').value)||15;
+            let cK = parseFloat(document.getElementById('costKm').value)||0.5;
+            let cost = (dist * cK) + ((totalTime/60) * cH);
+            
+            let totalRev = stops.reduce((acc, s) => acc + s.montant, 0);
+            let ratio = totalRev > 0 ? ((cost / totalRev) * 100).toFixed(1) : 0;
+
+            document.getElementById('syn-dist').innerText = dist.toFixed(1) + " km";
+            document.getElementById('syn-time').innerText = Math.floor(driveTime/60) + "h" + Math.round(driveTime%60);
+            document.getElementById('syn-ops').innerText = Math.floor(opsTime/60) + "h" + Math.round(opsTime%60);
+            document.getElementById('syn-cost-total').innerText = cost.toFixed(0) + " €";
+            document.getElementById('syn-ratio').innerText = ratio + " %";
+            document.getElementById('syn-rev-display').innerText = `(Valeur: ${totalRev}€)`;
+        }
+
+        function updateProdGlobal() {
+            PROD_DATA.name = document.getElementById('prodName').value;
+            saveProdData();
+        }
+
+        function saveProdData() {
+            PROD_DATA.name = document.getElementById('prodName').value;
+            localStorage.setItem('prod_v11', JSON.stringify(PROD_DATA));
+            if(PROD_DATA.lat) document.getElementById('box-prod').classList.add('saved');
+        }
+        
+        function loadProdData() {
+            let s = localStorage.getItem('prod_v11');
+            if(s) {
+                try {
+                    let d = JSON.parse(s);
+                    if(d.lat) {
+                        PROD_DATA = d;
+                        document.getElementById('prodName').value = d.name || "";
+                        document.getElementById('prodAddress').value = d.address || "";
+                        document.getElementById('box-prod').classList.add('saved');
+                        refreshMap();
+                    }
+                } catch(e) {}
+            }
+        }
+
+        function getDist(lat1, lon1, lat2, lon2) {
+            var R = 6371; var dLat = (lat2-lat1)*Math.PI/180; var dLon = (lon2-lon1)*Math.PI/180;
+            var a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
+        function sendTournee() {
+            if(!PROD_DATA.lat) { alert("Producteur manquant !"); return; }
+            let btn = document.getElementById('finalBtn');
+            btn.disabled = true; btn.innerText = "Envoi...";
+            
+            let p = {
+                general: { 
+                    Producteur: document.getElementById('prodName').value,
+                    Jour: document.getElementById('prodDay').value,
+                    AdresseProd: PROD_DATA.address,
+                    LatProd: PROD_DATA.lat, 
+                    LonProd: PROD_DATA.lon,
+                    TempsPreparation: parseFloat(document.getElementById('prepTime').value),
+                    TempsChargement: parseFloat(document.getElementById('loadTime').value),
+                    CoutHoraire: parseFloat(document.getElementById('costHour').value),
+                    CoutKm: parseFloat(document.getElementById('costKm').value),
+                    Vehicule: document.getElementById('vehicleType').value,
+                    Carburant: document.getElementById('fuelType').value
+                },
+                stops: stops
+            };
+
+            fetch(API_URL, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(p)})
+            .then(r => r.json())
+            .then(d => {
+                if(d.success) {
+                    alert("✅ Sauvegardé !");
+                    stops = []; refreshMap();
+                    btn.innerText = "🚀 ENVOYER TOURNÉE"; btn.disabled = false;
+                } else { alert("Erreur Serveur: " + d.error); btn.disabled = false; }
+            })
+            .catch(e => { alert("Erreur Réseau: " + e); btn.disabled = false; });
+        }
+    </script>
+</body>
+</html>
