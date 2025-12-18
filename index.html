@@ -3,13 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulateur Logistique - V17</title>
+    <title>Simulateur Logistique V19</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        :root { --primary: #2c3e50; --accent: #e67e22; --success: #27ae60; --bg: #eaeff2; --danger: #e74c3c; }
+        :root { --primary: #2c3e50; --accent: #e67e22; --success: #27ae60; --bg: #eaeff2; --danger: #e74c3c; --info: #2980b9; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; background: var(--bg); color: #333; font-size: 13px; }
         
+        /* BANDEAU HAUT */
         .header-band { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; border-top: 6px solid var(--primary); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .header-band.saved { border-top-color: var(--success); }
+
+        /* LAYOUT */
         .main-container { display: flex; gap: 20px; flex-wrap: wrap; }
         .left-panel { flex: 1; min-width: 400px; }
         .right-panel { flex: 1.5; min-width: 400px; }
@@ -30,12 +34,13 @@
         #stops-list { list-style: none; padding: 0; margin: 10px 0; }
         .stop-item { background: white; padding: 10px; margin-bottom: 8px; border-radius: 8px; display: flex; justify-content: space-between; border-left: 5px solid #3498db; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
+        /* RÉSULTATS */
         .res-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 15px; }
         .res-item { background: var(--primary); color: white; padding: 12px; border-radius: 8px; text-align: center; }
         .res-item b { display: block; font-size: 1.1rem; margin-top: 4px; }
         
         .cost-card { padding: 15px; border-radius: 8px; color: white; text-align: center; flex: 1; }
-        .cost-transport { background: #2980b9; }
+        .cost-transport { background: var(--info); }
         .cost-human { background: #8e44ad; }
         .cost-final { background: var(--danger); }
 
@@ -47,14 +52,14 @@
 </head>
 <body>
 
-    <button onclick="localStorage.clear(); location.reload();" class="btn-mini" style="float:right; background:var(--danger)">🧹 Reset</button>
-    <h2 style="color: var(--primary); margin-bottom: 15px;">🚛 Simulateur Logistique V17</h2>
+    <button onclick="localStorage.clear(); location.reload();" class="btn-mini" style="float:right; background:var(--danger)">🧹 Reset Complet</button>
+    <h2 style="color: var(--primary); margin-bottom: 15px;">🚛 Simulateur Logistique Expert V19</h2>
 
     <div class="header-band" id="box-prod" onclick="setMode('prod')">
         <div class="grid">
             <div class="form-group" style="grid-column: span 2;">
                 <label>Nom Producteur / Ferme</label>
-                <input type="text" id="pName" placeholder="Ex: Ferme du Soleil" onchange="saveProd()">
+                <input type="text" id="pName" placeholder="Ex: Ferme du Val" onchange="saveProd()">
             </div>
             <div class="form-group" style="grid-column: span 2;">
                 <label>📍 Adresse de Départ (Dépôt)</label>
@@ -67,8 +72,18 @@
             <div class="form-group"><label>🚚 Charg. (min)</label><input type="number" id="tLoad" value="20" onchange="updateStats()"></div>
             <div class="form-group"><label>💶 Main d'Oeuvre (€/h)</label><input type="number" id="cH" value="15" onchange="updateStats()"></div>
             <div class="form-group"><label>⛽ Carburant (€/km)</label><input type="number" id="cK" value="0.5" step="0.1" onchange="updateStats()"></div>
-            <div class="form-group"><label>Véhicule</label><select id="vType"><option>Petit (<3m³)</option><option>Moyen (3-6m³)</option><option>Grand (6-12m³)</option><option>Poids Lourd</option></select></div>
-            <div class="form-group"><label>Énergie</label><select id="fType"><option>Diesel</option><option>Essence</option><option>Électrique</option><option>GNV</option></select></div>
+            <div class="form-group">
+                <label>Type Véhicule</label>
+                <select id="vType">
+                    <option>Petit (<3m³)</option><option>Moyen (3-6m³)</option><option>Grand (6-12m³)</option><option>Poids Lourd</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Énergie</label>
+                <select id="fType">
+                    <option>Diesel</option><option>Essence</option><option>Électrique</option><option>GNV / Bio-méthane</option>
+                </select>
+            </div>
         </div>
     </div>
 
@@ -86,9 +101,9 @@
                 <div class="grid" style="margin-top:10px;">
                     <div class="form-group" style="grid-column: span 2;"><label>Nom Client / Lieu</label><input type="text" id="sClient"></div>
                     <div class="form-group"><label>Valeur (€)</label><input type="number" id="sEuro" value="0"></div>
-                    <div class="form-group"><label>⏱️ Tps Arrêt (min)</label><input type="number" id="sTime" value="15"></div>
+                    <div class="form-group"><label>⏱️ Arrêt (min)</label><input type="number" id="sTime" value="15"></div>
                 </div>
-                <button class="btn-main" style="background:#2980b9; margin-top:15px;" onclick="addStop()">Ajouter à la tournée</button>
+                <button class="btn-main" style="background:var(--info); margin-top:15px;" onclick="addStop()">Ajouter à la tournée</button>
             </div>
             <ul id="stops-list"></ul>
             <button class="btn-main" id="btnSend" onclick="sendData()" disabled>🚀 ENREGISTRER LA TOURNÉE</button>
@@ -98,16 +113,19 @@
             <div id="map" class="card" style="padding:0;"></div>
             <div class="res-grid">
                 <div class="res-item"><span>🛣️ Distance</span><b id="rDist">0 km</b></div>
-                <div class="res-item"><span>Conduite</span><b id="rTime">0h00</b></div>
-                <div class="res-item"><span>Manutention</span><b id="rOps">0h00</b></div>
+                <div class="res-item"><span>Temps Conduite</span><b id="rTime">0h00</b></div>
+                <div class="res-item"><span>Temps Service</span><b id="rOps">0h00</b></div>
+                
                 <div style="grid-column: span 3; display: flex; gap: 10px;">
-                    <div class="cost-card cost-transport"><span>🚛 Transport</span><b id="rCostTrans">0 €</b></div>
-                    <div class="cost-card cost-human"><span>🤝 Manutention</span><b id="rCostOps">0 €</b></div>
-                    <div class="cost-card cost-final"><span>💰 TOTAL</span><b id="rTotal">0 €</b></div>
+                    <div class="cost-card cost-transport"><span>🚛 Transport</span><small>(Carb. + Chauffeur)</small><b id="rCostTrans">0 €</b></div>
+                    <div class="cost-card cost-human"><span>🤝 Manutention</span><small>(Prép. + Arrêts)</small><b id="rCostOps">0 €</b></div>
+                    <div class="cost-card cost-final"><span>💰 TOTAL GLOBAL</span><b id="rTotal">0 €</b></div>
                 </div>
+                
                 <div class="ratio-box">
-                    <div><span>📦 Valeur</span><b id="rVal" style="font-size:1.5rem;">0 €</b></div>
-                    <div><span>📉 Ratio</span><b id="rRatio" style="font-size:1.5rem;">0 %</b></div>
+                    <div><span>📦 Valeur Marchandise</span><b id="rVal" style="font-size:1.5rem;">0 €</b></div>
+                    <div style="width:1px; height:40px; background:rgba(255,255,255,0.3);"></div>
+                    <div><span>📉 Ratio Logistique</span><b id="rRatio" style="font-size:1.5rem;">0 %</b></div>
                 </div>
             </div>
         </div>
@@ -121,7 +139,6 @@
         let pData = { lat:null, lon:null, addr: "" };
         let sTemp = { lat:null, lon:null };
 
-        // Attendre le chargement complet du DOM
         document.addEventListener('DOMContentLoaded', function() {
             try {
                 map = L.map('map').setView([46.6, 1.88], 6);
@@ -130,7 +147,7 @@
                 routeLayer = L.layerGroup().addTo(map);
                 map.on('click', onMapClick);
                 
-                let saved = localStorage.getItem('pMem_v17');
+                let saved = localStorage.getItem('pMem_v19');
                 if(saved) {
                     pData = JSON.parse(saved);
                     document.getElementById('pName').value = pData.name || "";
@@ -157,11 +174,13 @@
             markers.clearLayers();
             if(pData.lat) L.marker([pData.lat, pData.lon], {icon: L.divIcon({html:'🏠', className:''})}).addTo(markers);
             stops.forEach(s => L.circleMarker([s.lat, s.lon], {radius:8, color:'blue', fillOpacity:1}).addTo(markers));
+            
+            // Feedback visuel de sélection (point orange)
             L.circleMarker([lat, lon], {radius:10, color:'orange', weight:3, fillOpacity:0.5}).addTo(markers);
 
             fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
                 .then(r => r.json()).then(d => {
-                    let a = d.display_name || "Point Carte";
+                    let a = d.display_name || "Lieu sélectionné";
                     if(mode === 'prod') {
                         pData = { lat, lon, addr: a, name: document.getElementById('pName').value };
                         document.getElementById('pAddr').value = a;
@@ -175,7 +194,7 @@
 
         function saveProd() {
             pData.name = document.getElementById('pName').value;
-            localStorage.setItem('pMem_v17', JSON.stringify(pData));
+            localStorage.setItem('pMem_v19', JSON.stringify(pData));
             updateView();
         }
 
@@ -229,14 +248,17 @@
             let cH = parseFloat(document.getElementById('cH').value) || 15;
             let cK = parseFloat(document.getElementById('cK').value) || 0.5;
 
+            // Coût Transport : Carburant + Chauffeur roulant
             let cTrans = (dist * cK) + ((driveTime / 60) * cH);
+            // Coût Manutention : Temps passé à l'arrêt
             let cOps = (totalOps / 60) * cH;
+            
             let total = cTrans + cOps;
             let val = stops.reduce((a, b) => a + b.euro, 0);
 
             document.getElementById('rDist').innerText = dist.toFixed(1) + " km";
-            document.getElementById('rTime').innerText = Math.floor(driveTime/60) + "h" + Math.round(driveTime%60);
-            document.getElementById('rOps').innerText = Math.floor(totalOps/60) + "h" + Math.round(totalOps%60);
+            document.getElementById('rTime').innerText = Math.floor(driveTime/60) + "h" + Math.round(driveTime%60).toString().padStart(2,'0');
+            document.getElementById('rOps').innerText = Math.floor(totalOps/60) + "h" + Math.round(totalOps%60).toString().padStart(2,'0');
             document.getElementById('rCostTrans').innerText = cTrans.toFixed(1) + " €";
             document.getElementById('rCostOps').innerText = cOps.toFixed(1) + " €";
             document.getElementById('rTotal').innerText = total.toFixed(0) + " €";
@@ -245,8 +267,8 @@
         }
 
         function sendData() {
-            alert("Envoi simulé : Tournée enregistrée !");
-            stops = []; updateView();
+            alert("✅ Données prêtes pour l'enregistrement !");
+            // Ici, votre fonction fetch vers le serveur habituel
         }
     </script>
 </body>
