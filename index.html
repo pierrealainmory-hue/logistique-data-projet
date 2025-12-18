@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logistique Producteur - V12</title>
+    <title>Logistique Producteur - V13</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
     
@@ -19,7 +19,6 @@
         
         .btn-reset { background: #c0392b; color: white; padding: 8px 15px; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; float: right; margin-bottom: 10px; }
 
-        /* PANELS */
         .header-box { background: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; border-left: 8px solid #95a5a6; box-shadow: 0 4px 6px rgba(0,0,0,0.05); clear: both; }
         .header-box.active-zone { border-left-color: var(--accent); background: #fffbf0; }
         .header-box.saved { border-left-color: var(--success); }
@@ -27,8 +26,7 @@
         .add-stop-box { background: white; padding: 25px; border-radius: 12px; border-top: 8px solid #1abc9c; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .add-stop-box.active-zone { border-top-color: var(--accent); background: #fffbf0; }
 
-        /* FORMULAIRE */
-        .grid-header { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; }
+        .grid-header { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
         .form-group label { display: block; font-weight: 700; color: #7f8c8d; margin-bottom: 5px; font-size: 0.85rem; }
         .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #bdc3c7; border-radius: 6px; box-sizing: border-box; }
         
@@ -38,11 +36,9 @@
         .btn-target { background: #95a5a6; min-width: 80px; }
         .btn-target.active { background: var(--accent); }
 
-        /* FEEDBACKS */
         .coords-ok { color: var(--success); font-weight: bold; font-size: 12px; margin-top: 5px; display: none; }
         .input-valid { border-color: var(--success) !important; background-color: #f0fff4 !important; }
 
-        /* LISTE ARRETS */
         #stops-list { list-style: none; padding: 0; margin: 0; }
         .stop-item { 
             background: white; padding: 15px; margin-bottom: 12px; border-radius: 8px; 
@@ -53,7 +49,6 @@
         .stop-item.type-collecte { border-left-color: #9b59b6; }
         .stop-item.type-point-relais { border-left-color: #f39c12; }
 
-        /* SYNTHESE DESIGN */
         .results-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
         .res-card { background: var(--primary); color: white; padding: 15px; border-radius: 10px; text-align: center; }
         .res-card b { font-size: 1.3rem; display: block; margin-top: 5px; }
@@ -63,7 +58,6 @@
         .total-card b { font-size: 2rem; display: block; }
         .ratio-box { grid-column: span 2; background: var(--accent); padding: 15px; border-radius: 10px; text-align: center; }
 
-        /* MAP */
         #map { height: 600px; width: 100%; border-radius: 12px; border: 1px solid #ccc; background: #e5e5e5; }
         .crosshair-cursor { cursor: crosshair !important; }
 
@@ -71,320 +65,4 @@
         .left-panel { flex: 1; min-width: 450px; }
         .right-panel { flex: 1.5; min-width: 450px; }
 
-        .btn-add { background: #2980b9; color: white; width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; margin-top: 15px; cursor: pointer; }
-        .btn-save { background: var(--success); color: white; width: 100%; padding: 18px; border: none; border-radius: 10px; font-weight: bold; margin-top: 15px; cursor: pointer; }
-    </style>
-</head>
-<body>
-
-    <button class="btn-reset" onclick="hardReset()">🧹 Réinitialiser</button>
-    <h1 style="color: var(--primary);">🚚 Simulateur de Tournées Locales</h1>
-
-    <div class="header-box" id="box-prod" onclick="setMapTarget('prod')">
-        <h3 style="margin-top:0;">🏭 Informations Producteur</h3>
-        <div class="grid-header" onchange="updateProdGlobal()">
-            <div class="form-group">
-                <label>Producteur / Ferme</label>
-                <input type="text" id="prodName" placeholder="Ex: Ferme des Oliviers">
-            </div>
-            <div class="form-group">
-                <label>Jour de Tournée</label>
-                <select id="prodDay">
-                    <option>Lundi</option><option>Mardi</option><option>Mercredi</option>
-                    <option>Jeudi</option><option>Vendredi</option><option>Samedi</option>
-                </select>
-            </div>
-            <div class="form-group" style="grid-column: span 2;">
-                <label>📍 Adresse de Départ (Dépôt)</label>
-                <div class="search-bar">
-                    <input type="text" id="prodAddress" placeholder="Ciblez sur la carte..." onfocus="setMapTarget('prod')">
-                    <button type="button" class="btn-mini btn-search" onclick="geocodeInput('prod')">🔍</button>
-                    <button type="button" class="btn-mini btn-target" id="btn-target-prod">🎯 CIBLER</button>
-                </div>
-                <div id="feedback-prod" class="coords-ok">✅ Coordonnées OK</div>
-            </div>
-
-            <div class="form-group"><label>Main d'Oeuvre (€/h)</label><input type="number" id="costHour" value="15"></div>
-            <div class="form-group"><label>Coût Km (€/km)</label><input type="number" id="costKm" value="0.5" step="0.1"></div>
-            <div class="form-group">
-                <label>Véhicule</label>
-                <select id="vehicleType">
-                    <option value="<3m3">Petit (<3m³)</option>
-                    <option value="3-6m3">Moyen (3-6m³)</option>
-                    <option value="6-12m3">Grand (6-12m³)</option>
-                    <option value="12-20m3">Châssis (12-20m³)</option>
-                    <option value="PL">Poids Lourd</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Énergie</label>
-                <select id="fuelType">
-                    <option>Diesel</option><option>Essence</option><option>Électrique</option>
-                    <option>GNV / Bio-méthane</option><option>Hydrogène</option>
-                </select>
-            </div>
-        </div>
-    </div>
-
-    <div class="main-container">
-        <div class="left-panel">
-            <div class="add-stop-box" id="box-stop" onclick="setMapTarget('stop')">
-                <h3 style="margin-top:0;">📍 Nouvel Arrêt</h3>
-                <div class="form-group">
-                    <label>Localisation</label>
-                    <div class="search-bar">
-                        <input type="text" id="stopAddress" placeholder="Cliquez sur la carte..." onfocus="setMapTarget('stop')">
-                        <button type="button" class="btn-mini btn-search" onclick="geocodeInput('stop')">🔍</button>
-                        <button type="button" class="btn-mini btn-target" id="btn-target-stop">🎯 CIBLE</button>
-                    </div>
-                    <div id="feedback-stop" class="coords-ok">✅ Coordonnées OK</div>
-                </div>
-                
-                <div class="grid-header" style="margin-top:10px;">
-                    <div class="form-group">
-                        <label>Opération</label>
-                        <select id="stopType">
-                            <option value="Livraison">📦 Livraison Client</option>
-                            <option value="Point Relais">🏬 Point Relais</option>
-                            <option value="Collecte">🚜 Collecte</option>
-                        </select>
-                    </div>
-                    <div class="form-group"><label>Client / Lieu</label><input type="text" id="stopClient"></div>
-                    <div class="form-group"><label>Valeur (€)</label><input type="number" id="stopEuro" value="0"></div>
-                    <div class="form-group"><label>Poids (kg)</label><input type="number" id="stopWeight" value="0"></div>
-                </div>
-                <button type="button" class="btn-add" onclick="addStop()">➕ Ajouter cet arrêt</button>
-            </div>
-            
-            <ul id="stops-list"></ul>
-            <button class="btn-save" id="finalBtn" onclick="sendTournee()" disabled>🚀 ENREGISTRER LA TOURNÉE</button>
-        </div>
-
-        <div class="right-panel">
-            <div id="map"></div>
-            <div class="results-grid">
-                <div class="res-card"><span>🛣️ Distance</span><b id="syn-dist">0 km</b></div>
-                <div class="res-card"><span>⏱️ Route</span><b id="syn-time">0h00</b></div>
-                <div class="res-card"><span>⚙️ Service</span><b id="syn-ops">0h00</b></div>
-                <div class="res-card"><span>💶 Main d'Oeuvre</span><b id="syn-cost-mo">0 €</b></div>
-                <div class="total-card"><span style="color:#ffcccc;">COÛT LOGISTIQUE GLOBAL</span><b id="syn-cost-total">0 €</b></div>
-                <div class="ratio-box">
-                    <span>Indice de Rentabilité (Coût/Valeur)</span><b id="syn-ratio" style="font-size:2rem; display:block;">0 %</b>
-                    <span id="syn-rev-display">Valeur totale : 0 €</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-    <script>
-        const API_URL = "https://update-github-csv-149052175314.europe-west1.run.app/"; 
-        let map, markersLayer, routeLayer;
-        let stops = [];
-        let activeTarget = 'stop';
-        let PROD_DATA = { lat: null, lon: null, name: "", address: "" };
-        let STOP_TEMP = { lat: null, lon: null, address: "" };
-        let tempMarker = null;
-
-        // INIT
-        try {
-            map = L.map('map').setView([46.60, 1.88], 6);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: 'OSM' }).addTo(map);
-            markersLayer = L.layerGroup().addTo(map);
-            routeLayer = L.layerGroup().addTo(map);
-            map.on('click', onMapClick);
-            loadProdData();
-            setMapTarget('stop');
-        } catch(e) { console.error(e); }
-
-        function hardReset() { localStorage.removeItem('prod_v12'); location.reload(); }
-
-        function setMapTarget(t) {
-            activeTarget = t;
-            document.getElementById('btn-target-prod').classList.toggle('active', t==='prod');
-            document.getElementById('btn-target-stop').classList.toggle('active', t==='stop');
-            document.getElementById('box-prod').classList.toggle('active-zone', t==='prod');
-            document.getElementById('box-stop').classList.toggle('active-zone', t==='stop');
-            document.getElementById('map').classList.add('crosshair-cursor');
-        }
-
-        function onMapClick(e) {
-            if(tempMarker) map.removeLayer(tempMarker);
-            let icon = activeTarget === 'prod' ? '🏭' : '📍';
-            tempMarker = L.marker(e.latlng).addTo(map).bindPopup(icon).openPopup();
-
-            let prefix = activeTarget === 'prod' ? 'prod' : 'stop';
-            let input = document.getElementById(prefix+'Address');
-            input.value = `📍 ${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}`;
-            input.classList.add('input-valid');
-            document.getElementById('feedback-'+prefix).style.display = 'block';
-
-            if(activeTarget === 'prod') { PROD_DATA.lat = e.latlng.lat; PROD_DATA.lon = e.latlng.lng; refreshMap(); }
-            else { STOP_TEMP.lat = e.latlng.lat; STOP_TEMP.lon = e.latlng.lng; }
-
-            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lng}`)
-            .then(r => r.json()).then(data => {
-                let addr = data.display_name || input.value;
-                input.value = addr;
-                if(activeTarget === 'prod') { PROD_DATA.address = addr; saveProdData(); }
-                else { STOP_TEMP.address = addr; }
-            });
-        }
-
-        function geocodeInput(target) {
-            setMapTarget(target);
-            let q = document.getElementById((target==='prod'?'prod':'stop')+'Address').value;
-            if(q.length < 3) return;
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}`)
-            .then(r => r.json()).then(d => {
-                if(d.length > 0) {
-                    onMapClick({latlng: {lat: parseFloat(d[0].lat), lng: parseFloat(d[0].lon)}});
-                    map.setView([d[0].lat, d[0].lon], 15);
-                }
-            });
-        }
-
-        function addStop() {
-            if(!PROD_DATA.lat) { alert("Défisissez le Producteur !"); return; }
-            if(!STOP_TEMP.lat) { alert("Pointez l'arrêt !"); return; }
-            let client = document.getElementById('stopClient').value;
-            if(!client) { alert("Nom manquant !"); return; }
-            
-            let type = document.getElementById('stopType').value;
-            let icon = type === "Livraison" ? "📦" : (type === "Point Relais" ? "🏬" : "🚜");
-
-            stops.push({
-                client: client, type: type, icon: icon,
-                poids: parseFloat(document.getElementById('stopWeight').value)||0,
-                montant: parseFloat(document.getElementById('stopEuro').value)||0,
-                time: 15, lat: STOP_TEMP.lat, lon: STOP_TEMP.lon,
-                addr: document.getElementById('stopAddress').value
-            });
-            
-            STOP_TEMP = { lat: null, lon: null, address: "" };
-            document.getElementById('stopClient').value = '';
-            document.getElementById('stopAddress').value = '';
-            document.getElementById('stopAddress').classList.remove('input-valid');
-            document.getElementById('feedback-stop').style.display = 'none';
-            if(tempMarker) map.removeLayer(tempMarker);
-            refreshMap();
-        }
-
-        function refreshMap() {
-            markersLayer.clearLayers();
-            routeLayer.clearLayers();
-            let ul = document.getElementById('stops-list');
-            ul.innerHTML = "";
-
-            if(PROD_DATA.lat) {
-                L.marker([PROD_DATA.lat, PROD_DATA.lon], {
-                    icon: L.divIcon({html: '<div style="font-size:32px;">🏠</div>', className: ''})
-                }).addTo(markersLayer);
-            }
-
-            stops.forEach((s, i) => {
-                let color = s.type === 'Livraison' ? '#3498db' : (s.type === 'Point Relais' ? '#f39c12' : '#9b59b6');
-                ul.innerHTML += `<li class="stop-item" style="border-left-color:${color}">
-                    <div><b>${i+1}. ${s.icon} ${s.client}</b> <br>
-                    <small style="color:#7f8c8d;">${s.poids}kg • ${s.montant}€</small></div>
-                    <button type="button" onclick="stops.splice(${i},1); refreshMap()" style="color:#e74c3c;border:none;background:none;cursor:pointer;font-size:1.5em;">✕</button>
-                </li>`;
-                L.circleMarker([s.lat, s.lon], {radius:9, color:color, fillColor:color, fillOpacity:1}).addTo(markersLayer);
-            });
-
-            if(PROD_DATA.lat && stops.length > 0) calculateRoute();
-            else updateTotals(0, 0);
-            document.getElementById('finalBtn').disabled = stops.length === 0;
-        }
-
-        function calculateRoute() {
-            let coords = [[PROD_DATA.lon, PROD_DATA.lat]];
-            stops.forEach(s => coords.push([s.lon, s.lat]));
-            coords.push([PROD_DATA.lon, PROD_DATA.lat]);
-            
-            let rawDist = 0;
-            let linePoints = [[PROD_DATA.lat, PROD_DATA.lon]];
-            for(let i=0; i<coords.length-1; i++) {
-                rawDist += getDist(coords[i][1], coords[i][0], coords[i+1][1], coords[i+1][0]);
-                linePoints.push([coords[i+1][1], coords[i+1][0]]);
-            }
-            
-            let estDist = rawDist * 1.3;
-            let estTime = (estDist / 50) * 60;
-            updateTotals(estDist, estTime);
-            L.polyline(linePoints, {color:'red', dashArray:'5,5'}).addTo(routeLayer);
-            map.fitBounds(L.polyline(linePoints).getBounds().pad(0.1));
-
-            fetch(`https://router.project-osrm.org/route/v1/driving/${coords.map(c => c.join(',')).join(';')}?overview=full&geometries=geojson`)
-            .then(r => r.json()).then(res => {
-                if(res.code === 'Ok') {
-                    routeLayer.clearLayers();
-                    L.polyline(res.routes[0].geometry.coordinates.map(c => [c[1], c[0]]), {color:'#2c3e50', weight:5}).addTo(routeLayer);
-                    updateTotals(res.routes[0].distance/1000, res.routes[0].duration/60);
-                }
-            });
-        }
-
-        function updateTotals(dist, driveTime) {
-            let opsTime = 45 + stops.reduce((a, b) => a + b.time, 0);
-            let cH = parseFloat(document.getElementById('costHour').value)||15;
-            let cK = parseFloat(document.getElementById('costKm').value)||0.5;
-            let cMO = ((driveTime + opsTime)/60) * cH;
-            let cost = (dist * cK) + cMO;
-            let rev = stops.reduce((acc, s) => acc + s.montant, 0);
-
-            document.getElementById('syn-dist').innerText = dist.toFixed(1) + " km";
-            document.getElementById('syn-time').innerText = formatTime(driveTime);
-            document.getElementById('syn-ops').innerText = formatTime(opsTime);
-            document.getElementById('syn-cost-mo').innerText = cMO.toFixed(1) + " €";
-            document.getElementById('syn-cost-total').innerText = cost.toFixed(0) + " €";
-            document.getElementById('syn-ratio').innerText = rev > 0 ? (cost/rev*100).toFixed(1) + " %" : "0 %";
-            document.getElementById('syn-rev-display').innerText = `Valeur totale : ${rev} €`;
-        }
-
-        function formatTime(min) { return Math.floor(min/60) + "h" + (Math.round(min%60)).toString().padStart(2,'0'); }
-        function getDist(lat1, lon1, lat2, lon2) {
-            var R = 6371; var dLat = (lat2-lat1)*Math.PI/180; var dLon = (lon2-lon1)*Math.PI/180;
-            var a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        }
-
-        function updateProdGlobal() { PROD_DATA.name = document.getElementById('prodName').value; saveProdData(); }
-        function saveProdData() { localStorage.setItem('prod_v12', JSON.stringify(PROD_DATA)); if(PROD_DATA.lat) document.getElementById('box-prod').classList.add('saved'); }
-        function loadProdData() {
-            let s = localStorage.getItem('prod_v12');
-            if(s) {
-                let d = JSON.parse(s);
-                if(d.lat) {
-                    PROD_DATA = d;
-                    document.getElementById('prodName').value = d.name || "";
-                    document.getElementById('prodAddress').value = d.address || "";
-                    document.getElementById('box-prod').classList.add('saved');
-                    refreshMap();
-                }
-            }
-        }
-
-        function sendTournee() {
-            let btn = document.getElementById('finalBtn');
-            btn.disabled = true; btn.innerText = "Envoi...";
-            let p = {
-                general: { 
-                    Producteur: document.getElementById('prodName').value,
-                    Jour: document.getElementById('prodDay').value,
-                    AdresseProd: PROD_DATA.address, LatProd: PROD_DATA.lat, LonProd: PROD_DATA.lon,
-                    CoutHoraire: parseFloat(document.getElementById('costHour').value),
-                    CoutKm: parseFloat(document.getElementById('costKm').value),
-                    Vehicule: document.getElementById('vehicleType').value
-                },
-                stops: stops
-            };
-            fetch(API_URL, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(p)})
-            .then(r => r.json()).then(d => {
-                if(d.success) { alert("✅ Tournée enregistrée !"); stops = []; refreshMap(); }
-                btn.disabled = false; btn.innerText = "🚀 ENREGISTRER LA TOURNÉE";
-            }).catch(() => { alert("Erreur réseau"); btn.disabled = false; });
-        }
-    </script>
-</body>
-</html>
+        .btn-add { background: #2980b9;
