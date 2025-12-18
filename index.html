@@ -11,14 +11,12 @@
     <style>
         body { font-family: 'Segoe UI', sans-serif; max-width: 1400px; margin: 0 auto; padding: 15px; background: #eaeff2; color: #333; font-size: 14px; }
         
-        /* HEADER PRODUCTEUR */
-        .header-box { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-left: 6px solid #95a5a6; transition: all 0.3s; }
+        /* HEADER */
+        .header-box { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-left: 6px solid #95a5a6; }
         .header-box.saved { border-left-color: #27ae60; background: #f0fdf4; }
-        
         .header-title { font-size: 1.5em; color: #2c3e50; margin-bottom: 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-        
-        #memory-badge { font-size: 0.6em; font-weight: normal; background: #ecf0f1; padding: 5px 12px; border-radius: 15px; color: #7f8c8d; transition: all 0.3s; }
-        .header-box.saved #memory-badge { background: #27ae60; color: white; content: "Données Mémorisées ✅"; }
+        #memory-badge { font-size: 0.6em; background: #ecf0f1; padding: 5px 12px; border-radius: 15px; color: #7f8c8d; }
+        .header-box.saved #memory-badge { background: #27ae60; color: white; }
 
         .grid-header { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
         .form-group label { display: block; font-weight: 700; color: #7f8c8d; margin-bottom: 5px; font-size: 0.9em; }
@@ -29,34 +27,40 @@
         .main-container { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
         .left-panel { flex: 1; min-width: 400px; }
         .right-panel { flex: 1.5; min-width: 400px; display: flex; flex-direction: column; }
-        
         .add-stop-box { background: white; padding: 20px; border-radius: 8px; border-top: 5px solid #1abc9c; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        
-        /* SEARCH & BUTTONS */
-        .search-bar { display: flex; gap: 5px; margin-bottom: 5px; }
-        .btn-mini { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; font-size: 0.9em; white-space: nowrap; }
-        .btn-search { background: #8e44ad; }
-        .btn-target { background: #95a5a6; color: white; opacity: 0.6; transition: all 0.3s; }
-        .btn-target.active { background: #e74c3c; opacity: 1; transform: scale(1.05); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .btn-gps { background: #e67e22; }
 
-        /* LISTE ARRETS */
+        /* LISTE ARRETS CORRIGEE */
         #stops-list { list-style: none; padding: 0; margin: 0; max-height: 500px; overflow-y: auto; }
-        .stop-item { background: white; padding: 12px; margin-bottom: 10px; border-radius: 4px; display: flex; align-items: center; justify-content: space-between; border-left: 5px solid #bdc3c7; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .stop-item { 
+            background: white; 
+            padding: 15px; /* Plus d'espace */
+            margin-bottom: 12px; /* Séparation nette */
+            border-radius: 6px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            border-left: 5px solid #bdc3c7; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Ombre pour détacher */
+        }
         .stop-item.type-livraison { border-left-color: #3498db; }
         .stop-item.type-point-relais { border-left-color: #f39c12; }
         .stop-item.type-collecte { border-left-color: #9b59b6; }
 
-        /* MAP */
-        #map { height: 600px; width: 100%; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 20px; cursor: crosshair; }
+        /* BUTTONS & SEARCH */
+        .search-bar { display: flex; gap: 5px; margin-bottom: 5px; }
+        .btn-mini { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; }
+        .btn-search { background: #8e44ad; }
+        .btn-target { background: #95a5a6; opacity: 0.6; }
+        .btn-target.active { background: #e74c3c; opacity: 1; transform: scale(1.05); }
+        .btn-gps { background: #e67e22; }
+
+        #map { height: 600px; width: 100%; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 20px; }
 
         /* SYNTHESE */
         .synthesis-box { background: #2c3e50; color: white; padding: 20px; border-radius: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .stat-group h4 { margin: 0 0 10px 0; border-bottom: 1px solid #7f8c8d; padding-bottom: 5px; font-size: 0.9em; color: #bdc3c7; }
-        .stat-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.95em; }
-        
+        .stat-group h4 { margin: 0 0 10px 0; border-bottom: 1px solid #7f8c8d; padding-bottom: 5px; color: #bdc3c7; }
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
         .total-cost-row { grid-column: span 2; background: #34495e; padding: 15px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 1.2em; border-left: 5px solid #e74c3c; margin-top: 5px; }
-        
         .ratio-box { grid-column: span 2; background: #e67e22; padding: 10px; border-radius: 6px; text-align: center; margin-top: 5px; }
         .ratio-box b { font-size: 1.4em; display: block; }
 
@@ -64,7 +68,6 @@
         .btn-save { background: #27ae60; color: white; width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.3em; margin-top: 10px; }
         .btn-save:disabled { background: #95a5a6; cursor: not-allowed; }
         .coords-feedback { font-size: 0.8em; color: #27ae60; font-weight: bold; display: none; margin-top: 4px; }
-        .warning-text { color: #e74c3c; font-size: 0.8em; margin-top: 2px; display: none; }
     </style>
 </head>
 <body>
@@ -72,7 +75,7 @@
     <div class="header-box" id="header-box">
         <div class="header-title">
             <span>📝 Décrire une Tournée (Producteur)</span>
-            <span id="memory-badge">Données en attente...</span>
+            <span id="memory-badge">En attente...</span>
         </div>
         
         <div class="grid-header" onchange="saveProdData()">
@@ -93,7 +96,6 @@
                     <button class="btn-mini btn-gps" onclick="geolocate('prod')">📍 GPS</button>
                 </div>
                 <div id="feedback-prod" class="coords-feedback">✅ Coordonnées OK</div>
-                <div id="warn-prod" class="warning-text">⚠️ Veuillez valider l'adresse (🔍)</div>
                 <input type="hidden" id="prodLat"><input type="hidden" id="prodLon">
             </div>
 
@@ -112,21 +114,14 @@
                     <option value=">20m3">Plus de 20m³ (Camion)</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label>Carburant</label>
-                <select id="fuelType">
-                    <option value="Diesel">Diesel</option><option value="Essence">Essence</option><option value="Electrique">Électrique</option>
-                </select>
-            </div>
+            <div class="form-group"><label>Carburant</label><select id="fuelType"><option value="Diesel">Diesel</option><option value="Essence">Essence</option><option value="Electrique">Électrique</option></select></div>
         </div>
     </div>
 
     <div class="main-container">
-        
         <div class="left-panel">
             <div class="add-stop-box" onclick="setMapTarget('stop')">
                 <h3>➕ Ajouter un Point d'Arrêt</h3>
-
                 <div class="form-group">
                     <label>Localisation</label>
                     <div class="search-bar">
@@ -137,40 +132,33 @@
                     <div id="feedback-stop" class="coords-feedback">✅ Coordonnées récupérées</div>
                     <input type="hidden" id="stopLat"><input type="hidden" id="stopLon">
                 </div>
-
                 <div class="form-group">
                     <label>Type d'opération</label>
                     <select id="stopType" style="background:#f0f8ff; font-weight:bold;">
                         <option value="Livraison">📦 Livraison Client</option>
-                        <option value="Point Relais">🏬 Livraison Point Relais</option>
+                        <option value="Point Relais">🏬 Point Relais</option>
                         <option value="Collecte">🚜 Collecte Producteur</option>
                     </select>
                 </div>
-
                 <div class="form-group"><label>Nom (Client/Lieu)</label><input type="text" id="stopClient" placeholder="Ex: Resto le Gourmet"></div>
-                
                 <div style="display:flex; gap:10px;">
                     <div class="form-group"><label>Poids approx. (kg)</label><input type="number" id="stopWeight" placeholder="Ex: 50"></div>
                     <div class="form-group"><label>Montant approx. (€)</label><input type="number" id="stopEuro" placeholder="Ex: 120"></div>
                 </div>
                 <div class="form-group"><label>Temps d'arrêt sur place (min)</label><input type="number" id="stopTime" value="15"></div>
-
                 <button class="btn-add" onclick="addStop()">Valider cet arrêt</button>
-                <p id="error-msg" style="color:red; display:none; text-align:center; margin-top:5px; font-weight:bold;">⚠️ Adresse, Nom ou Poids manquant !</p>
+                <p id="error-msg" style="color:red; display:none; text-align:center; font-weight:bold; margin-top:5px;">⚠️ Erreur : Localisation ou Nom manquant !</p>
             </div>
 
             <div style="background:white; padding:10px; border-radius:8px;">
                 <h4 style="margin:0 0 10px 0;">📋 Liste des arrêts</h4>
                 <ul id="stops-list"></ul>
             </div>
-            
             <button class="btn-save" id="finalBtn" onclick="sendTournee()" disabled>🚀 ENREGISTRER LA TOURNÉE</button>
-            <div id="status-msg" style="text-align:center; margin-top:10px; font-weight:bold;"></div>
         </div>
 
         <div class="right-panel">
             <div id="map"></div>
-            
             <div class="synthesis-box">
                 <div class="stat-group">
                     <h4>🚚 TRANSPORT</h4>
@@ -178,21 +166,16 @@
                     <div class="stat-row"><span>Temps Conduite</span><b id="syn-time-drive">0h00</b></div>
                     <div class="stat-row"><span>Coût Km</span><b id="syn-cost-trans">0 €</b></div>
                 </div>
-                
                 <div class="stat-group">
                     <h4>⏱️ OPÉRATIONS</h4>
                     <div class="stat-row"><span>Tps Service (Prépa+Arrêts)</span><b id="syn-time-ops">0h00</b></div>
                     <div class="stat-row"><span>Coût Main d'Oeuvre</span><b id="syn-cost-mo">0 €</b></div>
                 </div>
-                
                 <div class="total-cost-row">
-                    <span>COÛT TOTAL LOGISTIQUE</span>
-                    <b id="syn-cost-total">0 €</b>
+                    <span>COÛT TOTAL LOGISTIQUE</span><b id="syn-cost-total">0 €</b>
                 </div>
-                
                 <div class="ratio-box">
-                    <span>Ratio Coût / Valeur Marchandise</span>
-                    <b id="syn-ratio">0 %</b>
+                    <span>Ratio Coût / Valeur Marchandise</span><b id="syn-ratio">0 %</b>
                     <span style="font-size:0.8em; font-weight:normal;" id="syn-rev-display">(Valeur: 0€)</span>
                 </div>
             </div>
@@ -203,17 +186,17 @@
     const API_URL = "https://update-github-csv-149052175314.europe-west1.run.app/"; 
 
     let stops = [];
-    let prodMarker = null;
     let mapMarkers = []; 
     let routeLayer = null;
+    let fallbackLayer = null; // Pour le mode vol d'oiseau
     let tempMarker = null;
+    let prodMarker = null;
     let activeTarget = 'stop'; 
     
-    // Initialisation Carte
     var map = L.map('map').setView([46.60, 1.88], 6);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: 'OSM' }).addTo(map);
 
-    // --- 1. MEMOIRE & CHARGEMENT ---
+    // --- MEMOIRE PRODUCTEUR ---
     window.onload = function() { loadProdData(); };
 
     function saveProdData() {
@@ -231,10 +214,11 @@
         };
         localStorage.setItem('logistique_prod_data', JSON.stringify(data));
         checkHeaderStatus();
+        
+        // Si on a des coordonnées, on les affiche
         if(data.lat && data.lon) {
             placeProdMarker(data.lat, data.lon);
-            // Recalculer si des arrêts existent
-            if(stops.length > 0) calculateRoute();
+            if(stops.length > 0) calculateRoute(); // Recalcul immédiat
         }
     }
 
@@ -250,8 +234,6 @@
             document.getElementById('loadTime').value = data.load || 30;
             document.getElementById('costHour').value = data.ch || 15;
             document.getElementById('costKm').value = data.ck || 0.5;
-            document.getElementById('vehicleType').value = data.veh || "<3m3";
-            document.getElementById('fuelType').value = data.fuel || "Diesel";
             
             checkHeaderStatus();
             if(data.lat && data.lon) {
@@ -273,11 +255,11 @@
             badge.innerText = "Données Mémorisées ✅";
         } else {
             header.classList.remove('saved');
-            badge.innerText = "Données en attente... (Validez le Départ)";
+            badge.innerText = "Données en attente...";
         }
     }
 
-    // --- 2. CIBLAGE ---
+    // --- CARTE & CIBLE ---
     function setMapTarget(target) {
         activeTarget = target;
         document.getElementById('btn-target-prod').classList.remove('active');
@@ -285,11 +267,10 @@
         document.getElementById('btn-target-' + target).classList.add('active');
     }
 
-    // --- 3. CARTE & MARKERS ---
     function placeProdMarker(lat, lon) {
         if(prodMarker) map.removeLayer(prodMarker);
         prodMarker = L.marker([lat, lon], {
-            icon: L.divIcon({html: '<div style="font-size:30px;">🏭</div>', className: ''})
+            icon: L.divIcon({html: '<div style="font-size:32px;">🏭</div>', className: ''})
         }).addTo(map);
     }
 
@@ -298,14 +279,14 @@
         
         let iconChar = activeTarget === 'prod' ? '🏭' : '📍';
         tempMarker = L.marker(e.latlng, {
-            icon: L.divIcon({html: `<div style="font-size:30px; opacity:0.6;">${iconChar}</div>`, className: ''})
+            icon: L.divIcon({html: `<div style="font-size:32px; opacity:0.6;">${iconChar}</div>`, className: ''})
         }).addTo(map);
         
         let inputId = activeTarget === 'prod' ? 'prodAddress' : 'stopAddress';
         let feedbackId = activeTarget === 'prod' ? 'feedback-prod' : 'feedback-stop';
         let latId = activeTarget === 'prod' ? 'prodLat' : 'stopLat';
         let lonId = activeTarget === 'prod' ? 'prodLon' : 'stopLon';
-        
+
         document.getElementById(inputId).value = "⏳ Recherche...";
         
         fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lon}`)
@@ -318,13 +299,9 @@
             
             document.getElementById(inputId).classList.add('input-valid');
             document.getElementById(feedbackId).style.display = 'block';
-            if(activeTarget === 'prod') document.getElementById('warn-prod').style.display='none';
             
             if(activeTarget === 'prod') {
-                saveProdData();
-                placeProdMarker(e.latlng.lat, e.latlng.lon);
-                // Si arrêts existants, recalculer
-                if(stops.length > 0) calculateRoute();
+                saveProdData(); // Sauvegarde et update marker
             }
         });
     });
@@ -346,19 +323,17 @@
     
     function geolocate(target) {
         setMapTarget(target);
-        if(!navigator.geolocation) return;
         navigator.geolocation.getCurrentPosition(p => {
             map.fireEvent('click', {latlng: {lat:p.coords.latitude, lng:p.coords.longitude}});
             map.setView([p.coords.latitude, p.coords.longitude], 16);
         });
     }
 
-    // --- 4. LISTE STOPS ---
+    // --- GESTION DES STOPS ---
     function addStop() {
         let pLat = document.getElementById('prodLat').value;
         if(!pLat) {
-            document.getElementById('warn-prod').style.display='block';
-            alert("⚠️ Veuillez d'abord valider (🔍) l'adresse de départ du Producteur !");
+            alert("⚠️ D'abord, validez le Producteur (Départ) !");
             return;
         }
 
@@ -398,9 +373,12 @@
         let ul = document.getElementById('stops-list');
         ul.innerHTML = "";
         
+        // Nettoyage markers Arrets (on garde prodMarker)
         mapMarkers.forEach(m => map.removeLayer(m));
         mapMarkers = [];
-        
+        if(routeLayer) map.removeLayer(routeLayer);
+        if(fallbackLayer) map.removeLayer(fallbackLayer);
+
         stops.forEach((s, i) => {
             let li = document.createElement('li');
             let cls = 'stop-item';
@@ -411,15 +389,16 @@
             li.className = cls;
             li.innerHTML = `
                 <div style="width:100%">
-                    <strong>${i+1}. ${s.client}</strong> (${s.type})<br>
-                    <span style="color:#7f8c8d; font-size:0.9em;">~${s.poids}kg | ~${s.montant}€ | ${s.temps_arret}min</span>
+                    <strong>${i+1}. ${s.client}</strong> <span style="font-size:0.8em; color:#7f8c8d;">(${s.type})</span><br>
+                    <span style="color:#555; font-size:0.9em;">~${s.poids}kg | ~${s.montant}€ | ${s.temps_arret}min</span>
                 </div>
-                <button onclick="removeStop(${i})" style="color:red; border:none; background:none; cursor:pointer; font-weight:bold; font-size:1.2em;">✕</button>
+                <button onclick="removeStop(${i})" style="color:red; border:none; background:none; cursor:pointer; font-size:1.5em;">✕</button>
             `;
             ul.appendChild(li);
             
+            // Marker
             let color = s.type === 'Livraison' ? '#3498db' : (s.type === 'Point Relais' ? '#f39c12' : '#9b59b6');
-            let m = L.circleMarker([s.lat, s.lon], {radius: 8, fillColor: color, color: '#fff', weight: 1, fillOpacity: 1})
+            let m = L.circleMarker([s.lat, s.lon], {radius: 8, fillColor: color, color: '#fff', weight: 2, fillOpacity: 1})
                      .bindPopup(`<b>${i+1}</b> ${s.client}`);
             m.addTo(map);
             mapMarkers.push(m);
@@ -434,19 +413,19 @@
         refreshUI();
     }
 
-    // --- 5. CALCUL ROUTE ET SYNTHESE ---
+    // --- CALCULS ROUTE (OSRM + Fallback) ---
     async function calculateRoute() {
         let pLat = document.getElementById('prodLat').value;
         let pLon = document.getElementById('prodLon').value;
         
+        // Toujours afficher le marker producteur
         if(pLat && !prodMarker) placeProdMarker(pLat, pLon);
         
         if(!pLat || stops.length === 0) { 
-            if(routeLayer) map.removeLayer(routeLayer);
-            updateStats(0, 0); // Reset à 0 si vide
-            return; 
+            updateStats(0, 0); return; 
         }
 
+        // Construction URL OSRM
         let coords = [`${pLon},${pLat}`];
         stops.forEach(s => coords.push(`${s.lon},${s.lat}`));
         coords.push(`${pLon},${pLat}`);
@@ -455,24 +434,61 @@
         
         try {
             let res = await fetch(url).then(r=>r.json());
-            if(res.routes && res.routes.length > 0) {
+            
+            if(res.code === "Ok" && res.routes && res.routes.length > 0) {
+                // SUCCES OSRM
                 let r = res.routes[0];
-                if(routeLayer) map.removeLayer(routeLayer);
                 let latlngs = r.geometry.coordinates.map(c => [c[1],c[0]]);
-                routeLayer = L.polyline(latlngs, {color:'#2c3e50', weight:5, opacity:0.7}).addTo(map);
+                routeLayer = L.polyline(latlngs, {color:'#2c3e50', weight:5, opacity:0.8}).addTo(map);
                 map.fitBounds(routeLayer.getBounds().pad(0.1));
-
-                // Mettre à jour avec valeurs réelles
+                
                 updateStats(r.distance / 1000, r.duration / 60);
             } else {
-                // Fallback si route non trouvée
-                updateStats(0, 0);
+                // ECHEC OSRM -> FALLBACK
+                throw new Error("Route non trouvée");
             }
         } catch(e) { 
-            console.error("Erreur Route", e); 
-            updateStats(0, 0);
+            console.log("Mode Secours (Vol d'oiseau)", e);
+            calculateFallback(coords);
         }
     }
+
+    // Calcul Vol d'oiseau (Secours)
+    function calculateFallback(coords) {
+        let distKm = 0;
+        let points = [];
+        
+        // Extraction lat/lon depuis le tableau de strings de OSRM
+        let latlons = coords.map(c => {
+            let parts = c.split(',');
+            return {lon: parseFloat(parts[0]), lat: parseFloat(parts[1])};
+        });
+
+        for(let i=0; i<latlons.length-1; i++) {
+            distKm += getDistanceFromLatLonInKm(latlons[i].lat, latlons[i].lon, latlons[i+1].lat, latlons[i+1].lon);
+        }
+        
+        // Ajout 30% pour simuler la route réelle
+        distKm = distKm * 1.3;
+        // Estimation 50km/h
+        let durationMin = (distKm / 50) * 60;
+
+        // Dessin Ligne Droite
+        let path = latlons.map(p => [p.lat, p.lon]);
+        fallbackLayer = L.polyline(path, {color: 'red', dashArray: '5, 10', weight: 3}).addTo(map);
+        map.fitBounds(fallbackLayer.getBounds().pad(0.1));
+        
+        updateStats(distKm, durationMin);
+    }
+
+    function getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2) {
+        var R = 6371; 
+        var dLat = deg2rad(lat2-lat1); var dLon = deg2rad(lon2-lon1); 
+        var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
+        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+        return R * c;
+    }
+    function deg2rad(deg) { return deg * (Math.PI/180); }
 
     function updateStats(distKm, driveTimeMin) {
         let prepTime = parseFloat(document.getElementById('prepTime').value)||0;
@@ -491,6 +507,7 @@
         let totalRev = stops.reduce((acc, s) => acc + s.montant, 0);
         let ratio = totalRev > 0 ? ((totalCost / totalRev) * 100).toFixed(1) : 0;
 
+        // Update DOM
         document.getElementById('syn-dist').innerText = distKm.toFixed(1) + " km";
         document.getElementById('syn-time-drive').innerText = formatTime(driveTimeMin);
         document.getElementById('syn-time-ops').innerText = formatTime(opsTimeMin);
@@ -509,7 +526,7 @@
         return `${h}h${m<10?'0':''}${m}`;
     }
 
-    // --- 6. ENVOI ---
+    // --- ENVOI ---
     function sendTournee() {
         if(!document.getElementById('prodLat').value) { alert("Adresse Dépôt requise !"); return; }
         let btn = document.getElementById('finalBtn');
@@ -543,6 +560,7 @@
                 stops = []; 
                 refreshUI(); 
                 btn.innerText = "🚀 ENREGISTRER LA TOURNÉE"; 
+                // Note: On ne vide pas le producteur pour faciliter la saisie suivante
             } 
             else throw new Error(d.error);
         })
