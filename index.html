@@ -3,16 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logistique V25 - Opérations Typées</title>
+    <title>Logistique V26 - Précision Temps Dépôt</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #e67e22; --success: #27ae60; --bg: #f4f7f9; --danger: #e74c3c; --info: #3498db; --text: #546e7a; }
         body { font-family: 'Inter', 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: var(--bg); color: #333; }
         
-        /* BANDEAU DEPOT */
         .header-band { background: white; padding: 25px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-top: 5px solid var(--primary); }
-        .header-row { display: flex; gap: 20px; margin-bottom: 20px; align-items: flex-end; }
+        .header-row { display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-end; flex-wrap: wrap; }
         .header-row:last-child { margin-bottom: 0; }
         
         .main-container { display: flex; gap: 25px; }
@@ -20,8 +19,8 @@
         .right-panel { flex: 2; }
 
         .card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #eef2f7; }
-        .form-group { flex: 1; display: flex; flex-direction: column; gap: 8px; }
-        .form-group label { font-weight: 600; color: var(--text); font-size: 0.85rem; }
+        .form-group { flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 120px; }
+        .form-group label { font-weight: 600; color: var(--text); font-size: 0.8rem; }
         input, select { padding: 10px; border: 1px solid #dcdfe6; border-radius: 8px; font-size: 0.9rem; }
         
         /* KPI CARDS */
@@ -33,7 +32,6 @@
         .summary-banner { grid-column: span 3; background: var(--primary); color: white; border-radius: 10px; padding: 20px; display: flex; justify-content: space-around; align-items: center; }
         .summary-value { font-size: 1.8rem; font-weight: 800; display: block; }
 
-        /* LIST & MAP */
         #map { height: 450px; width: 100%; border-radius: 12px; border: 1px solid #dcdfe6; }
         .stop-item { background: #fdfdfd; padding: 12px; margin-bottom: 8px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #ebedf0; }
         .stop-info { display: flex; align-items: center; gap: 10px; }
@@ -57,8 +55,8 @@
                 <input type="text" id="pName" placeholder="Ex: Ferme du Val" onchange="updateTitle()">
             </div>
             <div class="form-group">
-                <label>Journée de Livraison</label>
-                <select id="pDay">
+                <label>Journée</label>
+                <select id="pDay" onchange="saveProd()">
                     <option>Lundi</option><option>Mardi</option><option>Mercredi</option>
                     <option>Jeudi</option><option>Vendredi</option><option>Samedi</option>
                 </select>
@@ -73,18 +71,20 @@
             </div>
         </div>
         <div class="header-row">
-            <div class="form-group">
-                <label>🚚 Type de Véhicule</label>
-                <select id="vType">
-                    <option value="0.5">🚲 Moins de 3m³ (Petit utilitaire)</option>
-                    <option value="0.7" selected>🚗 De 3m³ à 6m³ (Fourgon compact)</option>
-                    <option value="0.9">🚐 De 6m³ à 12m³ (Grand fourgon)</option>
-                    <option value="1.2">🚚 De 12m³ à 20m³ (Petit camion)</option>
-                    <option value="1.6">🚛 Plus de 20m³ (Camion lourd)</option>
+            <div class="form-group" style="flex: 1.5;">
+                <label>🚚 Véhicule</label>
+                <select id="vType" onchange="saveProd()">
+                    <option value="0.5">🚲 Petit utilitaire (< 3m³)</option>
+                    <option value="0.7" selected>🚗 Fourgon compact (3-6m³)</option>
+                    <option value="0.9">🚐 Grand fourgon (6-12m³)</option>
+                    <option value="1.2">🚚 Petit camion (12-20m³)</option>
+                    <option value="1.6">🚛 Camion lourd (> 20m³)</option>
                 </select>
             </div>
-            <div class="form-group"><label>💶 Coût Horaire Livreure (€/h)</label><input type="number" id="cH" value="15"></div>
-            <div class="form-group"><label>⛽ Coût au Km Véhicule (€/km)</label><input type="number" id="cK" value="0.5" step="0.05"></div>
+            <div class="form-group"><label>📦 Prép. (min)</label><input type="number" id="tPrep" value="30" onchange="updateView()"></div>
+            <div class="form-group"><label>🚚 Charg. (min)</label><input type="number" id="tLoad" value="20" onchange="updateView()"></div>
+            <div class="form-group"><label>💶 Livreure (€/h)</label><input type="number" id="cH" value="18" onchange="updateView()"></div>
+            <div class="form-group"><label>⛽ Carburant (€/km)</label><input type="number" id="cK" value="0.6" step="0.05" onchange="updateView()"></div>
         </div>
     </div>
 
@@ -105,20 +105,19 @@
                         <label>Type d'opération</label>
                         <select id="sOpType">
                             <option value="📦">📦 Livraison Client</option>
-                            <option value="🚜">🚜 Collecte chez autrui</option>
-                            <option value="🏬">🏬 Dépôt Point Relais</option>
+                            <option value="🚜">🚜 Collecte autrui</option>
+                            <option value="🏬">🏬 Point Relais</option>
                         </select>
                     </div>
                     <div class="form-group"><label>Nom / Lieu</label><input type="text" id="sClient"></div>
                 </div>
                 <div style="display:flex; gap:10px; margin-top:10px;">
-                    <div class="form-group"><label>Valeur March. (€)</label><input type="number" id="sEuro" value="0"></div>
-                    <div class="form-group"><label>Temps sur place (min)</label><input type="number" id="sTime" value="15"></div>
+                    <div class="form-group"><label>Valeur (€)</label><input type="number" id="sEuro" value="0"></div>
+                    <div class="form-group"><label>Arrêt (min)</label><input type="number" id="sTime" value="15"></div>
                 </div>
                 <button class="btn-main" style="background:var(--info); margin-top:20px;" onclick="addStop()">Ajouter à la tournée</button>
             </div>
-
-            <h4 style="color:var(--text); margin-bottom:10px;">📋 Itinéraire (Ordre de passage)</h4>
+            <h4 style="color:var(--text); margin-bottom:10px;">📋 Itinéraire (Ordre modifiable)</h4>
             <ul id="stops-list"></ul>
             <button class="btn-main" id="btnSend" onclick="sendData()" disabled>🚀 Enregistrer la Tournée</button>
         </div>
@@ -127,14 +126,8 @@
             <div id="map"></div>
             <div class="kpi-container">
                 <div class="summary-banner">
-                    <div style="text-align:center;">
-                        <span style="font-size:0.8rem; opacity:0.8;">COÛT GLOBAL</span>
-                        <span class="summary-value" id="rTotal">0 €</span>
-                    </div>
-                    <div style="text-align:center;">
-                        <span style="font-size:0.8rem; opacity:0.8;">CHIFFRE D'AFFAIRES</span>
-                        <span class="summary-value" id="rVal">0 €</span>
-                    </div>
+                    <div style="text-align:center;"><span style="font-size:0.8rem; opacity:0.8;">COÛT GLOBAL</span><span class="summary-value" id="rTotal">0 €</span></div>
+                    <div style="text-align:center;"><span style="font-size:0.8rem; opacity:0.8;">CHIFFRE D'AFFAIRES</span><span class="summary-value" id="rVal">0 €</span></div>
                 </div>
                 <div class="kpi-card">
                     <div class="kpi-title">Route</div>
@@ -212,18 +205,12 @@
             L.circleMarker([lat, lon], {radius:10, color:'var(--accent)', weight:3, fillOpacity:0.5}).addTo(markers);
         }
 
-        function saveProd() { pData.name = document.getElementById('pName').value; pData.day = document.getElementById('pDay').value; localStorage.setItem('pMem_v25', JSON.stringify(pData)); updateView(); }
-        function loadSaved() { let saved = localStorage.getItem('pMem_v25'); if(saved) { pData = JSON.parse(saved); document.getElementById('pName').value = pData.name || ""; document.getElementById('pAddr').value = pData.addr || ""; if(pData.day) document.getElementById('pDay').value = pData.day; updateTitle(); } }
+        function saveProd() { pData.name = document.getElementById('pName').value; pData.day = document.getElementById('pDay').value; localStorage.setItem('pMem_v26', JSON.stringify(pData)); updateView(); }
+        function loadSaved() { let saved = localStorage.getItem('pMem_v26'); if(saved) { pData = JSON.parse(saved); document.getElementById('pName').value = pData.name || ""; document.getElementById('pAddr').value = pData.addr || ""; if(pData.day) document.getElementById('pDay').value = pData.day; updateTitle(); } }
 
         function addStop() {
             if(!pData.lat || !sTemp.lat) return alert("Position manquante");
-            stops.push({
-                client: document.getElementById('sClient').value || "Client",
-                icon: document.getElementById('sOpType').value,
-                euro: parseFloat(document.getElementById('sEuro').value) || 0,
-                time: parseFloat(document.getElementById('sTime').value) || 15,
-                lat: sTemp.lat, lon: sTemp.lon, id: Date.now()
-            });
+            stops.push({ client: document.getElementById('sClient').value || "Client", icon: document.getElementById('sOpType').value, euro: parseFloat(document.getElementById('sEuro').value) || 0, time: parseFloat(document.getElementById('sTime').value) || 15, lat: sTemp.lat, lon: sTemp.lon, id: Date.now() });
             sTemp = { lat:null, lon:null }; document.getElementById('sAddr').value = ""; document.getElementById('sClient').value = ""; updateView();
         }
 
@@ -263,7 +250,9 @@
 
         function updateStats(dist, driveTime) {
             const cH = parseFloat(document.getElementById('cH').value) || 0, cK = parseFloat(document.getElementById('cK').value) || 0;
-            const sTime = stops.reduce((a, b) => a + b.time, 0) + 40; // Forfait préparation
+            const prep = parseFloat(document.getElementById('tPrep').value) || 0;
+            const load = parseFloat(document.getElementById('tLoad').value) || 0;
+            const sTime = stops.reduce((a, b) => a + b.time, 0) + prep + load;
             const cTrans = (dist * cK) + ((driveTime / 60) * cH), cOps = (sTime / 60) * cH, total = cTrans + cOps, val = stops.reduce((a, b) => a + b.euro, 0);
             document.getElementById('rDist').innerText = dist.toFixed(1) + " km";
             document.getElementById('rTime').innerText = Math.floor(driveTime/60) + "h" + Math.round(driveTime%60);
@@ -277,7 +266,7 @@
 
         function sendData() {
             const btn = document.getElementById('btnSend'); btn.disabled = true; btn.innerText = "Envoi...";
-            const payload = { general: { Depot: document.getElementById('pName').value, Jour: document.getElementById('pDay').value, Total: document.getElementById('rTotal').innerText }, stops: stops };
+            const payload = { general: { Depot: document.getElementById('pName').value, Jour: document.getElementById('pDay').value, Total: document.getElementById('rTotal').innerText, TempsTotal: document.getElementById('rOps').innerText }, stops: stops };
             fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
             .then(() => { alert("Sauvegardé !"); stops = []; updateView(); })
             .finally(() => { btn.disabled = false; btn.innerText = "🚀 Enregistrer la Tournée"; });
