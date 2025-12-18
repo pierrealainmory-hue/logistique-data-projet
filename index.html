@@ -3,58 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion Tournées Pro</title>
+    <title>Décrire une Tournée</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     
     <style>
         body { font-family: 'Segoe UI', sans-serif; max-width: 1400px; margin: 0 auto; padding: 15px; background: #eaeff2; color: #333; font-size: 14px; }
-        
-        /* HEADER PRODUCTEUR */
         .header-box { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-left: 6px solid #2c3e50; }
         .header-title { font-size: 1.5em; color: #2c3e50; margin-bottom: 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-        
         .grid-header { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
         .form-group label { display: block; font-weight: 700; color: #7f8c8d; margin-bottom: 5px; font-size: 0.9em; }
         .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #bdc3c7; border-radius: 4px; box-sizing: border-box; }
-
-        /* LAYOUT PRINCIPAL */
         .main-container { display: flex; gap: 20px; flex-wrap: wrap; }
         .left-panel { flex: 1; min-width: 400px; }
         .right-panel { flex: 1.5; min-width: 400px; display: flex; flex-direction: column; }
-
-        /* BOITE AJOUT ARRET */
         .add-stop-box { background: white; padding: 20px; border-radius: 8px; border-top: 5px solid #1abc9c; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .add-stop-box h3 { margin-top: 0; color: #16a085; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-        
         .search-bar { display: flex; gap: 5px; margin-bottom: 5px; }
-        .btn-mini { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; }
+        .btn-mini { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; font-size: 0.9em; white-space: nowrap; }
         .btn-search { background: #8e44ad; }
         .btn-gps { background: #e67e22; }
-
-        /* LISTE ARRETS */
         #stops-list { list-style: none; padding: 0; max-height: 400px; overflow-y: auto; }
         .stop-item { background: white; padding: 10px; margin-bottom: 8px; border-radius: 4px; display: flex; align-items: center; justify-content: space-between; border-left: 4px solid #bdc3c7; }
-        .stop-item.type-livraison { border-left-color: #3498db; } /* Bleu */
-        .stop-item.type-collecte { border-left-color: #9b59b6; } /* Violet */
-        
-        /* CARTE & SYNTHESE */
+        .stop-item.type-livraison { border-left-color: #3498db; }
+        .stop-item.type-collecte { border-left-color: #9b59b6; }
         #map { height: 500px; width: 100%; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 20px; }
-        
         .synthesis-box { background: #2c3e50; color: white; padding: 20px; border-radius: 8px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; text-align: center; }
         .stat-item span { display: block; font-size: 0.8em; opacity: 0.8; text-transform: uppercase; }
         .stat-item b { font-size: 1.4em; }
         .stat-item.highlight { color: #f1c40f; }
-
-        /* BOUTONS */
         .btn-add { background: #2980b9; color: white; width: 100%; padding: 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 1.1em; margin-top: 10px; }
-        .btn-add:hover { background: #2471a3; }
-        
         .btn-save { background: #27ae60; color: white; width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.3em; margin-top: 10px; }
         .btn-save:disabled { background: #95a5a6; cursor: not-allowed; }
-
-        /* FEEDBACK ADRESSE */
         .input-feedback { font-size: 0.85em; text-align: right; min-height: 1.2em; margin-bottom: 5px; font-weight: bold; }
     </style>
 </head>
@@ -62,8 +42,8 @@
 
     <div class="header-box">
         <div class="header-title">
-            <span>🏭 Informations Producteur & Véhicule</span>
-            <span style="font-size:0.6em; font-weight:normal; background:#ecf0f1; padding:5px 10px; border-radius:15px; color:#7f8c8d;">Données conservées pour la prochaine tournée</span>
+            <span>📝 Décrire une Tournée (Producteur)</span>
+            <span style="font-size:0.6em; font-weight:normal; background:#ecf0f1; padding:5px 10px; border-radius:15px; color:#7f8c8d;">Données mémorisées</span>
         </div>
         
         <div class="grid-header">
@@ -72,7 +52,7 @@
                 <input type="text" id="prodName" placeholder="Ex: Ferme du Val">
             </div>
             <div class="form-group">
-                <label>Jour de Tournée</label>
+                <label>Jour</label>
                 <select id="prodDay">
                     <option value="Lundi">Lundi</option><option value="Mardi">Mardi</option>
                     <option value="Mercredi">Mercredi</option><option value="Jeudi">Jeudi</option>
@@ -81,13 +61,14 @@
             </div>
             
             <div class="form-group">
-                <label>📍 Adresse Départ (Dépôt)</label>
+                <label>📍 Adresse de DÉPART (Dépôt)</label>
                 <div style="display:flex; gap:5px;">
-                    <input type="text" id="prodAddress" placeholder="Votre adresse de départ..." onchange="geocodeProd()">
+                    <input type="text" id="prodAddress" placeholder="Votre adresse..." onchange="geocodeProd()">
                     <button class="btn-mini btn-search" onclick="geocodeProd()">🔍</button>
+                    <button class="btn-mini btn-gps" onclick="geolocateProd()" title="Me géolocaliser ici">📍 GPS</button>
                 </div>
                 <input type="hidden" id="prodLat"><input type="hidden" id="prodLon">
-                <div id="prod-geo-msg" style="font-size:0.8em; color:green; display:none;">Adresse validée ✅</div>
+                <div id="prod-geo-msg" style="font-size:0.8em; color:green; display:none;">Adresse Dépôt validée ✅</div>
             </div>
 
             <div class="form-group"><label>Temps Chargement (min)</label><input type="number" id="loadTime" value="30"></div>
@@ -109,7 +90,6 @@
                     <option value="Diesel">Diesel</option>
                     <option value="Essence">Essence</option>
                     <option value="Electrique">Électrique</option>
-                    <option value="GPL/Hybride">GPL / Hybride</option>
                 </select>
             </div>
         </div>
@@ -119,10 +99,10 @@
         
         <div class="left-panel">
             <div class="add-stop-box">
-                <h3>➕ Ajouter un Arrêt</h3>
+                <h3>➕ Ajouter un Point d'Arrêt</h3>
                 
                 <div class="form-group">
-                    <label>Type d'arrêt</label>
+                    <label>Type d'opération</label>
                     <select id="stopType" style="background:#f0f8ff; font-weight:bold;">
                         <option value="Livraison">📦 Livraison Client</option>
                         <option value="Collecte">🚜 Collecte Producteur</option>
@@ -130,25 +110,26 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Localisation (Recherche ou Clic Carte)</label>
+                    <label>Localisation du point d'arrêt</label>
                     <div class="search-bar">
-                        <input type="text" id="addressSearch" placeholder="Adresse..." onkeypress="if(event.key==='Enter') searchAddress()">
-                        <button class="btn-mini btn-search" onclick="searchAddress()">🔍</button>
-                        <button class="btn-mini btn-gps" onclick="geolocate()">🎯 Moi</button>
+                        <input type="text" id="addressSearch" placeholder="Cliquez sur carte ou tapez adresse..." onkeypress="if(event.key==='Enter') searchAddress()">
+                        <button class="btn-mini btn-search" onclick="searchAddress()">🔍 Chercher</button>
+                        <button class="btn-mini btn-gps" onclick="geolocateStop()">📍 Ma position GPS</button>
                     </div>
                     <div id="latlon-preview" class="input-feedback" style="color:#e74c3c;">En attente de localisation...</div>
                 </div>
 
-                <div class="form-group"><label>Nom (Client/Lieu)</label><input type="text" id="stopClient"></div>
+                <div class="form-group"><label>Nom (Client/Lieu)</label><input type="text" id="stopClient" placeholder="Ex: Resto le Gourmet"></div>
                 
                 <div style="display:flex; gap:10px;">
-                    <div class="form-group"><label>Poids (kg)</label><input type="number" id="stopWeight"></div>
-                    <div class="form-group"><label>Montant (€)</label><input type="number" id="stopEuro"></div>
+                    <div class="form-group"><label>Poids approx. (kg)</label><input type="number" id="stopWeight" placeholder="Ex: 50"></div>
+                    <div class="form-group"><label>Montant approx. (€)</label><input type="number" id="stopEuro" placeholder="Ex: 120"></div>
                 </div>
-                <div class="form-group"><label>Temps d'arrêt (min)</label><input type="number" id="stopTime" value="15"></div>
+
+                <div class="form-group"><label>Temps d'arrêt estimé (min)</label><input type="number" id="stopTime" value="15"></div>
 
                 <button class="btn-add" onclick="addStop()">Valider cet arrêt</button>
-                <p id="error-msg" style="color:red; display:none; text-align:center;">⚠️ Manque Nom, Poids ou Localisation !</p>
+                <p id="error-msg" style="color:red; display:none; text-align:center;">⚠️ Remplir Nom, Poids et Localiser !</p>
             </div>
 
             <div style="background:white; padding:10px; border-radius:8px;">
@@ -162,24 +143,11 @@
 
         <div class="right-panel">
             <div id="map"></div>
-            
             <div class="synthesis-box">
-                <div class="stat-item">
-                    <span>Distance Est.</span>
-                    <b id="syn-dist">0 km</b>
-                </div>
-                <div class="stat-item">
-                    <span>Temps Total</span>
-                    <b id="syn-time">0h00</b>
-                </div>
-                <div class="stat-item">
-                    <span>Coût Estimé</span>
-                    <b id="syn-cost">0 €</b>
-                </div>
-                <div class="stat-item highlight">
-                    <span>Recette Totale</span>
-                    <b id="syn-rev">0 €</b>
-                </div>
+                <div class="stat-item"><span>Distance (Est.)</span><b id="syn-dist">0 km</b></div>
+                <div class="stat-item"><span>Temps Total (Est.)</span><b id="syn-time">0h00</b></div>
+                <div class="stat-item"><span>Coût Logistique</span><b id="syn-cost">0 €</b></div>
+                <div class="stat-item highlight"><span>Valeur Marchandise</span><b id="syn-rev">0 €</b></div>
             </div>
         </div>
     </div>
@@ -187,37 +155,49 @@
 <script>
     const API_URL = "https://update-github-csv-149052175314.europe-west1.run.app/"; 
 
-    // Données
     let stops = [];
     let mapMarkers = [];
     let routeLayer = null;
     let tempMarker = null;
     let currentAddressTxt = "";
     
-    // Init Carte
     var map = L.map('map').setView([46.60, 1.88], 6);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: 'OSM' }).addTo(map);
 
-    // --- GESTION ADRESSE PRODUCTEUR (DEPART) ---
+    // --- GESTION PRODUCTEUR (DEPART) ---
     function geocodeProd() {
         let addr = document.getElementById('prodAddress').value;
         if(addr.length < 3) return;
         fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addr)}`)
         .then(r=>r.json()).then(d=>{
-            if(d.length>0) {
-                document.getElementById('prodLat').value = d[0].lat;
-                document.getElementById('prodLon').value = d[0].lon;
-                document.getElementById('prod-geo-msg').style.display = 'block';
-                // On met un marker Home sur la carte
-                L.marker([d[0].lat, d[0].lon], {icon: L.divIcon({html:'🏭', className:'home-icon', iconSize:[24,24]})}).addTo(map);
-                map.setView([d[0].lat, d[0].lon], 13);
-                calculateRoute(); // Recalculer si on change le départ
-            }
+            if(d.length>0) setProdLoc(d[0].lat, d[0].lon, addr);
         });
     }
 
-    // --- GESTION CARTE & INPUTS ---
-    // Clic Carte = Remplir Input
+    function geolocateProd() {
+        navigator.geolocation.getCurrentPosition(p => {
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${p.coords.latitude}&lon=${p.coords.longitude}`)
+            .then(r=>r.json()).then(d => {
+                setProdLoc(p.coords.latitude, p.coords.longitude, d.display_name || "GPS Producteur");
+            });
+        });
+    }
+
+    function setProdLoc(lat, lon, txt) {
+        document.getElementById('prodLat').value = lat;
+        document.getElementById('prodLon').value = lon;
+        document.getElementById('prodAddress').value = txt;
+        document.getElementById('prod-geo-msg').style.display = 'block';
+        
+        // Nettoyage anciens markers home
+        map.eachLayer((layer) => { if(layer.options && layer.options.icon && layer.options.icon.options.className === 'home-icon') map.removeLayer(layer); });
+
+        L.marker([lat, lon], {icon: L.divIcon({html:'🏭', className:'home-icon', iconSize:[24,24]})}).addTo(map);
+        map.setView([lat, lon], 13);
+        calculateRoute();
+    }
+
+    // --- GESTION ARRETS (STOP) ---
     map.on('click', function(e) {
         if(tempMarker) map.removeLayer(tempMarker);
         tempMarker = L.marker(e.latlng).addTo(map);
@@ -225,11 +205,15 @@
         let el = document.getElementById('latlon-preview');
         el.dataset.lat = e.latlng.lat;
         el.dataset.lon = e.latlng.lng;
-        el.innerText = "📍 Pointé sur la carte (Coordonnées OK)";
+        el.innerText = "📍 Coordonnées récupérées";
         el.style.color = "#27ae60";
         
-        document.getElementById('addressSearch').value = "Position pointée sur la carte";
-        currentAddressTxt = "Pointé Carte";
+        document.getElementById('addressSearch').value = "🔍 Recherche...";
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lon}`)
+        .then(r => r.json()).then(d => {
+            document.getElementById('addressSearch').value = d.display_name || "Point sur Carte";
+            currentAddressTxt = d.display_name || "Point Carte";
+        });
     });
 
     function searchAddress() {
@@ -237,7 +221,6 @@
         fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}`)
         .then(r=>r.json()).then(d=>{
             if(d.length>0) {
-                // Simuler un clic carte
                 map.fireEvent('click', {latlng: {lat:d[0].lat, lng:d[0].lon}});
                 map.setView([d[0].lat, d[0].lon], 16);
                 currentAddressTxt = q;
@@ -245,7 +228,7 @@
         });
     }
     
-    function geolocate() {
+    function geolocateStop() {
         navigator.geolocation.getCurrentPosition(p => {
             map.fireEvent('click', {latlng: {lat:p.coords.latitude, lng:p.coords.longitude}});
             map.setView([p.coords.latitude, p.coords.longitude], 16);
@@ -271,7 +254,6 @@
             adresse_txt: currentAddressTxt
         });
         
-        // Reset Inputs Arrêt uniquement
         document.getElementById('stopClient').value = '';
         document.getElementById('stopWeight').value = '';
         document.getElementById('stopEuro').value = '';
@@ -285,83 +267,58 @@
     }
 
     function refreshUI() {
-        // Liste HTML
         let ul = document.getElementById('stops-list');
         ul.innerHTML = "";
         mapMarkers.forEach(m => map.removeLayer(m));
         mapMarkers = [];
-        
         let totalRev = 0;
 
         stops.forEach((s, i) => {
             totalRev += s.montant;
             let li = document.createElement('li');
             li.className = `stop-item type-${s.type.toLowerCase()}`;
-            li.innerHTML = `
-                <div>
-                    <strong>${i+1}. ${s.client}</strong> (${s.type})<br>
-                    <span style="color:#7f8c8d; font-size:0.9em;">${s.poids}kg | ${s.montant}€ | ${s.temps_arret}min</span>
-                </div>
-                <button onclick="stops.splice(${i},1); refreshUI();" style="color:red; border:none; background:none; cursor:pointer; font-weight:bold;">✕</button>
-            `;
+            li.innerHTML = `<div><strong>${i+1}. ${s.client}</strong> (${s.type})<br><span style="color:#7f8c8d; font-size:0.9em;">~${s.poids}kg | ~${s.montant}€ | ${s.temps_arret}min</span></div><button onclick="stops.splice(${i},1); refreshUI();" style="color:red; border:none; background:none; cursor:pointer;">✕</button>`;
             ul.appendChild(li);
-            
             let m = L.marker([s.lat, s.lon]).addTo(map).bindPopup(`<b>${i+1}</b> ${s.client}`);
             mapMarkers.push(m);
         });
 
         document.getElementById('syn-rev').innerText = totalRev + " €";
         document.getElementById('finalBtn').disabled = stops.length === 0;
-        
-        calculateRoute(); // Recalculer la route OSRM + Temps + Coûts
+        calculateRoute(); 
     }
 
     async function calculateRoute() {
-        // On a besoin du départ + les arrêts
         let pLat = document.getElementById('prodLat').value;
         let pLon = document.getElementById('prodLon').value;
-        
-        if(!pLat || stops.length === 0) {
-            document.getElementById('syn-dist').innerText = "Attente Départ...";
-            return;
-        }
+        if(!pLat || stops.length === 0) { document.getElementById('syn-dist').innerText = "Attente Départ..."; return; }
 
-        // Construire la chaine de coordonnées: Depart;Stop1;Stop2;...;Depart
         let coords = [`${pLon},${pLat}`];
         stops.forEach(s => coords.push(`${s.lon},${s.lat}`));
-        coords.push(`${pLon},${pLat}`); // Retour au dépôt
+        coords.push(`${pLon},${pLat}`); // Boucle retour
 
         let url = `https://router.project-osrm.org/route/v1/driving/${coords.join(';')}?overview=full&geometries=geojson`;
-        
         try {
             let res = await fetch(url).then(r=>r.json());
             if(res.routes && res.routes.length > 0) {
                 let r = res.routes[0];
-                
-                // 1. Dessin
                 if(routeLayer) map.removeLayer(routeLayer);
                 let latlngs = r.geometry.coordinates.map(c => [c[1],c[0]]);
                 routeLayer = L.polyline(latlngs, {color:'#2c3e50', weight:5}).addTo(map);
                 map.fitBounds(routeLayer.getBounds().pad(0.1));
 
-                // 2. Calculs Temps & Coûts
                 let distKm = r.distance / 1000;
                 let driveTimeMin = r.duration / 60;
-                
                 let loadTime = parseFloat(document.getElementById('loadTime').value)||0;
                 let stopsTime = stops.reduce((acc, s) => acc + s.temps_arret, 0);
                 let totalTimeMin = driveTimeMin + loadTime + stopsTime;
                 
-                // Convertir minutes en H:mm
                 let h = Math.floor(totalTimeMin / 60);
                 let m = Math.round(totalTimeMin % 60);
-                
-                // Coûts
                 let costH = parseFloat(document.getElementById('costHour').value)||0;
                 let costK = parseFloat(document.getElementById('costKm').value)||0;
                 let totalCost = (distKm * costK) + ((totalTimeMin/60) * costH);
 
-                // Affichage
                 document.getElementById('syn-dist').innerText = distKm.toFixed(1) + " km";
                 document.getElementById('syn-time').innerText = `${h}h${m<10?'0':''}${m}`;
                 document.getElementById('syn-cost').innerText = totalCost.toFixed(0) + " €";
@@ -371,12 +328,10 @@
 
     function sendTournee() {
         let pLat = document.getElementById('prodLat').value;
-        if(!pLat) { alert("Veuillez renseigner et valider (🔍) l'adresse de départ !"); return; }
-        if(!document.getElementById('prodName').value) { alert("Nom Producteur manquant !"); return; }
-
+        if(!pLat) { alert("Adresse de départ requise !"); return; }
+        if(!document.getElementById('prodName').value) { alert("Nom Producteur requis !"); return; }
         let btn = document.getElementById('finalBtn');
-        btn.disabled = true;
-        btn.innerText = "Envoi en cours...";
+        btn.disabled = true; btn.innerText = "Envoi...";
 
         let payload = {
             general: {
@@ -398,23 +353,12 @@
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(payload)
         })
-        .then(r=>r.json())
-        .then(d => {
-            if(d.success) {
-                // RESET PARTIEL POUR NOUVELLE TOURNEE
-                alert("✅ Tournée enregistrée ! Vous pouvez saisir la suivante.");
-                stops = [];
-                refreshUI();
-                btn.innerText = "🚀 ENREGISTRER LA TOURNÉE";
-                // On ne vide PAS les infos producteurs
-            } else throw new Error(d.error);
+        .then(r=>r.json()).then(d => {
+            if(d.success) { alert("✅ Tournée enregistrée !"); stops = []; refreshUI(); btn.innerText = "🚀 ENREGISTRER LA TOURNÉE"; } 
+            else throw new Error(d.error);
         })
-        .catch(e => {
-            alert("Erreur: " + e.message);
-            btn.disabled = false;
-        });
+        .catch(e => { alert("Erreur: " + e.message); btn.disabled = false; });
     }
 </script>
-
 </body>
 </html>
