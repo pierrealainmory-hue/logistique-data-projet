@@ -1,226 +1,211 @@
-const API = "https://update-github-csv-149052175314.europe-west1.run.app/";
-let map, markers, routeLayer, stops = [], mode = 'stop', pData = { lat:null, lon:null, addr:"" }, sTemp = { lat:null, lon:null };
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logistique V28 - Format Colab</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <style>
+        :root { --primary: #2c3e50; --accent: #e67e22; --success: #27ae60; --bg: #f4f7f9; --danger: #e74c3c; --info: #3498db; --text: #546e7a; }
+        body { font-family: 'Inter', 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: var(--bg); color: #333; }
+        .header-band { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-top: 5px solid var(--primary); }
+        .header-row { display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-end; flex-wrap: wrap; }
+        .main-container { display: flex; gap: 20px; }
+        .left-panel { flex: 1; min-width: 400px; }
+        .right-panel { flex: 1.8; }
+        .card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #eef2f7; }
+        .form-group { flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 140px; }
+        .form-group label { font-weight: 600; color: var(--text); font-size: 0.75rem; }
+        input, select { padding: 8px; border: 1px solid #dcdfe6; border-radius: 6px; font-size: 0.85rem; }
+        .kpi-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 15px; }
+        .kpi-card { background: white; padding: 15px; border-radius: 8px; border: 1px solid #e4e7ed; text-align: center; }
+        .kpi-title { font-size: 0.65rem; font-weight: 700; color: var(--text); text-transform: uppercase; }
+        .kpi-value { font-size: 1.1rem; font-weight: 800; color: var(--primary); margin-top: 5px; }
+        .summary-banner { grid-column: span 3; background: var(--primary); color: white; border-radius: 10px; padding: 15px; display: flex; justify-content: space-around; text-align: center; }
+        #map { height: 400px; width: 100%; border-radius: 12px; border: 1px solid #dcdfe6; }
+        .stop-item { background: #fff; padding: 10px; margin-bottom: 6px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #ebedf0; }
+        .btn-main { background: var(--success); color: white; width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn-mini { padding: 6px 10px; border: none; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
 
-window.onload = function() {
-    map = L.map('map').setView([46.6, 1.88], 6);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-    markers = L.layerGroup().addTo(map); routeLayer = L.layerGroup().addTo(map);
-    map.on('click', onMapClick);
-    
-    Sortable.create(document.getElementById('stops-list'), { 
-        animation: 150, 
-        handle: '.handle', 
-        onEnd: function() { reorderStops(); } 
-    });
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+        <h2 style="margin:0; font-size: 1.4rem;">🚛 Simulateur Logistique <span style="color:var(--info)">V28 - Export CSV</span></h2>
+        <button onclick="resetAll()" class="btn-mini" style="background:var(--danger); color:white;">🧹 Reset</button>
+    </div>
 
-    loadSaved(); 
-    setMode('stop');
-};
+    <div class="header-band">
+        <div class="header-row">
+            <div class="form-group" style="flex: 1.5;"><label>Nom Producteur</label><input type="text" id="pName" placeholder="Ex: Ferme du Val" onchange="updateTitle()"></div>
+            <div class="form-group"><label>Journée</label><select id="pDay" onchange="saveProd()"><option>Lundi</option><option>Mardi</option><option>Mercredi</option><option>Jeudi</option><option>Vendredi</option><option>Samedi</option></select></div>
+            <div class="form-group" style="flex: 2;"><label>📍 Adresse du Dépôt (Départ/Retour)</label><div style="display:flex; gap:4px;"><input type="text" id="pAddr" placeholder="Chercher..." style="flex:1;"><button class="btn-mini" style="background:var(--info); color:white" onclick="searchAddress('prod')">🔍</button><button class="btn-mini" id="btn-t-prod" style="background:#95a5a6; color:white" onclick="setMode('prod')">🎯</button></div></div>
+        </div>
+        <div class="header-row">
+            <div class="form-group"><label>🚚 Véhicule</label><select id="vType"><option>Moins de 3m³ (Petit utilitaire)</option><option selected>De 3m³ à 6m³ (Fourgon compact)</option><option>De 6m³ à 12m³ (Grand fourgon)</option><option>De 12m³ à 20m³ (Petit camion)</option><option>Plus de 20m³ (Camion)</option></select></div>
+            <div class="form-group"><label>⛽ Carburant</label><select id="vFuel"><option>Diesel</option><option>Essence</option><option>Électrique</option><option>GNV / Bio-méthane</option></select></div>
+            <div class="form-group" style="max-width:80px;"><label>📦 Prép. (min)</label><input type="number" id="tPrep" value="30"></div>
+            <div class="form-group" style="max-width:80px;"><label>🚚 Charg. (min)</label><input type="number" id="tLoad" value="20"></div>
+            <div class="form-group" style="max-width:80px;"><label>💶 MO (€/h)</label><input type="number" id="cH" value="18"></div>
+            <div class="form-group" style="max-width:80px;"><label>⛽ Km (€/km)</label><input type="number" id="cK" value="0.6" step="0.05"></div>
+        </div>
+    </div>
 
-function updateTitle() { 
-    document.getElementById('display-depot').innerText = document.getElementById('pName').value || "Point de Départ"; 
-    saveProd(); 
-}
+    <div class="main-container">
+        <div class="left-panel">
+            <div class="card" style="border-left: 5px solid var(--success);">
+                <h3 style="margin-top:0; font-size:1rem;">➕ Ajouter un Arrêt</h3>
+                <div class="form-group"><label>Localisation</label><div style="display:flex; gap:4px;"><input type="text" id="sAddr" placeholder="Adresse..." style="flex:1;"><button class="btn-mini" style="background:var(--info); color:white" onclick="searchAddress('stop')">🔍</button><button class="btn-mini" id="btn-t-stop" style="background:#95a5a6; color:white" onclick="setMode('stop')">🎯</button></div></div>
+                <div style="display:flex; gap:8px; margin-top:10px;">
+                    <div class="form-group"><label>Opération</label><select id="sOpType"><option value="Livraison">📦 Livraison Client</option><option value="Collecte">🚜 Collecte</option><option value="Relais">🏬 Point Relais</option></select></div>
+                    <div class="form-group"><label>Nom Client</label><input type="text" id="sClient"></div>
+                </div>
+                <div style="display:flex; gap:8px; margin-top:8px;">
+                    <div class="form-group"><label>Valeur (€)</label><input type="number" id="sEuro" value="0"></div>
+                    <div class="form-group"><label>Volume (kg)</label><input type="number" id="sVol" value="0"></div>
+                    <div class="form-group"><label>Arrêt (min)</label><input type="number" id="sTime" value="15"></div>
+                </div>
+                <button class="btn-main" style="background:var(--info); margin-top:15px;" onclick="addStop()">Ajouter à la tournée</button>
+            </div>
+            <ul id="stops-list"></ul>
+            <button class="btn-main" id="btnSend" onclick="sendData()" disabled>🚀 ENREGISTRER LA TOURNÉE</button>
+        </div>
 
-function resetAll() { 
-    if(confirm("Effacer toutes les données et réinitialiser ?")) { 
-        localStorage.clear(); 
-        location.reload(); 
-    } 
-}
+        <div class="right-panel">
+            <div id="map"></div>
+            <div class="kpi-container">
+                <div class="summary-banner"><div><small>COÛT LOGISTIQUE</small><b class="summary-value" id="rTotal">0 €</b></div><div><small>CHIFFRE D'AFFAIRES</small><b class="summary-value" id="rVal">0 €</b></div></div>
+                <div class="kpi-card"><div class="kpi-title">Distance</div><div class="kpi-value" id="rDist">0 km</div></div>
+                <div class="kpi-card"><div class="kpi-title">Frais Route</div><div class="kpi-value" id="rCostTrans">0 €</div></div>
+                <div class="kpi-card"><div class="kpi-title">Frais Perso.</div><div class="kpi-value" id="rCostOps">0 €</div></div>
+                <div class="kpi-card" style="grid-column: span 3; border-top: 2px solid var(--accent);"><div class="kpi-title">RATIO LOGISTIQUE</div><div class="kpi-value" style="color:var(--accent); font-size:1.5rem;" id="rRatio">0 %</div></div>
+            </div>
+        </div>
+    </div>
 
-function setMode(m) { 
-    mode = m; 
-    document.getElementById('btn-t-prod').style.background = m==='prod' ? 'var(--accent)' : '#95a5a6'; 
-    document.getElementById('btn-t-stop').style.background = m==='stop' ? 'var(--accent)' : '#95a5a6'; 
-}
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const API = "https://update-github-csv-149052175314.europe-west1.run.app/";
+        let map, markers, routeLayer, stops = [], mode = 'stop', pData = { lat:null, lon:null, addr:"" }, sTemp = { lat:null, lon:null };
 
-function onMapClick(e) {
-    let lat = e.latlng.lat, lon = e.latlng.lng; 
-    showTempMarker(lat, lon);
-    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`).then(r=>r.json()).then(d=>{
-        if(mode==='prod'){ 
-            pData={lat, lon, addr:d.display_name}; 
-            document.getElementById('pAddr').value=d.display_name; 
-            saveProd(); 
-        } else { 
-            sTemp={lat, lon}; 
-            document.getElementById('sAddr').value=d.display_name; 
+        window.onload = function() {
+            map = L.map('map').setView([46.6, 1.88], 6);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+            markers = L.layerGroup().addTo(map); routeLayer = L.layerGroup().addTo(map);
+            map.on('click', onMapClick);
+            Sortable.create(document.getElementById('stops-list'), { animation:150, handle:'.handle', onEnd:reorderStops });
+            loadSaved(); setMode('stop');
+        };
+
+        function updateTitle() { document.getElementById('display-depot').innerText = document.getElementById('pName').value || "Point de Départ"; saveProd(); }
+        function resetAll() { if(confirm("Effacer tout ?")) { localStorage.clear(); location.reload(); } }
+        function setMode(m) { mode = m; document.getElementById('btn-t-prod').style.background = m==='prod' ? 'var(--accent)' : '#95a5a6'; document.getElementById('btn-t-stop').style.background = m==='stop' ? 'var(--accent)' : '#95a5a6'; }
+
+        function onMapClick(e) {
+            let lat = e.latlng.lat, lon = e.latlng.lng; showTempMarker(lat, lon);
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`).then(r=>r.json()).then(d=>{
+                if(mode==='prod'){ pData={lat, lon, addr:d.display_name}; document.getElementById('pAddr').value=d.display_name; saveProd(); }
+                else { sTemp={lat, lon}; document.getElementById('sAddr').value=d.display_name; }
+            });
         }
-    });
-}
 
-function searchAddress(target) {
-    let q = document.getElementById(target==='prod'?'pAddr':'sAddr').value;
-    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`).then(r=>r.json()).then(res=>{
-        if(res.length>0){ 
-            let lat=parseFloat(res[0].lat), lon=parseFloat(res[0].lon); 
-            showTempMarker(lat, lon); map.setView([lat, lon], 14);
-            if(target==='prod'){ 
-                pData={lat, lon, addr:res[0].display_name}; 
-                document.getElementById('pAddr').value=res[0].display_name; 
-                saveProd(); 
-            } else { 
-                sTemp={lat, lon}; 
-                document.getElementById('sAddr').value=res[0].display_name; 
-            }
+        function searchAddress(target) {
+            let q = document.getElementById(target==='prod'?'pAddr':'sAddr').value;
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`).then(r=>r.json()).then(res=>{
+                if(res.length>0){ let lat=parseFloat(res[0].lat), lon=parseFloat(res[0].lon); showTempMarker(lat, lon); map.setView([lat, lon], 14);
+                    if(target==='prod'){ pData={lat, lon, addr:res[0].display_name}; document.getElementById('pAddr').value=res[0].display_name; saveProd(); }
+                    else { sTemp={lat, lon}; document.getElementById('sAddr').value=res[0].display_name; }
+                }
+            });
         }
-    });
-}
 
-function showTempMarker(lat, lon) {
-    markers.clearLayers(); 
-    if(pData.lat) L.marker([pData.lat, pData.lon], {icon: L.divIcon({html:'🏠', className:''})}).addTo(markers);
-    stops.forEach(s => L.circleMarker([s.lat, s.lon], {radius:6, color:'var(--info)', fillOpacity:1}).addTo(markers));
-    L.circleMarker([lat, lon], {radius:9, color:'var(--accent)', weight:3, fillOpacity:0.5}).addTo(markers);
-}
-
-function saveProd() { 
-    pData.name=document.getElementById('pName').value; 
-    pData.day=document.getElementById('pDay').value; 
-    localStorage.setItem('pMem_v28', JSON.stringify(pData)); 
-    updateView(); 
-}
-
-function loadSaved() { 
-    let saved=localStorage.getItem('pMem_v28'); 
-    if(saved){ 
-        pData=JSON.parse(saved); 
-        document.getElementById('pName').value=pData.name||""; 
-        document.getElementById('pAddr').value=pData.addr||""; 
-        if(pData.day) document.getElementById('pDay').value=pData.day; 
-        updateTitle(); 
-    } 
-}
-
-function addStop() {
-    if(!pData.lat || !sTemp.lat) return alert("Veuillez définir le dépôt et l'adresse de l'arrêt.");
-    stops.push({ 
-        client:document.getElementById('sClient').value||"Client", 
-        opType:document.getElementById('sOpType').value, 
-        euro:parseFloat(document.getElementById('sEuro').value)||0, 
-        vol:parseFloat(document.getElementById('sVol').value)||0, 
-        time:parseFloat(document.getElementById('sTime').value)||15, 
-        lat:sTemp.lat, lon:sTemp.lon, addr:document.getElementById('sAddr').value, id:Date.now() 
-    });
-    sTemp={lat:null, lon:null}; 
-    document.getElementById('sAddr').value=""; 
-    document.getElementById('sClient').value=""; 
-    updateView();
-}
-
-function reorderStops() { 
-    let ns=[]; 
-    document.querySelectorAll('.stop-item').forEach(it=>{ 
-        ns.push(stops.find(s=>s.id===parseInt(it.getAttribute('data-id')))); 
-    }); 
-    stops=ns; 
-    updateView(); 
-}
-
-function updateView() {
-    markers.clearLayers(); routeLayer.clearLayers(); 
-    const ul=document.getElementById('stops-list'); ul.innerHTML="";
-    if(pData.lat) L.marker([pData.lat, pData.lon], {icon: L.divIcon({html:'🏠', className:''})}).addTo(markers);
-    stops.forEach((s, i) => {
-        ul.innerHTML += `<li class="stop-item" data-id="${s.id}"><div><span class="handle">☰</span> <b>${i+1}.</b> ${s.client}</div><button onclick="deleteStop(${s.id})" style="border:none; background:none; color:red; cursor:pointer;">✕</button></li>`;
-        L.circleMarker([s.lat, s.lon], {radius:6, color:'var(--info)', fillOpacity:1}).addTo(markers);
-    });
-    if(pData.lat && stops.length > 0) calcRoute(); else updateStats(0,0);
-    document.getElementById('btnSend').disabled=(stops.length===0);
-}
-
-function deleteStop(id) { stops=stops.filter(s=>s.id!==id); updateView(); }
-
-function calcRoute() {
-    let pts = [[pData.lon, pData.lat], ...stops.map(s=>[s.lon, s.lat]), [pData.lon, pData.lat]];
-    fetch(`https://router.project-osrm.org/route/v1/driving/${pts.map(p=>p.join(',')).join(';')}?overview=full&geometries=geojson`).then(r=>r.json()).then(res=>{
-        if(res.code==='Ok'){ 
-            let rd=res.routes[0]; 
-            L.polyline(rd.geometry.coordinates.map(c=>[c[1], c[0]]), {color:'var(--info)', weight:4}).addTo(routeLayer); 
-            map.fitBounds(L.featureGroup(markers.getLayers()).getBounds().pad(0.2)); 
-            updateStats(rd.distance/1000, rd.duration/60); 
+        function showTempMarker(lat, lon) {
+            markers.clearLayers(); if(pData.lat) L.marker([pData.lat, pData.lon], {icon: L.divIcon({html:'🏠', className:''})}).addTo(markers);
+            stops.forEach(s => L.circleMarker([s.lat, s.lon], {radius:6, color:'var(--info)', fillOpacity:1}).addTo(markers));
+            L.circleMarker([lat, lon], {radius:9, color:'var(--accent)', weight:3, fillOpacity:0.5}).addTo(markers);
         }
-    });
-}
 
-function updateStats(dist, driveTime) {
-    const cH=parseFloat(document.getElementById('cH').value)||0;
-    const cK=parseFloat(document.getElementById('cK').value)||0;
-    const prep=parseFloat(document.getElementById('tPrep').value)||0;
-    const load=parseFloat(document.getElementById('tLoad').value)||0;
-    
-    const sTime = stops.reduce((a,b)=>a+b.time, 0) + prep + load;
-    const costTrans = (dist * cK) + ((driveTime / 60) * cH);
-    const costOps = (sTime / 60) * cH;
-    const total = costTrans + costOps;
-    const val = stops.reduce((a,b)=>a+b.euro, 0);
+        function saveProd() { pData.name=document.getElementById('pName').value; pData.day=document.getElementById('pDay').value; localStorage.setItem('pMem_v28', JSON.stringify(pData)); updateView(); }
+        function loadSaved() { let saved=localStorage.getItem('pMem_v28'); if(saved){ pData=JSON.parse(saved); document.getElementById('pName').value=pData.name||""; document.getElementById('pAddr').value=pData.addr||""; if(pData.day) document.getElementById('pDay').value=pData.day; updateTitle(); } }
 
-    document.getElementById('rDist').innerText = dist.toFixed(1) + " km"; 
-    document.getElementById('rTime').innerText = "Conduite: " + Math.floor(driveTime/60) + "h" + Math.round(driveTime%60).toString().padStart(2,'0'); 
-    document.getElementById('rOps').innerText = "Service: " + Math.floor(sTime/60) + "h" + Math.round(sTime%60).toString().padStart(2,'0');
-    document.getElementById('rCostTrans').innerText = costTrans.toFixed(2) + " €"; 
-    document.getElementById('rCostOps').innerText = costOps.toFixed(2) + " €"; 
-    document.getElementById('rTotal').innerText = total.toFixed(2) + " €";
-    document.getElementById('rVal').innerText = val.toFixed(2) + " €"; 
-    document.getElementById('rRatio').innerText = val > 0 ? (total/val*100).toFixed(1) + " %" : "0 %";
-}
-
-function sendData() {
-    const btn=document.getElementById('btnSend'); 
-    btn.disabled=true; btn.innerText="⏳ Envoi...";
-    
-    const now = new Date();
-    const dateStr = now.toISOString().split('T')[0];
-    const tourId = (document.getElementById('pName').value || "ID").replace(/\s/g,'') + "_" + Date.now();
-    
-    const dataToSend = {
-        producteur: document.getElementById('pName').value,
-        date: dateStr,
-        jour: document.getElementById('pDay').value,
-        tournee_id: tourId,
-        vehicule: document.getElementById('vType').value,
-        carburant: document.getElementById('vFuel').value,
-        cout_horaire: parseFloat(document.getElementById('cH').value) || 0,
-        cout_km: parseFloat(document.getElementById('cK').value) || 0,
-        temps_preparation: parseFloat(document.getElementById('tPrep').value) || 0,
-        temps_chargement_depart: parseFloat(document.getElementById('tLoad').value) || 0,
-        depot_adresse: pData.addr,
-        depot_lat: pData.lat,
-        depot_lon: pData.lon,
-        arrets: stops.map((s, i) => ({
-            ordre: i + 1,
-            client: s.client,
-            type: s.opType,
-            montant: s.euro,
-            volume: s.vol,
-            temps_arret: s.time,
-            adresse: s.addr,
-            lat: s.lat,
-            lon: s.lon
-        }))
-    };
-
-    fetch(API, { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify(dataToSend) 
-    })
-    .then(response => {
-        if (response.ok) {
-            alert("✅ Tournée enregistrée avec succès !");
-            stops = []; 
-            updateView();
-        } else {
-            throw new Error("Erreur serveur");
+        function addStop() {
+            if(!pData.lat || !sTemp.lat) return alert("Position manquante");
+            stops.push({ client:document.getElementById('sClient').value||"Client", opType:document.getElementById('sOpType').value, euro:parseFloat(document.getElementById('sEuro').value)||0, vol:parseFloat(document.getElementById('sVol').value)||0, time:parseFloat(document.getElementById('sTime').value)||15, lat:sTemp.lat, lon:sTemp.lon, addr:document.getElementById('sAddr').value, id:Date.now() });
+            sTemp={lat:null, lon:null}; document.getElementById('sAddr').value=""; document.getElementById('sClient').value=""; updateView();
         }
-    })
-    .catch(err => {
-        console.error(err);
-        alert("❌ Erreur d'enregistrement.");
-    })
-    .finally(() => { 
-        btn.disabled = false; 
-        btn.innerText = "🚀 ENREGISTRER LA TOURNÉE"; 
-    });
-}
+
+        function reorderStops() { let ns=[]; document.querySelectorAll('.stop-item').forEach(it=>{ ns.push(stops.find(s=>s.id===parseInt(it.getAttribute('data-id')))); }); stops=ns; updateView(); }
+
+        function updateView() {
+            markers.clearLayers(); routeLayer.clearLayers(); const ul=document.getElementById('stops-list'); ul.innerHTML="";
+            if(pData.lat) L.marker([pData.lat, pData.lon], {icon: L.divIcon({html:'🏠', className:''})}).addTo(markers);
+            stops.forEach((s, i) => {
+                ul.innerHTML += `<li class="stop-item" data-id="${s.id}"><div><span class="handle">☰</span> <b>${i+1}.</b> ${s.client}</div><button onclick="deleteStop(${s.id})" style="border:none; background:none; color:red; cursor:pointer;">✕</button></li>`;
+                L.circleMarker([s.lat, s.lon], {radius:6, color:'var(--info)', fillOpacity:1}).addTo(markers);
+            });
+            if(pData.lat && stops.length > 0) calcRoute(); else updateStats(0,0);
+            document.getElementById('btnSend').disabled=(stops.length===0);
+        }
+
+        function deleteStop(id) { stops=stops.filter(s=>s.id!==id); updateView(); }
+
+        function calcRoute() {
+            let pts = [[pData.lon, pData.lat], ...stops.map(s=>[s.lon, s.lat]), [pData.lon, pData.lat]];
+            fetch(`https://router.project-osrm.org/route/v1/driving/${pts.map(p=>p.join(',')).join(';')}?overview=full&geometries=geojson`).then(r=>r.json()).then(res=>{
+                if(res.code==='Ok'){ let rd=res.routes[0]; L.polyline(rd.geometry.coordinates.map(c=>[c[1], c[0]]), {color:'var(--info)', weight:4}).addTo(routeLayer); map.fitBounds(L.featureGroup(markers.getLayers()).getBounds().pad(0.2)); updateStats(rd.distance/1000, rd.duration/60); }
+            });
+        }
+
+        function updateStats(dist, driveTime) {
+            const cH=parseFloat(document.getElementById('cH').value)||0, cK=parseFloat(document.getElementById('cK').value)||0, prep=parseFloat(document.getElementById('tPrep').value)||0, load=parseFloat(document.getElementById('tLoad').value)||0;
+            const sTime=stops.reduce((a,b)=>a+b.time, 0)+prep+load, ct=(dist*cK)+((driveTime/60)*cH), co=(sTime/60)*cH, tt=ct+co, v=stops.reduce((a,b)=>a+b.euro, 0);
+            document.getElementById('rDist').innerText=dist.toFixed(1)+" km"; document.getElementById('rTime').innerText=Math.floor(driveTime/60)+"h"+Math.round(driveTime%60); document.getElementById('rOps').innerText=Math.floor(sTime/60)+"h"+Math.round(sTime%60);
+            document.getElementById('rCostTrans').innerText=ct.toFixed(2)+" €"; document.getElementById('rCostOps').innerText=co.toFixed(2)+" €"; document.getElementById('rTotal').innerText=tt.toFixed(2)+" €";
+            document.getElementById('rVal').innerText=v.toFixed(2)+" €"; document.getElementById('rRatio').innerText=v>0?(tt/v*100).toFixed(1)+" %":"0 %";
+        }
+
+        function sendData() {
+            const btn=document.getElementById('btnSend'); btn.disabled=true; btn.innerText="⏳ Envoi...";
+            const now = new Date(); const dateStr = now.toISOString().split('T')[0];
+            const tourId = (document.getElementById('pName').value||"None").replace(/\s/g,'') + "_" + document.getElementById('pDay').value + "_" + dateStr.replace(/-/g,'') + "_" + now.getHours() + now.getMinutes();
+            
+            // Création des lignes CSV pour le Colab
+            const rows = [];
+            // 1. Point de départ
+            rows.push(createCSVRow(1, "Départ Dépôt", pData.addr, pData.lat, pData.lon, tourId, dateStr, 0, 0, 0));
+            // 2. Les arrêts
+            stops.forEach((s, i) => rows.push(createCSVRow(i+2, s.client, s.addr, s.lat, s.lon, tourId, dateStr, s.euro, s.time, s.vol)));
+            // 3. Point de retour
+            rows.push(createCSVRow(stops.length+2, "Retour Dépôt", pData.addr, pData.lat, pData.lon, tourId, dateStr, 0, 0, 0));
+
+            fetch(API, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ rows: rows }) })
+            .then(r=>r.json()).then(()=>{ alert("✅ Tournée synchronisée avec le Colab !"); stops=[]; updateView(); })
+            .catch(()=>alert("❌ Erreur envoi")).finally(()=>{ btn.disabled=false; btn.innerText="🚀 ENREGISTRER LA TOURNÉE"; });
+        }
+
+        function createCSVRow(ordre, client, addr, lat, lon, tourId, date, euro, time, vol) {
+            return {
+                "Producteur": document.getElementById('pName').value,
+                "Date de Livraison": date,
+                "Jour": document.getElementById('pDay').value,
+                "Tournée ID": tourId,
+                "Ordre d'Arrêt": ordre,
+                "Client / Point de Livraison": client,
+                "Adresse Complète": addr,
+                "lat": lat, "lon": lon,
+                "Volume (Kg Normalisé)": vol,
+                "Temps Chargement Départ (min)": parseFloat(document.getElementById('tLoad').value),
+                "Poids (kg)": 0,
+                "Montant (€)": euro,
+                "Temps d'arrêt (min)": time,
+                "Véhicule": document.getElementById('vType').value,
+                "Carburant": document.getElementById('vFuel').value,
+                "Cout Horaire (€/h)": parseFloat(document.getElementById('cH').value),
+                "Cout Km (€/km)": parseFloat(document.getElementById('cK').value),
+                "Temps Préparation (min)": parseFloat(document.getElementById('tPrep').value)
+            };
+        }
+    </script>
+</body>
+</html>
