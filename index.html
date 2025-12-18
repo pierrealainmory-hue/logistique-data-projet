@@ -170,7 +170,44 @@
             document.getElementById('box-prod').classList.toggle('active-zone', m==='prod');
             document.getElementById('box-stop').classList.toggle('active-zone', m==='stop');
         }
-
+        
+        function searchAddress(targetMode) {
+            let inputId = (targetMode === 'prod') ? 'pAddr' : 'sAddr';
+            let query = document.getElementById(inputId).value;
+        
+            if (!query || query.length < 3) return alert("Veuillez saisir une adresse plus précise.");
+        
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`)
+                .then(r => r.json())
+                .then(results => {
+                    if (results.length > 0) {
+                        let first = results[0];
+                        let lat = parseFloat(first.lat);
+                        let lon = parseFloat(first.lon);
+                        let addr = first.display_name;
+        
+                        if (targetMode === 'prod') {
+                            pData = { lat, lon, addr, name: document.getElementById('pName').value };
+                            document.getElementById('pAddr').value = addr;
+                            saveProd();
+                            map.setView([lat, lon], 13);
+                        } else {
+                            sTemp = { lat, lon };
+                            document.getElementById('sAddr').value = addr;
+                            // On place un marqueur temporaire orange pour confirmer
+                            markers.clearLayers();
+                            if(pData.lat) L.marker([pData.lat, pData.lon], {icon: L.divIcon({html:'🏠', className:''})}).addTo(markers);
+                            stops.forEach(s => L.circleMarker([s.lat, s.lon], {radius:8, color:'blue', fillOpacity:1}).addTo(markers));
+                            L.circleMarker([lat, lon], {radius:10, color:'orange', weight:3, fillOpacity:0.5}).addTo(markers);
+                            map.setView([lat, lon], 13);
+                        }
+                    } else {
+                        alert("Adresse introuvable. Essayez d'être plus précis (rue, ville, code postal).");
+                    }
+                })
+                .catch(err => console.error("Erreur recherche :", err));
+        }
+        
         function onMapClick(e) {
             let lat = e.latlng.lat;
             let lon = e.latlng.lng;
