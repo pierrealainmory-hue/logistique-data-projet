@@ -3,242 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logistique Producteur - V15</title>
-    
+    <title>Logistique Producteur - V16</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
-    
     <style>
-        :root { --primary: #2c3e50; --accent: #e67e22; --success: #27ae60; --bg: #eaeff2; }
-        body { font-family: 'Segoe UI', sans-serif; max-width: 1400px; margin: 0 auto; padding: 15px; background: var(--bg); color: #333; font-size: 14px; }
+        :root { --primary: #2c3e50; --accent: #e67e22; --success: #27ae60; --bg: #eaeff2; --danger: #e74c3c; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; background: var(--bg); color: #333; font-size: 13px; }
         
-        /* Layout */
-        .main-container { display: flex; gap: 20px; flex-wrap: wrap; }
-        .left-panel { flex: 1; min-width: 400px; }
-        .right-panel { flex: 1.5; min-width: 400px; }
+        /* BANDEAU HAUT */
+        .header-band { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; border-top: 6px solid var(--primary); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .header-band.saved { border-top-color: var(--success); }
+        
+        /* LAYOUT */
+        .main-container { display: flex; gap: 20px; }
+        .left-panel { flex: 1; min-width: 420px; }
+        .right-panel { flex: 2; }
 
-        /* Box Styles */
         .card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .header-box { border-left: 8px solid #95a5a6; }
-        .header-box.active-zone { border-left-color: var(--accent); background: #fffbf0; }
-        .header-box.saved { border-left-color: var(--success); }
-        .stop-box { border-top: 8px solid #1abc9c; }
-        .stop-box.active-zone { border-top-color: var(--accent); background: #fffbf0; }
+        .stop-box { border-left: 6px solid #1abc9c; }
+        .active-zone { background: #fffbf0 !important; border-color: var(--accent) !important; }
 
-        /* Form */
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
-        .form-group label { display: block; font-weight: bold; color: #7f8c8d; margin-bottom: 5px; font-size: 0.85rem; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #bdc3c7; border-radius: 6px; box-sizing: border-box; }
+        /* FORM */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+        .form-group label { display: block; font-weight: bold; color: #7f8c8d; margin-bottom: 5px; font-size: 0.8rem; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #bdc3c7; border-radius: 6px; box-sizing: border-box; }
         .search-bar { display: flex; gap: 5px; }
         .btn-mini { padding: 8px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; }
         .btn-target { background: #95a5a6; min-width: 70px; }
         .btn-target.active { background: var(--accent); }
 
-        /* List */
-        #stops-list { list-style: none; padding: 0; }
-        .stop-item { background: white; padding: 12px; margin-bottom: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid #3498db; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        /* LISTE */
+        #stops-list { list-style: none; padding: 0; margin: 0; }
+        .stop-item { background: white; padding: 10px; margin-bottom: 8px; border-radius: 8px; display: flex; justify-content: space-between; border-left: 5px solid #3498db; }
 
-        /* Results Display */
-        .res-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        /* RESULTATS DETAILLES */
+        .res-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 15px; }
         .res-item { background: var(--primary); color: white; padding: 12px; border-radius: 8px; text-align: center; }
-        .res-item b { display: block; font-size: 1.2rem; }
-        .res-total { grid-column: span 2; background: #e74c3c; padding: 15px; border-radius: 8px; text-align: center; }
-        .res-ratio { grid-column: span 2; background: var(--accent); padding: 10px; border-radius: 8px; text-align: center; }
+        .res-item b { display: block; font-size: 1.1rem; margin-top: 4px; }
+        .res-highlight { background: #34495e; border-bottom: 3px solid var(--accent); }
+        
+        .total-box { grid-column: span 3; display: flex; gap: 12px; }
+        .cost-card { flex: 1; padding: 15px; border-radius: 8px; color: white; text-align: center; }
+        .cost-transport { background: #2980b9; }
+        .cost-human { background: #8e44ad; }
+        .cost-final { background: var(--danger); }
 
-        #map { height: 500px; width: 100%; border-radius: 12px; border: 1px solid #ccc; background: #ddd; }
-        .btn-main { background: var(--success); color: white; width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.1rem; margin-top: 10px; }
+        .ratio-box { grid-column: span 3; background: var(--accent); color: white; padding: 15px; border-radius: 8px; display: flex; justify-content: space-around; align-items: center; }
+
+        #map { height: 450px; width: 100%; border-radius: 12px; border: 1px solid #ccc; }
+        .btn-main { background: var(--success); color: white; width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.1rem; }
     </style>
 </head>
 <body>
 
-    <button onclick="localStorage.clear(); location.reload();" style="float:right; background:#c0392b; color:white; border:none; padding:5px 10px; cursor:pointer; border-radius:4px;">Effacer Mémoire</button>
-    <h1>🚚 Simulateur Logistique V15</h1>
+    <button onclick="localStorage.clear(); location.reload();" class="btn-mini" style="float:right; background:var(--danger)">🧹 Reset</button>
+    <h2 style="margin: 0 0 15px 0; color: var(--primary);">🚛 Simulateur Logistique Expert</h2>
 
-    <div class="main-container">
-        <div class="left-panel">
-            <div class="card header-box" id="box-prod" onclick="setMode('prod')">
-                <h3 style="margin:0 0 15px 0;">🏭 Configuration Tournée</h3>
-                <div class="grid">
-                    <div class="form-group" style="grid-column: span 2;">
-                        <label>Nom du Producteur / Tournée</label>
-                        <input type="text" id="pName" placeholder="Ex: Ferme Alpha">
-                    </div>
-                    <div class="form-group" style="grid-column: span 2;">
-                        <label>📍 Adresse de Départ</label>
-                        <div class="search-bar">
-                            <input type="text" id="pAddr" placeholder="Cliquez sur la carte...">
-                            <button class="btn-mini btn-target" id="btn-t-prod">🎯 CIBLE</button>
-                        </div>
-                    </div>
-                    <div class="form-group"><label>📦 Prép. (min)</label><input type="number" id="tPrep" value="30"></div>
-                    <div class="form-group"><label>🚚 Charg. (min)</label><input type="number" id="tLoad" value="20"></div>
-                    <div class="form-group"><label>💶 Coût H (€/h)</label><input type="number" id="cH" value="15"></div>
-                    <div class="form-group"><label>⛽ Coût Km (€/km)</label><input type="number" id="cK" value="0.5" step="0.1"></div>
-                </div>
+    <div class="header-band" id="box-prod" onclick="setMode('prod')">
+        <div class="grid">
+            <div class="form-group" style="grid-column: span 2;">
+                <label>Nom Producteur / Ferme</label>
+                <input type="text" id="pName" placeholder="Ex: Ferme du Soleil">
             </div>
-
-            <div class="card stop-box" id="box-stop" onclick="setMode('stop')">
-                <h3 style="margin:0 0 15px 0;">📍 Nouvel Arrêt</h3>
-                <div class="form-group">
-                    <label>Adresse Arrêt</label>
-                    <div class="search-bar">
-                        <input type="text" id="sAddr" placeholder="Ciblez sur la carte...">
-                        <button class="btn-mini btn-target" id="btn-t-stop">🎯 CIBLE</button>
-                    </div>
-                </div>
-                <div class="grid" style="margin-top:10px;">
-                    <div class="form-group" style="grid-column: span 2;"><label>Client</label><input type="text" id="sClient"></div>
-                    <div class="form-group"><label>Valeur (€)</label><input type="number" id="sEuro" value="0"></div>
-                    <div class="form-group"><label>⏱️ Arrêt (min)</label><input type="number" id="sTime" value="15"></div>
-                </div>
-                <button class="btn-main" style="background:#2980b9;" onclick="addStop()">Ajouter l'arrêt</button>
-            </div>
-
-            <ul id="stops-list"></ul>
-            <button class="btn-main" id="btnSend" onclick="sendData()" disabled>🚀 ENREGISTRER LA TOURNÉE</button>
-        </div>
-
-        <div class="right-panel">
-            <div id="map"></div>
-            <div class="res-grid">
-                <div class="res-item"><span>🛣️ Distance</span><b id="rDist">0 km</b></div>
-                <div class="res-item"><span>⏱️ Route</span><b id="rTime">0h00</b></div>
-                <div class="res-item"><span>⚙️ Service</span><b id="rOps">0h00</b></div>
-                <div class="res-item"><span>💶 Main d'Oeuvre</span><b id="rCostMO">0 €</b></div>
-                <div class="res-total"><span>COÛT LOGISTIQUE GLOBAL</span><b id="rTotal">0 €</b></div>
-                <div class="res-ratio"><span>Rentabilité (Coût/Valeur)</span><b id="rRatio">0 %</b></div>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        const API = "https://update-github-csv-149052175314.europe-west1.run.app/";
-        let map, markers, route;
-        let stops = [];
-        let mode = 'stop';
-        let pData = { lat:null, lon:null, addr:"" };
-        let sTemp = { lat:null, lon:null, addr:"" };
-
-        // INITIALISATION
-        window.onload = function() {
-            map = L.map('map').setView([46.6, 1.88], 6);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-            markers = L.layerGroup().addTo(map);
-            route = L.layerGroup().addTo(map);
-            map.on('click', onMapClick);
-            setMode('stop');
-            
-            // Recharger producteur si en mémoire
-            let saved = localStorage.getItem('pMem');
-            if(saved) {
-                pData = JSON.parse(saved);
-                document.getElementById('pName').value = pData.name || "";
-                document.getElementById('pAddr').value = pData.addr;
-                updateView();
-            }
-        };
-
-        function setMode(m) {
-            mode = m;
-            document.getElementById('btn-t-prod').classList.toggle('active', m==='prod');
-            document.getElementById('btn-t-stop').classList.toggle('active', m==='stop');
-            document.getElementById('box-prod').classList.toggle('active-zone', m==='prod');
-            document.getElementById('box-stop').classList.toggle('active-zone', m==='stop');
-        }
-
-        function onMapClick(e) {
-            let lat = e.latlng.lat;
-            let lon = e.latlng.lng;
-            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
-                .then(r => r.json()).then(d => {
-                    let a = d.display_name || "Point Carte";
-                    if(mode === 'prod') {
-                        pData = { lat, lon, addr: a, name: document.getElementById('pName').value };
-                        document.getElementById('pAddr').value = a;
-                        localStorage.setItem('pMem', JSON.stringify(pData));
-                    } else {
-                        sTemp = { lat, lon, addr: a };
-                        document.getElementById('sAddr').value = a;
-                    }
-                    updateView();
-                });
-        }
-
-        function addStop() {
-            if(!pData.lat) return alert("Défisissez le Dépôt !");
-            if(!sTemp.lat) return alert("Pointez l'arrêt !");
-            stops.push({
-                client: document.getElementById('sClient').value || "Client",
-                euro: parseFloat(document.getElementById('sEuro').value) || 0,
-                time: parseFloat(document.getElementById('sTime').value) || 15,
-                lat: sTemp.lat, lon: sTemp.lon
-            });
-            sTemp = { lat:null, lon:null, addr:"" };
-            document.getElementById('sAddr').value = "";
-            document.getElementById('sClient').value = "";
-            updateView();
-        }
-
-        function updateView() {
-            markers.clearLayers();
-            route.clearLayers();
-            let ul = document.getElementById('stops-list');
-            ul.innerHTML = "";
-
-            if(pData.lat) L.marker([pData.lat, pData.lon], {icon: L.divIcon({html:'🏠', className:''})}).addTo(markers);
-
-            stops.forEach((s, i) => {
-                ul.innerHTML += `<li class="stop-item"><span><b>${i+1}.</b> ${s.client} (${s.euro}€)</span><button onclick="stops.splice(${i},1); updateView()">✕</button></li>`;
-                L.circleMarker([s.lat, s.lon], {radius:8, color:'blue', fillOpacity:1}).addTo(markers);
-            });
-
-            if(pData.lat && stops.length > 0) calcRoute();
-            document.getElementById('btnSend').disabled = stops.length === 0;
-        }
-
-        function calcRoute() {
-            let pts = [[pData.lon, pData.lat], ...stops.map(s => [s.lon, s.lat]), [pData.lon, pData.lat]];
-            fetch(`https://router.project-osrm.org/route/v1/driving/${pts.map(p => p.join(',')).join(';')}?overview=full&geometries=geojson`)
-                .then(r => r.json()).then(res => {
-                    if(res.code === 'Ok') {
-                        let rData = res.routes[0];
-                        L.polyline(rData.geometry.coordinates.map(c => [c[1], c[0]]), {color:'blue', weight:4}).addTo(route);
-                        map.fitBounds(L.featureGroup(markers.getLayers()).getBounds().pad(0.1));
-                        updateStats(rData.distance/1000, rData.duration/60);
-                    }
-                });
-        }
-
-        function updateStats(dist, driveTime) {
-            let prep = parseFloat(document.getElementById('tPrep').value) || 0;
-            let load = parseFloat(document.getElementById('tLoad').value) || 0;
-            let sTime = stops.reduce((a, b) => a + b.time, 0);
-            let totalOps = prep + load + sTime;
-            let costH = parseFloat(document.getElementById('cH').value) || 15;
-            let costK = parseFloat(document.getElementById('cK').value) || 0.5;
-            let mo = ((driveTime + totalOps) / 60) * costH;
-            let total = (dist * costK) + mo;
-            let val = stops.reduce((a, b) => a + b.euro, 0);
-
-            document.getElementById('rDist').innerText = dist.toFixed(1) + " km";
-            document.getElementById('rTime').innerText = Math.floor(driveTime/60) + "h" + Math.round(driveTime%60);
-            document.getElementById('rOps').innerText = Math.floor(totalOps/60) + "h" + Math.round(totalOps%60);
-            document.getElementById('rCostMO').innerText = mo.toFixed(1) + " €";
-            document.getElementById('rTotal').innerText = total.toFixed(0) + " €";
-            document.getElementById('rRatio').innerText = val > 0 ? (total/val*100).toFixed(1) + " %" : "0 %";
-        }
-
-        function sendData() {
-            let btn = document.getElementById('btnSend');
-            btn.disabled = true;
-            let payload = {
-                general: { Producteur: document.getElementById('pName').value, Lat: pData.lat, Lon: pData.lon },
-                stops: stops
-            };
-            fetch(API, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) })
-                .then(() => { alert("✅ Sauvegardé !"); stops = []; updateView(); })
-                .catch(() => alert("Erreur envoi"));
-        }
-    </script>
-</body>
-</html>
+            <div class="form-group" style="grid-column:
