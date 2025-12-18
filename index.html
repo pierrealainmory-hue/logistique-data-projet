@@ -133,6 +133,7 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+        const API = "https://update-github-csv-149052175314.europe-west1.run.app/";
         let map, markers, routeLayer;
         let stops = [];
         let mode = 'stop';
@@ -169,13 +170,9 @@
         function onMapClick(e) {
             let lat = e.latlng.lat;
             let lon = e.latlng.lng;
-            
-            // Point temporaire visuel
             markers.clearLayers();
             if(pData.lat) L.marker([pData.lat, pData.lon], {icon: L.divIcon({html:'🏠', className:''})}).addTo(markers);
             stops.forEach(s => L.circleMarker([s.lat, s.lon], {radius:8, color:'blue', fillOpacity:1}).addTo(markers));
-            
-            // Feedback visuel de sélection (point orange)
             L.circleMarker([lat, lon], {radius:10, color:'orange', weight:3, fillOpacity:0.5}).addTo(markers);
 
             fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
@@ -199,7 +196,7 @@
         }
 
         function addStop() {
-            if(!pData.lat) return alert("Défisissez le Producteur !");
+            if(!pData.lat) return alert("Définissez le Producteur !");
             if(!sTemp.lat) return alert("Cliquez sur la carte !");
             stops.push({
                 client: document.getElementById('sClient').value || "Client",
@@ -248,11 +245,8 @@
             let cH = parseFloat(document.getElementById('cH').value) || 15;
             let cK = parseFloat(document.getElementById('cK').value) || 0.5;
 
-            // Coût Transport : Carburant + Chauffeur roulant
             let cTrans = (dist * cK) + ((driveTime / 60) * cH);
-            // Coût Manutention : Temps passé à l'arrêt
             let cOps = (totalOps / 60) * cH;
-            
             let total = cTrans + cOps;
             let val = stops.reduce((a, b) => a + b.euro, 0);
 
@@ -267,8 +261,53 @@
         }
 
         function sendData() {
-            alert("✅ Données prêtes pour l'enregistrement !");
-            // Ici, votre fonction fetch vers le serveur habituel
+            let btn = document.getElementById('btnSend');
+            btn.disabled = true;
+            btn.innerText = "Envoi...";
+
+            let payload = {
+                general: { 
+                    Producteur: document.getElementById('pName').value, 
+                    AdresseProd: pData.addr,
+                    LatProd: pData.lat,
+                    LonProd: pData.lon,
+                    CoutHoraire: parseFloat(document.getElementById('cH').value),
+                    CoutKm: parseFloat(document.getElementById('cK').value),
+                    TempsPreparation: parseFloat(document.getElementById('tPrep').value),
+                    TempsChargement: parseFloat(document.getElementById('tLoad').value),
+                    Vehicule: document.getElementById('vType').value,
+                    Carburant: document.getElementById('fType').value,
+                    DistanceTotale: document.getElementById('rDist').innerText,
+                    CoutTransport: document.getElementById('rCostTrans').innerText,
+                    CoutManutention: document.getElementById('rCostOps').innerText,
+                    CoutTotal: document.getElementById('rTotal').innerText,
+                    ValeurMarchandise: document.getElementById('rVal').innerText
+                },
+                stops: stops
+            };
+
+            fetch(API, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify(payload) 
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Erreur serveur');
+                return response.json();
+            })
+            .then(data => {
+                alert("✅ Tournée enregistrée avec succès !");
+                stops = [];
+                updateView();
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                alert("❌ Erreur lors de l'enregistrement. Vérifiez votre connexion.");
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerText = "🚀 ENREGISTRER LA TOURNÉE";
+            });
         }
     </script>
 </body>
