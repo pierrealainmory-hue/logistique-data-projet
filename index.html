@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Décrire une Tournée (V3 Stable)</title>
+    <title>Décrire une Tournée (Stable V4)</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
@@ -12,7 +12,7 @@
         body { font-family: 'Segoe UI', sans-serif; max-width: 1400px; margin: 0 auto; padding: 15px; background: #eaeff2; color: #333; font-size: 14px; }
         
         /* HEADER */
-        .header-box { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-left: 6px solid #95a5a6; }
+        .header-box { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 6px solid #95a5a6; }
         .header-box.saved { border-left-color: #27ae60; background: #f0fdf4; }
         .header-title { font-size: 1.5em; color: #2c3e50; margin-bottom: 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         #memory-badge { font-size: 0.6em; background: #ecf0f1; padding: 5px 12px; border-radius: 15px; color: #7f8c8d; }
@@ -27,21 +27,14 @@
         .main-container { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
         .left-panel { flex: 1; min-width: 400px; }
         .right-panel { flex: 1.5; min-width: 400px; display: flex; flex-direction: column; }
-        .add-stop-box { background: white; padding: 20px; border-radius: 8px; border-top: 5px solid #1abc9c; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .add-stop-box { background: white; padding: 20px; border-radius: 8px; border-top: 5px solid #1abc9c; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
 
-        /* LISTE ARRETS (CORRIGÉE) */
+        /* LISTE ARRETS */
         #stops-list { list-style: none; padding: 0; margin: 0; max-height: 500px; overflow-y: auto; }
         .stop-item { 
-            background: white; 
-            padding: 12px 15px; 
-            margin-bottom: 12px; /* Espace entre les items */
-            border-radius: 6px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: space-between; 
-            border-left: 5px solid #bdc3c7; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            min-height: 50px; /* Hauteur min garantie */
+            background: white; padding: 12px 15px; margin-bottom: 12px; border-radius: 6px; 
+            display: flex; align-items: center; justify-content: space-between; 
+            border-left: 5px solid #bdc3c7; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
         .stop-item.type-livraison { border-left-color: #3498db; }
         .stop-item.type-point-relais { border-left-color: #f39c12; }
@@ -74,7 +67,7 @@
 </head>
 <body>
 
-    <div class="header-box" id="header-box">
+    <div class="header-box" id="header-box" onclick="setMapTarget('prod')">
         <div class="header-title">
             <span>📝 Décrire une Tournée (Producteur)</span>
             <span id="memory-badge">En attente...</span>
@@ -188,27 +181,299 @@
 <script>
     const API_URL = "https://update-github-csv-149052175314.europe-west1.run.app/"; 
 
+    // Données globales
     let stops = [];
-    let mapMarkers = []; 
-    let routeLayer = null;
-    let fallbackLayer = null; 
-    let tempMarker = null;
-    let prodMarker = null;
     let activeTarget = 'stop'; 
     
-    // Init Carte
-    var map = L.map('map').setView([46.60, 1.88], 6);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: 'OSM' }).addTo(map);
+    // Eléments Carte
+    let map = null;
+    let prodMarker = null;
+    let tempMarker = null;
+    let markersLayer = L.layerGroup();
+    let routeLayer = L.layerGroup();
 
-    // --- 1. MEMOIRE & CHARGEMENT ---
-    window.onload = function() { loadProdData(); };
+    // --- INITIALISATION ---
+    window.onload = function() {
+        initMap();
+        loadProdData();
+    };
 
+    function initMap() {
+        map = L.map('map').setView([46.60, 1.88], 6);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: 'OSM' }).addTo(map);
+        markersLayer.addTo(map);
+        routeLayer.addTo(map);
+        
+        map.on('click', onMapClick);
+    }
+
+    // --- CIBLAGE (TARGET) ---
+    function setMapTarget(target) {
+        activeTarget = target;
+        document.getElementById('btn-target-prod').classList.remove('active');
+        document.getElementById('btn-target-stop').classList.remove('active');
+        document.getElementById('btn-target-' + target).classList.add('active');
+    }
+
+    // --- GESTION COORDONNEES & CLICK ---
+    function onMapClick(e) {
+        // Nettoyer marker temporaire
+        if(tempMarker) map.removeLayer(tempMarker);
+        
+        let iconChar = activeTarget === 'prod' ? '🏭' : '📍';
+        tempMarker = L.marker(e.latlng, {
+            icon: L.divIcon({html: `<div style="font-size:32px; opacity:0.6;">${iconChar}</div>`, className: ''})
+        }).addTo(map);
+        
+        // Identifier les champs à remplir
+        let prefix = activeTarget === 'prod' ? 'prod' : 'stop';
+        document.getElementById(prefix + 'Address').value = "⏳ Recherche...";
+        
+        // Appel API
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lon}`)
+        .then(r => r.json())
+        .then(data => {
+            let addr = data.display_name || "Point Carte";
+            document.getElementById(prefix + 'Address').value = addr;
+            document.getElementById(prefix + 'Lat').value = e.latlng.lat;
+            document.getElementById(prefix + 'Lon').value = e.latlng.lon;
+            
+            // Validation visuelle
+            document.getElementById(prefix + 'Address').classList.add('input-valid');
+            document.getElementById('feedback-' + prefix).style.display = 'block';
+            
+            if(activeTarget === 'prod') {
+                document.getElementById('warn-prod').style.display='none';
+                saveProdData(); // Sauvegarde auto
+                refreshMapElements(); // Redessine tout
+            }
+        });
+    }
+
+    function geocodeInput(target) {
+        setMapTarget(target);
+        let prefix = target === 'prod' ? 'prod' : 'stop';
+        let q = document.getElementById(prefix + 'Address').value;
+        if(q.length < 3) return;
+
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}`)
+        .then(r=>r.json()).then(d=>{
+            if(d.length>0) {
+                map.fireEvent('click', {latlng: {lat:d[0].lat, lng:d[0].lon}});
+                map.setView([d[0].lat, d[0].lon], 16);
+            } else alert("Adresse introuvable");
+        });
+    }
+
+    function geolocate(target) {
+        setMapTarget(target);
+        navigator.geolocation.getCurrentPosition(p => {
+            map.fireEvent('click', {latlng: {lat:p.coords.latitude, lng:p.coords.longitude}});
+            map.setView([p.coords.latitude, p.coords.longitude], 16);
+        });
+    }
+
+    // --- GESTION DES ARRETS ---
+    function addStop() {
+        // 1. Vérifier si Prod est défini
+        let pLat = document.getElementById('prodLat').value;
+        if(!pLat) {
+            document.getElementById('warn-prod').style.display='block';
+            alert("⚠️ Définissez d'abord le départ (Producteur) !");
+            return;
+        }
+
+        // 2. Vérifier l'arrêt
+        let sLat = document.getElementById('stopLat').value;
+        let sClient = document.getElementById('stopClient').value;
+        if(!sLat || !sClient) {
+            document.getElementById('error-msg').style.display='block'; 
+            return;
+        }
+        document.getElementById('error-msg').style.display='none';
+
+        // 3. Ajouter
+        stops.push({
+            type: document.getElementById('stopType').value,
+            client: sClient,
+            poids: parseFloat(document.getElementById('stopWeight').value)||0,
+            montant: parseFloat(document.getElementById('stopEuro').value)||0,
+            temps_arret: parseFloat(document.getElementById('stopTime').value)||0,
+            lat: parseFloat(sLat),
+            lon: parseFloat(document.getElementById('stopLon').value),
+            adresse_txt: document.getElementById('stopAddress').value
+        });
+
+        // 4. Reset Formulaire
+        document.getElementById('stopClient').value = '';
+        document.getElementById('stopWeight').value = '';
+        document.getElementById('stopEuro').value = '';
+        document.getElementById('stopAddress').value = '';
+        document.getElementById('stopLat').value = '';
+        document.getElementById('stopAddress').classList.remove('input-valid');
+        document.getElementById('feedback-stop').style.display = 'none';
+        if(tempMarker) map.removeLayer(tempMarker);
+
+        // 5. Update
+        renderStopsList();
+        refreshMapElements();
+    }
+
+    function removeStop(i) {
+        stops.splice(i, 1);
+        renderStopsList();
+        refreshMapElements();
+    }
+
+    function renderStopsList() {
+        let ul = document.getElementById('stops-list');
+        ul.innerHTML = "";
+        stops.forEach((s, i) => {
+            let cls = 'stop-item';
+            if(s.type === 'Livraison') cls += ' type-livraison';
+            else if(s.type === 'Point Relais') cls += ' type-point-relais';
+            else cls += ' type-collecte';
+            
+            let li = document.createElement('li');
+            li.className = cls;
+            li.innerHTML = `
+                <div>
+                    <strong>${i+1}. ${s.client}</strong> <small>(${s.type})</small><br>
+                    <span style="color:#666;">${s.poids}kg | ${s.montant}€ | ${s.temps_arret}min</span>
+                </div>
+                <button onclick="removeStop(${i})" style="color:#e74c3c; background:none; border:none; cursor:pointer; font-weight:bold; font-size:1.2em;">✕</button>
+            `;
+            ul.appendChild(li);
+        });
+        document.getElementById('finalBtn').disabled = (stops.length === 0);
+    }
+
+    // --- MOTEUR DE CARTE & CALCUL (LE CŒUR DU SYSTEME) ---
+    function refreshMapElements() {
+        markersLayer.clearLayers();
+        routeLayer.clearLayers();
+
+        // 1. Dessiner Producteur (si existe)
+        let pLat = parseFloat(document.getElementById('prodLat').value);
+        let pLon = parseFloat(document.getElementById('prodLon').value);
+        
+        if(!isNaN(pLat)) {
+            L.marker([pLat, pLon], {
+                icon: L.divIcon({html: '<div style="font-size:32px;">🏭</div>', className: ''})
+            }).addTo(markersLayer);
+        }
+
+        // 2. Dessiner Arrêts
+        stops.forEach((s, i) => {
+            let color = '#3498db';
+            if(s.type === 'Point Relais') color = '#f39c12';
+            if(s.type === 'Collecte') color = '#9b59b6';
+            
+            L.circleMarker([s.lat, s.lon], {
+                radius: 8, fillColor: color, color: 'white', weight: 2, fillOpacity: 1
+            }).bindPopup(`<b>${i+1}</b> ${s.client}`).addTo(markersLayer);
+        });
+
+        // 3. Calculer Route (Si Producteur + au moins 1 arrêt)
+        if(!isNaN(pLat) && stops.length > 0) {
+            calculateTrip(pLat, pLon);
+        } else {
+            updateDashboard(0, 0); // Reset zéros
+        }
+    }
+
+    function calculateTrip(pLat, pLon) {
+        // Préparer les coordonnées
+        let coords = [[pLon, pLat]]; // OSRM veut [Lon, Lat]
+        stops.forEach(s => coords.push([s.lon, s.lat]));
+        coords.push([pLon, pLat]); // Retour
+
+        // A. Calcul Vol d'Oiseau (Immédiat - Secours)
+        let rawDist = 0;
+        let polyPoints = [[pLat, pLon]]; // Leaflet veut [Lat, Lon]
+        
+        for(let i=0; i<coords.length-1; i++) {
+            let p1 = coords[i];
+            let p2 = coords[i+1];
+            // Leaflet Lat,Lon
+            rawDist += map.distance([p1[1], p1[0]], [p2[1], p2[0]]); 
+            polyPoints.push([p2[1], p2[0]]);
+        }
+        
+        let distKm = (rawDist / 1000) * 1.3; // +30% marge erreur
+        let timeMin = (distKm / 50) * 60; // 50km/h moyenne
+        
+        // Affichage immédiat (Ligne rouge pointillée)
+        let fallbackLine = L.polyline(polyPoints, {color: 'red', dashArray: '5, 10', weight: 3}).addTo(routeLayer);
+        map.fitBounds(fallbackLine.getBounds().pad(0.1));
+        updateDashboard(distKm, timeMin);
+
+        // B. Tentative OSRM (Précis)
+        let strCoords = coords.map(c => c.join(',')).join(';');
+        let url = `https://router.project-osrm.org/route/v1/driving/${strCoords}?overview=full&geometries=geojson`;
+
+        fetch(url)
+        .then(r => r.json())
+        .then(res => {
+            if(res.code === 'Ok' && res.routes && res.routes.length > 0) {
+                // Succès : On remplace la ligne rouge par la bleue
+                routeLayer.clearLayers();
+                let r = res.routes[0];
+                let latlngs = r.geometry.coordinates.map(c => [c[1],c[0]]);
+                L.polyline(latlngs, {color: '#2c3e50', weight: 5, opacity: 0.8}).addTo(routeLayer);
+                
+                // Mettre à jour avec valeurs réelles
+                updateDashboard(r.distance/1000, r.duration/60);
+            }
+        })
+        .catch(err => console.log("OSRM Fail (garde vol d'oiseau)", err));
+    }
+
+    function updateDashboard(distKm, driveTimeMin) {
+        // Récupérer paramètres
+        let prep = parseFloat(document.getElementById('prepTime').value)||0;
+        let load = parseFloat(document.getElementById('loadTime').value)||0;
+        let stopsT = stops.reduce((acc, s) => acc + s.temps_arret, 0);
+        let opsTime = prep + load + stopsT;
+
+        let costH = parseFloat(document.getElementById('costHour').value)||15;
+        let costK = parseFloat(document.getElementById('costKm').value)||0.5;
+
+        // Calculs
+        let cTrans = distKm * costK;
+        let cMO = ((driveTimeMin + opsTime)/60) * costH;
+        let cTotal = cTrans + cMO;
+        
+        let revenue = stops.reduce((acc, s) => acc + s.montant, 0);
+        let ratio = revenue > 0 ? (cTotal / revenue * 100) : 0;
+
+        // Affichage HTML
+        document.getElementById('syn-dist').innerText = distKm.toFixed(1) + " km";
+        document.getElementById('syn-time-drive').innerText = formatTime(driveTimeMin);
+        document.getElementById('syn-time-ops').innerText = formatTime(opsTime);
+        
+        document.getElementById('syn-cost-trans').innerText = cTrans.toFixed(0) + " €";
+        document.getElementById('syn-cost-mo').innerText = cMO.toFixed(0) + " €";
+        document.getElementById('syn-cost-total').innerText = cTotal.toFixed(0) + " €";
+        
+        document.getElementById('syn-ratio').innerText = ratio.toFixed(1) + " %";
+        document.getElementById('syn-rev-display').innerText = `(Valeur: ${revenue}€)`;
+    }
+
+    function formatTime(min) {
+        let h = Math.floor(min/60);
+        let m = Math.round(min%60);
+        return `${h}h${m<10?'0':''}${m}`;
+    }
+
+    // --- MEMOIRE ---
     function saveProdData() {
         let data = {
             name: document.getElementById('prodName').value,
             address: document.getElementById('prodAddress').value,
             lat: document.getElementById('prodLat').value,
             lon: document.getElementById('prodLon').value,
+            // Paramètres
             prep: document.getElementById('prepTime').value,
             load: document.getElementById('loadTime').value,
             ch: document.getElementById('costHour').value,
@@ -218,330 +483,46 @@
         };
         localStorage.setItem('logistique_prod_data', JSON.stringify(data));
         checkHeaderStatus();
-        
-        if(data.lat && data.lon) {
-            placeProdMarker(data.lat, data.lon);
-            // Si on a des stops, on recalcule la route
-            if(stops.length > 0) processRoute(); 
-        }
+        refreshMapElements(); // Si on change le producteur, on redessine
     }
 
     function loadProdData() {
-        let saved = localStorage.getItem('logistique_prod_data');
-        if(saved) {
-            let data = JSON.parse(saved);
-            document.getElementById('prodName').value = data.name || "";
-            document.getElementById('prodAddress').value = data.address || "";
-            document.getElementById('prodLat').value = data.lat || "";
-            document.getElementById('prodLon').value = data.lon || "";
-            document.getElementById('prepTime').value = data.prep || 0;
-            document.getElementById('loadTime').value = data.load || 30;
-            document.getElementById('costHour').value = data.ch || 15;
-            document.getElementById('costKm').value = data.ck || 0.5;
+        let s = localStorage.getItem('logistique_prod_data');
+        if(s) {
+            let d = JSON.parse(s);
+            document.getElementById('prodName').value = d.name || "";
+            document.getElementById('prodAddress').value = d.address || "";
+            document.getElementById('prodLat').value = d.lat || "";
+            document.getElementById('prodLon').value = d.lon || "";
+            // Param
+            document.getElementById('prepTime').value = d.prep || 0;
+            document.getElementById('loadTime').value = d.load || 30;
+            document.getElementById('costHour').value = d.ch || 15;
+            document.getElementById('costKm').value = d.ck || 0.5;
+            document.getElementById('vehicleType').value = d.veh || "<3m3";
+            document.getElementById('fuelType').value = d.fuel || "Diesel";
             
             checkHeaderStatus();
-            if(data.lat && data.lon) {
-                placeProdMarker(data.lat, data.lon);
-                map.setView([data.lat, data.lon], 13);
-                document.getElementById('feedback-prod').style.display = 'block';
-            }
+            if(d.lat) refreshMapElements();
         }
     }
 
     function checkHeaderStatus() {
-        let name = document.getElementById('prodName').value;
-        let lat = document.getElementById('prodLat').value;
-        let header = document.getElementById('header-box');
-        let badge = document.getElementById('memory-badge');
-        
-        if(name && lat) {
-            header.classList.add('saved');
-            badge.innerText = "Données Mémorisées ✅";
+        let ok = document.getElementById('prodLat').value !== "";
+        let box = document.getElementById('header-box');
+        let bdg = document.getElementById('memory-badge');
+        if(ok) {
+            box.classList.add('saved');
+            bdg.innerText = "Données Mémorisées ✅";
         } else {
-            header.classList.remove('saved');
-            badge.innerText = "Données en attente...";
+            box.classList.remove('saved');
+            bdg.innerText = "En attente...";
         }
     }
 
-    // --- 2. CIBLAGE ---
-    function setMapTarget(target) {
-        activeTarget = target;
-        document.getElementById('btn-target-prod').classList.remove('active');
-        document.getElementById('btn-target-stop').classList.remove('active');
-        document.getElementById('btn-target-' + target).classList.add('active');
-    }
-
-    // --- 3. GESTION CARTE ---
-    function placeProdMarker(lat, lon) {
-        if(prodMarker) map.removeLayer(prodMarker);
-        prodMarker = L.marker([lat, lon], {
-            icon: L.divIcon({html: '<div style="font-size:32px;">🏭</div>', className: ''})
-        }).addTo(map);
-    }
-
-    map.on('click', function(e) {
-        if(tempMarker) map.removeLayer(tempMarker);
-        
-        let iconChar = activeTarget === 'prod' ? '🏭' : '📍';
-        tempMarker = L.marker(e.latlng, {
-            icon: L.divIcon({html: `<div style="font-size:32px; opacity:0.6;">${iconChar}</div>`, className: ''})
-        }).addTo(map);
-        
-        let inputId = activeTarget === 'prod' ? 'prodAddress' : 'stopAddress';
-        let feedbackId = activeTarget === 'prod' ? 'feedback-prod' : 'feedback-stop';
-        let latId = activeTarget === 'prod' ? 'prodLat' : 'stopLat';
-        let lonId = activeTarget === 'prod' ? 'prodLon' : 'stopLon';
-
-        document.getElementById(inputId).value = "⏳ Recherche...";
-        
-        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lon}`)
-        .then(r => r.json())
-        .then(data => {
-            let addr = data.display_name || "Point Carte";
-            document.getElementById(inputId).value = addr;
-            document.getElementById(latId).value = e.latlng.lat;
-            document.getElementById(lonId).value = e.latlng.lon;
-            
-            document.getElementById(inputId).classList.add('input-valid');
-            document.getElementById(feedbackId).style.display = 'block';
-            
-            if(activeTarget === 'prod') {
-                saveProdData(); // Déclenche sauvegarde + processRoute si stops
-            }
-        });
-    });
-
-    function geocodeInput(target) {
-        setMapTarget(target);
-        let inputId = target === 'prod' ? 'prodAddress' : 'stopAddress';
-        let q = document.getElementById(inputId).value;
-        if(q.length < 3) return;
-
-        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}`)
-        .then(r=>r.json()).then(d=>{
-            if(d.length>0) {
-                map.fireEvent('click', {latlng: {lat:d[0].lat, lng:d[0].lon}});
-                map.setView([d[0].lat, d[0].lon], 16);
-            } else alert("Introuvable");
-        });
-    }
-    
-    function geolocate(target) {
-        setMapTarget(target);
-        navigator.geolocation.getCurrentPosition(p => {
-            map.fireEvent('click', {latlng: {lat:p.coords.latitude, lng:p.coords.longitude}});
-            map.setView([p.coords.latitude, p.coords.longitude], 16);
-        });
-    }
-
-    // --- 4. LISTE STOPS ---
-    function addStop() {
-        let pLat = document.getElementById('prodLat').value;
-        if(!pLat) {
-            document.getElementById('warn-prod').style.display='block';
-            alert("⚠️ Veuillez d'abord valider (🔍) l'adresse de départ du Producteur !");
-            return;
-        }
-
-        let lat = document.getElementById('stopLat').value;
-        let client = document.getElementById('stopClient').value;
-        
-        if(!lat || !client) {
-            document.getElementById('error-msg').style.display='block'; return;
-        }
-        document.getElementById('error-msg').style.display='none';
-        
-        stops.push({
-            type: document.getElementById('stopType').value,
-            client: client,
-            poids: parseFloat(document.getElementById('stopWeight').value)||0,
-            montant: parseFloat(document.getElementById('stopEuro').value)||0,
-            temps_arret: parseFloat(document.getElementById('stopTime').value)||0,
-            lat: lat,
-            lon: document.getElementById('stopLon').value,
-            adresse_txt: document.getElementById('stopAddress').value
-        });
-        
-        // Reset Inputs
-        document.getElementById('stopClient').value = '';
-        document.getElementById('stopWeight').value = '';
-        document.getElementById('stopEuro').value = '';
-        document.getElementById('stopAddress').value = '';
-        document.getElementById('stopLat').value = ''; 
-        document.getElementById('stopAddress').classList.remove('input-valid');
-        document.getElementById('feedback-stop').style.display = 'none';
-        if(tempMarker) { map.removeLayer(tempMarker); tempMarker = null; }
-        
-        refreshUI();
-    }
-
-    function refreshUI() {
-        let ul = document.getElementById('stops-list');
-        ul.innerHTML = "";
-        
-        mapMarkers.forEach(m => map.removeLayer(m));
-        mapMarkers = [];
-
-        stops.forEach((s, i) => {
-            let li = document.createElement('li');
-            let cls = 'stop-item';
-            if(s.type === 'Livraison') cls += ' type-livraison';
-            else if(s.type === 'Point Relais') cls += ' type-point-relais';
-            else cls += ' type-collecte';
-            
-            li.className = cls;
-            li.innerHTML = `
-                <div style="width:100%">
-                    <strong>${i+1}. ${s.client}</strong> <span style="font-size:0.8em; color:#7f8c8d;">(${s.type})</span><br>
-                    <span style="color:#555; font-size:0.9em;">~${s.poids}kg | ~${s.montant}€ | ${s.temps_arret}min</span>
-                </div>
-                <button onclick="removeStop(${i})" style="color:red; border:none; background:none; cursor:pointer; font-size:1.5em;">✕</button>
-            `;
-            ul.appendChild(li);
-            
-            let color = s.type === 'Livraison' ? '#3498db' : (s.type === 'Point Relais' ? '#f39c12' : '#9b59b6');
-            let m = L.circleMarker([s.lat, s.lon], {radius: 8, fillColor: color, color: '#fff', weight: 2, fillOpacity: 1})
-                     .bindPopup(`<b>${i+1}</b> ${s.client}`);
-            m.addTo(map);
-            mapMarkers.push(m);
-        });
-
-        document.getElementById('finalBtn').disabled = stops.length === 0;
-        
-        // Appeler la fonction principale de calcul
-        processRoute();
-    }
-    
-    function removeStop(i) {
-        stops.splice(i, 1);
-        refreshUI();
-    }
-
-    // --- 5. LOGIQUE DE CALCUL ROBUSTE ---
-    // Cette fonction orchestre le calcul instantané PUIS le calcul précis
-    function processRoute() {
-        let pLat = document.getElementById('prodLat').value;
-        let pLon = document.getElementById('prodLon').value;
-        
-        // Redessine toujours le producteur
-        if(pLat) placeProdMarker(pLat, pLon);
-        
-        if(!pLat || stops.length === 0) {
-            updateStats(0, 0); // Remise à zéro
-            if(routeLayer) map.removeLayer(routeLayer);
-            if(fallbackLayer) map.removeLayer(fallbackLayer);
-            return;
-        }
-
-        // 1. Calcul immédiat (Vol d'oiseau) pour ne jamais avoir zéro
-        let coords = [`${pLon},${pLat}`];
-        stops.forEach(s => coords.push(`${s.lon},${s.lat}`));
-        coords.push(`${pLon},${pLat}`); // Boucle
-        
-        // Calcul manuel distance
-        let rawDistKm = calculateGeoDistance(coords); 
-        let rawTimeMin = (rawDistKm / 50) * 60; // Estimation 50km/h
-        
-        // Afficher ces stats tout de suite (en attendant mieux)
-        updateStats(rawDistKm * 1.3, rawTimeMin); // *1.3 coeff tortuosité
-        drawStraightLines(coords); // Lignes rouges en attendant
-
-        // 2. Essai Routeur OSRM (Async)
-        fetchRouteOSRM(coords);
-    }
-
-    function calculateGeoDistance(coords) {
-        let total = 0;
-        for(let i=0; i<coords.length-1; i++) {
-            let [lon1, lat1] = coords[i].split(',').map(parseFloat);
-            let [lon2, lat2] = coords[i+1].split(',').map(parseFloat);
-            total += getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2);
-        }
-        return total;
-    }
-
-    function drawStraightLines(coords) {
-        if(routeLayer) map.removeLayer(routeLayer);
-        if(fallbackLayer) map.removeLayer(fallbackLayer);
-        
-        let latlngs = coords.map(c => {
-            let [lon, lat] = c.split(',').map(parseFloat);
-            return [lat, lon];
-        });
-        fallbackLayer = L.polyline(latlngs, {color: 'red', dashArray: '5, 10', weight: 3}).addTo(map);
-        map.fitBounds(fallbackLayer.getBounds().pad(0.1));
-    }
-
-    async function fetchRouteOSRM(coords) {
-        let url = `https://router.project-osrm.org/route/v1/driving/${coords.join(';')}?overview=full&geometries=geojson`;
-        
-        try {
-            let res = await fetch(url).then(r=>r.json());
-            if(res.code === "Ok" && res.routes && res.routes.length > 0) {
-                // VICTOIRE : Route trouvée
-                let r = res.routes[0];
-                
-                // On remplace les lignes rouges par la bleue
-                if(fallbackLayer) map.removeLayer(fallbackLayer);
-                if(routeLayer) map.removeLayer(routeLayer);
-                
-                let latlngs = r.geometry.coordinates.map(c => [c[1],c[0]]);
-                routeLayer = L.polyline(latlngs, {color:'#2c3e50', weight:5, opacity:0.8}).addTo(map);
-                
-                // Mise à jour précise des stats
-                updateStats(r.distance / 1000, r.duration / 60);
-            }
-        } catch(e) {
-            console.log("OSRM échec, on garde l'estimation vol d'oiseau");
-        }
-    }
-
-    function updateStats(distKm, driveTimeMin) {
-        let prepTime = parseFloat(document.getElementById('prepTime').value)||0;
-        let loadTime = parseFloat(document.getElementById('loadTime').value)||0;
-        let stopsTime = stops.reduce((acc, s) => acc + s.temps_arret, 0);
-        
-        let opsTimeMin = prepTime + loadTime + stopsTime;
-        
-        let costH = parseFloat(document.getElementById('costHour').value)||0;
-        let costK = parseFloat(document.getElementById('costKm').value)||0;
-        
-        let costTrans = distKm * costK;
-        let costMO = ((driveTimeMin + opsTimeMin) / 60) * costH;
-        let totalCost = costTrans + costMO;
-
-        let totalRev = stops.reduce((acc, s) => acc + s.montant, 0);
-        let ratio = totalRev > 0 ? ((totalCost / totalRev) * 100).toFixed(1) : 0;
-
-        // Update DOM
-        document.getElementById('syn-dist').innerText = distKm.toFixed(1) + " km";
-        document.getElementById('syn-time-drive').innerText = formatTime(driveTimeMin);
-        document.getElementById('syn-time-ops').innerText = formatTime(opsTimeMin);
-        
-        document.getElementById('syn-cost-trans').innerText = costTrans.toFixed(0) + " €";
-        document.getElementById('syn-cost-mo').innerText = costMO.toFixed(0) + " €";
-        document.getElementById('syn-cost-total').innerText = totalCost.toFixed(0) + " €";
-        
-        document.getElementById('syn-ratio').innerText = ratio + " %";
-        document.getElementById('syn-rev-display').innerText = `(Valeur: ${totalRev}€)`;
-    }
-
-    function formatTime(min) {
-        let h = Math.floor(min / 60);
-        let m = Math.round(min % 60);
-        return `${h}h${m<10?'0':''}${m}`;
-    }
-
-    function getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2) {
-        var R = 6371; var dLat = deg2rad(lat2-lat1); var dLon = deg2rad(lon2-lon1); 
-        var a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(deg2rad(lat1))*Math.cos(deg2rad(lat2))*Math.sin(dLon/2)*Math.sin(dLon/2); 
-        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-    }
-    function deg2rad(deg) { return deg * (Math.PI/180); }
-
-    // --- 6. ENVOI ---
+    // --- ENVOI ---
     function sendTournee() {
-        if(!document.getElementById('prodLat').value) { alert("Adresse Dépôt requise !"); return; }
+        if(!document.getElementById('prodLat').value) { alert("Dépôt requis !"); return; }
         let btn = document.getElementById('finalBtn');
         btn.disabled = true; btn.innerText = "Envoi...";
 
@@ -571,10 +552,10 @@
             if(d.success) { 
                 alert("✅ Tournée enregistrée !"); 
                 stops = []; 
-                refreshUI(); 
+                refreshMapElements();
+                renderStopsList();
                 btn.innerText = "🚀 ENREGISTRER LA TOURNÉE"; 
-            } 
-            else throw new Error(d.error);
+            } else throw new Error(d.error);
         })
         .catch(e => { alert("Erreur: " + e.message); btn.disabled = false; });
     }
