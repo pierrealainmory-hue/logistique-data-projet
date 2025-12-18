@@ -86,126 +86,146 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        const API = "https://update-github-csv-149052175314.europe-west1.run.app/";
-        let map, markers, routeLayer, stops = [], mode = 'stop', pData = { lat:null, lon:null, addr:"" }, sTemp = { lat:null, lon:null };
+       const API = "https://update-github-csv-149052175314.europe-west1.run.app/";
+let map, markers, routeLayer, stops = [], mode = 'stop', pData = { lat:null, lon:null, addr:"" }, sTemp = { lat:null, lon:null };
 
-        window.onload = function() {
-            map = L.map('map').setView([46.6, 1.88], 6);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-            markers = L.layerGroup().addTo(map); routeLayer = L.layerGroup().addTo(map);
-            map.on('click', onMapClick);
-            Sortable.create(document.getElementById('stops-list'), { animation:150, handle:'.handle', onEnd:reorderStops });
-            loadSaved(); setMode('stop');
-        };
+window.onload = function() {
+    map = L.map('map').setView([46.6, 1.88], 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    markers = L.layerGroup().addTo(map); routeLayer = L.layerGroup().addTo(map);
+    map.on('click', onMapClick);
+    Sortable.create(document.getElementById('stops-list'), { animation:150, handle:'.handle', onEnd:reorderStops });
+    loadSaved(); setMode('stop');
+};
 
-        function updateTitle() { document.getElementById('display-depot').innerText = document.getElementById('pName').value || "Point de Départ"; saveProd(); }
-        function resetAll() { if(confirm("Effacer tout ?")) { localStorage.clear(); location.reload(); } }
-        function setMode(m) { mode = m; document.getElementById('btn-t-prod').style.background = m==='prod' ? 'var(--accent)' : '#95a5a6'; document.getElementById('btn-t-stop').style.background = m==='stop' ? 'var(--accent)' : '#95a5a6'; }
+function updateTitle() { document.getElementById('display-depot').innerText = document.getElementById('pName').value || "Point de Départ"; saveProd(); }
+function resetAll() { if(confirm("Effacer tout ?")) { localStorage.clear(); location.reload(); } }
+function setMode(m) { mode = m; document.getElementById('btn-t-prod').style.background = m==='prod' ? 'var(--accent)' : '#95a5a6'; document.getElementById('btn-t-stop').style.background = m==='stop' ? 'var(--accent)' : '#95a5a6'; }
 
-        function onMapClick(e) {
-            let lat = e.latlng.lat, lon = e.latlng.lng; showTempMarker(lat, lon);
-            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`).then(r=>r.json()).then(d=>{
-                if(mode==='prod'){ pData={lat, lon, addr:d.display_name}; document.getElementById('pAddr').value=d.display_name; saveProd(); }
-                else { sTemp={lat, lon}; document.getElementById('sAddr').value=d.display_name; }
-            });
+function onMapClick(e) {
+    let lat = e.latlng.lat, lon = e.latlng.lng; showTempMarker(lat, lon);
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`).then(r=>r.json()).then(d=>{
+        if(mode==='prod'){ pData={lat, lon, addr:d.display_name}; document.getElementById('pAddr').value=d.display_name; saveProd(); }
+        else { sTemp={lat, lon}; document.getElementById('sAddr').value=d.display_name; }
+    });
+}
+
+function searchAddress(target) {
+    let q = document.getElementById(target==='prod'?'pAddr':'sAddr').value;
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`).then(r=>r.json()).then(res=>{
+        if(res.length>0){ 
+            let lat=parseFloat(res[0].lat), lon=parseFloat(res[0].lon); 
+            showTempMarker(lat, lon); map.setView([lat, lon], 14);
+            if(target==='prod'){ pData={lat, lon, addr:res[0].display_name}; document.getElementById('pAddr').value=res[0].display_name; saveProd(); }
+            else { sTemp={lat, lon}; document.getElementById('sAddr').value=res[0].display_name; }
         }
+    });
+}
 
-        function searchAddress(target) {
-            let q = document.getElementById(target==='prod'?'pAddr':'sAddr').value;
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`).then(r=>r.json()).then(res=>{
-                if(res.length>0){ let lat=parseFloat(res[0].lat), lon=parseFloat(res[0].lon); showTempMarker(lat, lon); map.setView([lat, lon], 14);
-                    if(target==='prod'){ pData={lat, lon, addr:res[0].display_name}; document.getElementById('pAddr').value=res[0].display_name; saveProd(); }
-                    else { sTemp={lat, lon}; document.getElementById('sAddr').value=res[0].display_name; }
-                }
-            });
-        }
+function showTempMarker(lat, lon) {
+    markers.clearLayers(); if(pData.lat) L.marker([pData.lat, pData.lon], {icon: L.divIcon({html:'🏠', className:''})}).addTo(markers);
+    stops.forEach(s => L.circleMarker([s.lat, s.lon], {radius:6, color:'var(--info)', fillOpacity:1}).addTo(markers));
+    L.circleMarker([lat, lon], {radius:9, color:'var(--accent)', weight:3, fillOpacity:0.5}).addTo(markers);
+}
 
-        function showTempMarker(lat, lon) {
-            markers.clearLayers(); if(pData.lat) L.marker([pData.lat, pData.lon], {icon: L.divIcon({html:'🏠', className:''})}).addTo(markers);
-            stops.forEach(s => L.circleMarker([s.lat, s.lon], {radius:6, color:'var(--info)', fillOpacity:1}).addTo(markers));
-            L.circleMarker([lat, lon], {radius:9, color:'var(--accent)', weight:3, fillOpacity:0.5}).addTo(markers);
-        }
+function saveProd() { pData.name=document.getElementById('pName').value; pData.day=document.getElementById('pDay').value; localStorage.setItem('pMem_v28', JSON.stringify(pData)); updateView(); }
+function loadSaved() { let saved=localStorage.getItem('pMem_v28'); if(saved){ pData=JSON.parse(saved); document.getElementById('pName').value=pData.name||""; document.getElementById('pAddr').value=pData.addr||""; if(pData.day) document.getElementById('pDay').value=pData.day; updateTitle(); } }
 
-        function saveProd() { pData.name=document.getElementById('pName').value; pData.day=document.getElementById('pDay').value; localStorage.setItem('pMem_v28', JSON.stringify(pData)); updateView(); }
-        function loadSaved() { let saved=localStorage.getItem('pMem_v28'); if(saved){ pData=JSON.parse(saved); document.getElementById('pName').value=pData.name||""; document.getElementById('pAddr').value=pData.addr||""; if(pData.day) document.getElementById('pDay').value=pData.day; updateTitle(); } }
+function addStop() {
+    if(!pData.lat || !sTemp.lat) return alert("Position manquante");
+    stops.push({ client:document.getElementById('sClient').value||"Client", opType:document.getElementById('sOpType').value, euro:parseFloat(document.getElementById('sEuro').value)||0, vol:parseFloat(document.getElementById('sVol').value)||0, time:parseFloat(document.getElementById('sTime').value)||15, lat:sTemp.lat, lon:sTemp.lon, addr:document.getElementById('sAddr').value, id:Date.now() });
+    sTemp={lat:null, lon:null}; document.getElementById('sAddr').value=""; document.getElementById('sClient').value=""; updateView();
+}
 
-        function addStop() {
-            if(!pData.lat || !sTemp.lat) return alert("Position manquante");
-            stops.push({ client:document.getElementById('sClient').value||"Client", opType:document.getElementById('sOpType').value, euro:parseFloat(document.getElementById('sEuro').value)||0, vol:parseFloat(document.getElementById('sVol').value)||0, time:parseFloat(document.getElementById('sTime').value)||15, lat:sTemp.lat, lon:sTemp.lon, addr:document.getElementById('sAddr').value, id:Date.now() });
-            sTemp={lat:null, lon:null}; document.getElementById('sAddr').value=""; document.getElementById('sClient').value=""; updateView();
-        }
+function reorderStops() { let ns=[]; document.querySelectorAll('.stop-item').forEach(it=>{ ns.push(stops.find(s=>s.id===parseInt(it.getAttribute('data-id')))); }); stops=ns; updateView(); }
 
-        function reorderStops() { let ns=[]; document.querySelectorAll('.stop-item').forEach(it=>{ ns.push(stops.find(s=>s.id===parseInt(it.getAttribute('data-id')))); }); stops=ns; updateView(); }
+function updateView() {
+    markers.clearLayers(); routeLayer.clearLayers(); const ul=document.getElementById('stops-list'); ul.innerHTML="";
+    if(pData.lat) L.marker([pData.lat, pData.lon], {icon: L.divIcon({html:'🏠', className:''})}).addTo(markers);
+    stops.forEach((s, i) => {
+        ul.innerHTML += `<li class="stop-item" data-id="${s.id}"><div><span class="handle">☰</span> <b>${i+1}.</b> ${s.client}</div><button onclick="deleteStop(${s.id})" style="border:none; background:none; color:red; cursor:pointer;">✕</button></li>`;
+        L.circleMarker([s.lat, s.lon], {radius:6, color:'var(--info)', fillOpacity:1}).addTo(markers);
+    });
+    if(pData.lat && stops.length > 0) calcRoute(); else updateStats(0,0);
+    document.getElementById('btnSend').disabled=(stops.length===0);
+}
 
-        function updateView() {
-            markers.clearLayers(); routeLayer.clearLayers(); const ul=document.getElementById('stops-list'); ul.innerHTML="";
-            if(pData.lat) L.marker([pData.lat, pData.lon], {icon: L.divIcon({html:'🏠', className:''})}).addTo(markers);
-            stops.forEach((s, i) => {
-                ul.innerHTML += `<li class="stop-item" data-id="${s.id}"><div><span class="handle">☰</span> <b>${i+1}.</b> ${s.client}</div><button onclick="deleteStop(${s.id})" style="border:none; background:none; color:red; cursor:pointer;">✕</button></li>`;
-                L.circleMarker([s.lat, s.lon], {radius:6, color:'var(--info)', fillOpacity:1}).addTo(markers);
-            });
-            if(pData.lat && stops.length > 0) calcRoute(); else updateStats(0,0);
-            document.getElementById('btnSend').disabled=(stops.length===0);
-        }
+function deleteStop(id) { stops=stops.filter(s=>s.id!==id); updateView(); }
 
-        function deleteStop(id) { stops=stops.filter(s=>s.id!==id); updateView(); }
+function calcRoute() {
+    let pts = [[pData.lon, pData.lat], ...stops.map(s=>[s.lon, s.lat]), [pData.lon, pData.lat]];
+    fetch(`https://router.project-osrm.org/route/v1/driving/${pts.map(p=>p.join(',')).join(';')}?overview=full&geometries=geojson`).then(r=>r.json()).then(res=>{
+        if(res.code==='Ok'){ let rd=res.routes[0]; L.polyline(rd.geometry.coordinates.map(c=>[c[1], c[0]]), {color:'var(--info)', weight:4}).addTo(routeLayer); map.fitBounds(L.featureGroup(markers.getLayers()).getBounds().pad(0.2)); updateStats(rd.distance/1000, rd.duration/60); }
+    });
+}
 
-        function calcRoute() {
-            let pts = [[pData.lon, pData.lat], ...stops.map(s=>[s.lon, s.lat]), [pData.lon, pData.lat]];
-            fetch(`https://router.project-osrm.org/route/v1/driving/${pts.map(p=>p.join(',')).join(';')}?overview=full&geometries=geojson`).then(r=>r.json()).then(res=>{
-                if(res.code==='Ok'){ let rd=res.routes[0]; L.polyline(rd.geometry.coordinates.map(c=>[c[1], c[0]]), {color:'var(--info)', weight:4}).addTo(routeLayer); map.fitBounds(L.featureGroup(markers.getLayers()).getBounds().pad(0.2)); updateStats(rd.distance/1000, rd.duration/60); }
-            });
-        }
+function updateStats(dist, driveTime) {
+    const cH=parseFloat(document.getElementById('cH').value)||0, cK=parseFloat(document.getElementById('cK').value)||0, prep=parseFloat(document.getElementById('tPrep').value)||0, load=parseFloat(document.getElementById('tLoad').value)||0;
+    const sTime=stops.reduce((a,b)=>a+b.time, 0)+prep+load, ct=(dist*cK)+((driveTime/60)*cH), co=(sTime/60)*cH, tt=ct+co, v=stops.reduce((a,b)=>a+b.euro, 0);
+    document.getElementById('rDist').innerText=dist.toFixed(1)+" km"; document.getElementById('rTime').innerText=Math.floor(driveTime/60)+"h"+Math.round(driveTime%60); document.getElementById('rOps').innerText=Math.floor(sTime/60)+"h"+Math.round(sTime%60);
+    document.getElementById('rCostTrans').innerText=ct.toFixed(2)+" €"; document.getElementById('rCostOps').innerText=co.toFixed(2)+" €"; document.getElementById('rTotal').innerText=tt.toFixed(2)+" €";
+    document.getElementById('rVal').innerText=v.toFixed(2)+" €"; document.getElementById('rRatio').innerText=v>0?(tt/v*100).toFixed(1)+" %":"0 %";
+}
 
-        function updateStats(dist, driveTime) {
-            const cH=parseFloat(document.getElementById('cH').value)||0, cK=parseFloat(document.getElementById('cK').value)||0, prep=parseFloat(document.getElementById('tPrep').value)||0, load=parseFloat(document.getElementById('tLoad').value)||0;
-            const sTime=stops.reduce((a,b)=>a+b.time, 0)+prep+load, ct=(dist*cK)+((driveTime/60)*cH), co=(sTime/60)*cH, tt=ct+co, v=stops.reduce((a,b)=>a+b.euro, 0);
-            document.getElementById('rDist').innerText=dist.toFixed(1)+" km"; document.getElementById('rTime').innerText=Math.floor(driveTime/60)+"h"+Math.round(driveTime%60); document.getElementById('rOps').innerText=Math.floor(sTime/60)+"h"+Math.round(sTime%60);
-            document.getElementById('rCostTrans').innerText=ct.toFixed(2)+" €"; document.getElementById('rCostOps').innerText=co.toFixed(2)+" €"; document.getElementById('rTotal').innerText=tt.toFixed(2)+" €";
-            document.getElementById('rVal').innerText=v.toFixed(2)+" €"; document.getElementById('rRatio').innerText=v>0?(tt/v*100).toFixed(1)+" %":"0 %";
-        }
+function sendData() {
+    const btn=document.getElementById('btnSend'); 
+    btn.disabled=true; btn.innerText="⏳ Envoi...";
+    
+    const dateStr = new Date().toISOString().split('T')[0];
+    const tourId = (document.getElementById('pName').value||"ID").replace(/\s/g,'') + "_" + Date.now();
+    
+    // On prépare un objet simple qui contient les données de la tournée
+    // Votre serveur traitera ensuite la création des lignes CSV
+    const dataToSend = {
+        producteur: document.getElementById('pName').value,
+        date: dateStr,
+        jour: document.getElementById('pDay').value,
+        tournee_id: tourId,
+        vehicule: document.getElementById('vType').value,
+        carburant: document.getElementById('vFuel').value,
+        cout_horaire: parseFloat(document.getElementById('cH').value),
+        cout_km: parseFloat(document.getElementById('cK').value),
+        temps_preparation: parseFloat(document.getElementById('tPrep').value),
+        temps_chargement_depart: parseFloat(document.getElementById('tLoad').value),
+        depot_adresse: pData.addr,
+        depot_lat: pData.lat,
+        depot_lon: pData.lon,
+        arrets: stops.map((s, i) => ({
+            ordre: i + 1,
+            client: s.client,
+            type: s.opType,
+            montant: s.euro,
+            volume: s.vol,
+            temps_arret: s.time,
+            adresse: s.addr,
+            lat: s.lat,
+            lon: s.lon
+        }))
+    };
 
-        function sendData() {
-            const btn=document.getElementById('btnSend'); btn.disabled=true; btn.innerText="⏳ Envoi...";
-            const now = new Date(); const dateStr = now.toISOString().split('T')[0];
-            const tourId = (document.getElementById('pName').value||"None").replace(/\s/g,'') + "_" + document.getElementById('pDay').value + "_" + dateStr.replace(/-/g,'') + "_" + now.getHours() + now.getMinutes();
-            
-            // Création des lignes CSV pour le Colab
-            const rows = [];
-            // 1. Point de départ
-            rows.push(createCSVRow(1, "Départ Dépôt", pData.addr, pData.lat, pData.lon, tourId, dateStr, 0, 0, 0));
-            // 2. Les arrêts
-            stops.forEach((s, i) => rows.push(createCSVRow(i+2, s.client, s.addr, s.lat, s.lon, tourId, dateStr, s.euro, s.time, s.vol)));
-            // 3. Point de retour
-            rows.push(createCSVRow(stops.length+2, "Retour Dépôt", pData.addr, pData.lat, pData.lon, tourId, dateStr, 0, 0, 0));
-
-            fetch(API, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ rows: rows }) })
-            .then(r=>r.json()).then(()=>{ alert("✅ Tournée synchronisée avec le Colab !"); stops=[]; updateView(); })
-            .catch(()=>alert("❌ Erreur envoi")).finally(()=>{ btn.disabled=false; btn.innerText="🚀 ENREGISTRER LA TOURNÉE"; });
-        }
-
-        function createCSVRow(ordre, client, addr, lat, lon, tourId, date, euro, time, vol) {
-            return {
-                "Producteur": document.getElementById('pName').value,
-                "Date de Livraison": date,
-                "Jour": document.getElementById('pDay').value,
-                "Tournée ID": tourId,
-                "Ordre d'Arrêt": ordre,
-                "Client / Point de Livraison": client,
-                "Adresse Complète": addr,
-                "lat": lat, "lon": lon,
-                "Volume (Kg Normalisé)": vol,
-                "Temps Chargement Départ (min)": parseFloat(document.getElementById('tLoad').value),
-                "Poids (kg)": 0,
-                "Montant (€)": euro,
-                "Temps d'arrêt (min)": time,
-                "Véhicule": document.getElementById('vType').value,
-                "Carburant": document.getElementById('vFuel').value,
-                "Cout Horaire (€/h)": parseFloat(document.getElementById('cH').value),
-                "Cout Km (€/km)": parseFloat(document.getElementById('cK').value),
-                "Temps Préparation (min)": parseFloat(document.getElementById('tPrep').value)
-            };
-        }
+    fetch(API, { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify(dataToSend) 
+    })
+    .then(response => {
+        if (!response.ok) throw new Error("Erreur serveur");
+        return response.json();
+    })
+    .then(() => { 
+        alert("✅ Tournée enregistrée !"); 
+        stops = []; 
+        updateView(); 
+    })
+    .catch(err => {
+        alert("❌ Erreur lors de l'enregistrement. Vérifiez la console.");
+        console.error(err);
+    })
+    .finally(() => { 
+        btn.disabled = false; 
+        btn.innerText = "🚀 ENREGISTRER LA TOURNÉE"; 
+    });
+}
     </script>
 </body>
 </html>
