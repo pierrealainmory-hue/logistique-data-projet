@@ -39,7 +39,7 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
             border-top: 6px solid var(--primary); 
             transition: all 0.4s ease; 
-            position: relative; z-index: 10; /* Toujours au dessus quand actif */
+            position: relative; z-index: 10; 
         }
         .header-band.validated {
             border-top-color: var(--success);
@@ -64,8 +64,9 @@
 
         /* SECTION RESUME (COLLAPSED) */
         #header-summary { display: none; align-items: center; justify-content: space-between; }
-        .summary-text { font-size: 1rem; color: var(--primary); }
+        .summary-text { font-size: 0.95rem; color: var(--primary); display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
         .summary-text strong { color: var(--success); }
+        .sep { color: #bdc3c7; font-weight: normal; }
 
         .main-container { display: flex; gap: 25px; flex: 1; }
         .left-panel { flex: 1; min-width: 420px; transition: opacity 0.3s; }
@@ -74,7 +75,7 @@
         /* --- CLASSE DE VERROUILLAGE (GRISÉ) --- */
         .blocked-area {
             opacity: 0.4;
-            pointer-events: none; /* Empêche tout clic */
+            pointer-events: none; 
             filter: grayscale(100%);
             user-select: none;
         }
@@ -342,9 +343,22 @@
             document.getElementById('header-summary').style.display = 'flex';
             
             const name = document.getElementById('pName').value;
-            const veh = document.getElementById('vType').value;
-            const addr = document.getElementById('pAddr').value.split(',')[0]; 
-            document.getElementById('summary-content').innerHTML = `✅ <strong>${name}</strong> <span style="color:#ccc">|</span> 📍 ${addr} <span style="color:#ccc">|</span> 🚚 ${veh}`;
+            // On prend les 2 premières parties de l'adresse pour avoir Rue + Ville
+            const addr = document.getElementById('pAddr').value.split(',').slice(0, 2).join(',');
+            
+            // Calcul temps total
+            const tPrep = parseFloat(document.getElementById('tPrep').value) || 0;
+            const tLoad = parseFloat(document.getElementById('tLoad').value) || 0;
+            const totalTime = tPrep + tLoad;
+
+            // HTML du résumé
+            document.getElementById('summary-content').innerHTML = `
+                <span>✅ <strong>${name}</strong></span>
+                <span class="sep">|</span>
+                <span>📍 ${addr}</span>
+                <span class="sep">|</span>
+                <span>⏱️ ${totalTime} min (Prép+Chg)</span>
+            `;
             
             // DÉVERROUILLER LA SECTION ARRETS
             document.getElementById('locked-section').classList.remove('blocked-area');
@@ -541,21 +555,4 @@
                 "Prix Carburant (€/L)": parseFloat(document.getElementById('fPrice').value), 
                 "Type Livreur": document.getElementById('driverType').value,
                 "Cout Horaire (€/h)": parseFloat(document.getElementById('cH').value), 
-                "Temps Préparation (min)": parseFloat(document.getElementById('tPrep').value), 
-                "Temps Chargement Départ (min)": parseFloat(document.getElementById('tLoad').value) 
-            };
-
-            rows.push({...common, "Ordre d'Arrêt": 0, "Client / Point de Livraison": "Départ Dépôt", "Adresse Complète": pData.addr, "lat": pData.lat, "lon": pData.lon, "Type Arrêt": "Départ", "Montant (€)": 0, "Volume (Kg Normalisé)": 0, "Temps d'arrêt (min)": 0});
-            stops.forEach((s, i) => { 
-                rows.push({...common, "Ordre d'Arrêt": i+1, "Client / Point de Livraison": s.client, "Adresse Complète": s.addr, "lat": s.lat, "lon": s.lon, "Montant (€)": s.euro, "Volume (Kg Normalisé)": s.vol, "Temps d'arrêt (min)": s.time, "Type Arrêt": s.icon}); 
-            });
-            rows.push({...common, "Ordre d'Arrêt": stops.length+1, "Client / Point de Livraison": "Retour Dépôt", "Adresse Complète": pData.addr, "lat": pData.lat, "lon": pData.lon, "Type Arrêt": "Retour", "Montant (€)": 0, "Volume (Kg Normalisé)": 0, "Temps d'arrêt (min)": 0});
-
-            fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rows: rows }) })
-            .then(r => { if(r.ok) { alert("✅ Tournée enregistrée !"); stops=[]; updateView(); } })
-            .catch(() => alert("❌ Erreur de connexion"))
-            .finally(() => { btn.disabled = false; btn.innerText = "🚀 ENREGISTRER LA TOURNÉE"; });
-        }
-    </script>
-</body>
-</html>
+                "Temps Préparation (min)": parseFloat(document.getElementById('tPrep
