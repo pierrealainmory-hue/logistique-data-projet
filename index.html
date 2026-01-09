@@ -465,7 +465,13 @@
 
         function reorderStops() {
             let ns=[];
-            document.querySelectorAll('.stop-item').forEach(it=>{ ns.push(stops.find(s=>s.id===parseInt(it.getAttribute('data-id')))); });
+            document.querySelectorAll('.stop-item').forEach(it=>{ 
+                const id = it.getAttribute('data-id');
+                if(id) {
+                    const found = stops.find(s=>s.id===parseInt(id));
+                    if(found) ns.push(found);
+                }
+            });
             stops=ns; updateView();
         }
 
@@ -527,7 +533,6 @@
             document.getElementById('btnSend').disabled=(stops.length===0);
         }
 
-        // --- CALC ROUTE AVEC PREFIXE RATIO ---
         function calcRoute() {
             let pts = [[pData.lon, pData.lat], ...stops.map(s=>[s.lon, s.lat]), [pData.lon, pData.lat]];
             fetch(`https://router.project-osrm.org/route/v1/driving/${pts.map(p=>p.join(',')).join(';')}?overview=full&geometries=geojson`).then(r=>r.json()).then(res=>{
@@ -557,7 +562,7 @@
 
                             if(s.euro > 0) {
                                 ratio = (totalLegCost / s.euro) * 100;
-                                ratioText = "Ratio " + ratio.toFixed(0) + " %"; // AJOUT DU TEXTE
+                                ratioText = "Ratio " + ratio.toFixed(0) + " %";
                                 if(ratio < 10) ratioClass = "ratio-good";
                                 else if(ratio < 30) ratioClass = "ratio-mid";
                             } else {
