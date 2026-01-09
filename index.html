@@ -13,72 +13,133 @@
         :root { --primary: #2c3e50; --accent: #e67e22; --success: #27ae60; --bg: #f4f7f9; --danger: #e74c3c; --info: #3498db; --text: #546e7a; --locked: #bdc3c7; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; padding: 20px; background: var(--bg); color: #333; display: flex; flex-direction: column; min-height: 100vh; }
         
-        /* HEADER */
+        /* BANDEAU CLIENT */
         .client-header {
-            background: white; padding: 15px 25px; border-radius: 6px; margin-bottom: 20px;
+            background: white; padding: 15px 25px; 
+            border-radius: 6px; 
+            margin-bottom: 20px;
             display: flex; justify-content: space-between; align-items: center;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-top: 6px solid var(--success);
         }
         .client-identity { display: flex; align-items: center; gap: 25px; }
         .client-logo { height: 85px; width: auto; display: block; }
         
-        .assistance-box { font-size: 0.85rem; color: var(--text); text-align: right; border-left: 1px solid #ddd; padding-left: 20px; }
+        .assistance-box { 
+            font-size: 0.85rem; color: var(--text); text-align: right; 
+            border-left: 1px solid #ddd; padding-left: 20px;
+        }
         .assistance-title { font-weight: bold; color: var(--accent); text-transform: uppercase; font-size: 0.75rem; margin-bottom: 5px; display: block;}
         .assistance-box a { color: var(--primary); text-decoration: none; }
 
         /* BANDEAU DEPOT */
         .header-band { 
-            background: white; padding: 20px; border-radius: 6px; margin-bottom: 20px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-top: 6px solid var(--primary); 
-            transition: all 0.4s ease; position: relative; z-index: 100; 
+            background: white; padding: 20px; 
+            border-radius: 6px; 
+            margin-bottom: 20px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+            border-top: 6px solid var(--primary); 
+            transition: all 0.4s ease; 
+            position: relative; 
+            z-index: 100; 
         }
-        .header-band.validated { border-top-color: var(--success); background-color: #f6fffa; box-shadow: 0 4px 20px rgba(39, 174, 96, 0.15); }
+        .header-band.validated {
+            border-top-color: var(--success);
+            background-color: #f6fffa; 
+            box-shadow: 0 4px 20px rgba(39, 174, 96, 0.15);
+        }
+
         .header-row { display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-end; flex-wrap: wrap; }
+        .header-row:last-child { margin-bottom: 0; }
         
+        /* BADGE */
         .validation-badge {
-            display: inline-block; background: var(--success); color: white;
-            font-size: 0.8rem; padding: 5px 10px; border-radius: 20px; margin-left: 15px; 
-            opacity: 0; transform: translateY(10px); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: inline-block;
+            background: var(--success); color: white;
+            font-size: 0.8rem; padding: 5px 10px; border-radius: 20px;
+            margin-left: 15px; 
+            opacity: 0; transform: translateY(10px); 
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         .show-badge { opacity: 1; transform: translateY(0); }
 
+        /* SECTION RESUME (COLLAPSED) */
         #header-summary { display: none; align-items: center; justify-content: space-between; }
         .summary-text { font-size: 0.95rem; color: var(--primary); display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .summary-text strong { color: var(--success); }
         .sep { color: #bdc3c7; font-weight: normal; }
 
-        /* LAYOUT */
         .main-container { display: flex; gap: 25px; flex: 1; }
         .left-panel { flex: 1; min-width: 420px; transition: opacity 0.3s; }
         .right-panel { flex: 2; min-width: 300px; display: flex; flex-direction: column; }
-        .blocked-area { opacity: 0.4; pointer-events: none; filter: grayscale(100%); user-select: none; }
 
-        .card { background: white; padding: 20px; border-radius: 6px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #eef2f7; }
+        .blocked-area {
+            opacity: 0.4;
+            pointer-events: none; 
+            filter: grayscale(100%);
+            user-select: none;
+        }
+
+        .card { 
+            background: white; padding: 20px; 
+            border-radius: 6px; 
+            margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #eef2f7; 
+        }
         .form-group { flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 140px; }
         .form-group label { font-weight: 600; color: var(--text); font-size: 0.75rem; }
         
-        input, select { padding: 10px; border: 1px solid #dcdfe6; border-radius: 4px; font-size: 0.9rem; width: 100%; box-sizing: border-box; transition: border 0.3s; }
+        input, select { 
+            padding: 10px; border: 1px solid #dcdfe6; 
+            border-radius: 4px; 
+            font-size: 0.9rem; width: 100%; box-sizing: border-box; 
+            transition: border 0.3s;
+        }
         .input-valid { border-color: var(--success) !important; background-color: #fff !important; }
         
-        /* KPI */
+        /* KPI & LIST */
+        .kpi-header {
+            font-size: 1rem; font-weight: bold; color: var(--primary); 
+            margin-bottom: 10px; border-bottom: 2px solid #eee; padding-bottom: 5px;
+        }
         .kpi-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 10px; }
-        .kpi-card { background: white; padding: 15px; border-radius: 6px; border: 1px solid #e4e7ed; text-align: center; }
+        .kpi-card { 
+            background: white; padding: 15px; 
+            border-radius: 6px; 
+            border: 1px solid #e4e7ed; text-align: center; 
+        }
         .kpi-title { font-size: 0.7rem; font-weight: 700; color: var(--text); text-transform: uppercase; margin-bottom: 5px; }
         .kpi-value { font-size: 1.2rem; font-weight: 800; color: var(--primary); }
         
         .summary-banner { 
-            grid-column: span 3; background: var(--primary); color: white; 
-            border-radius: 6px; padding: 15px; display: flex; flex-direction: column; align-items: center; 
+            grid-column: span 3; 
+            background: var(--primary); color: white; 
+            border-radius: 6px; 
+            padding: 15px; 
+            display: flex; flex-direction: column; 
+            align-items: center; 
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
         .banner-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; }
         .banner-metrics { display: flex; justify-content: space-around; width: 100%; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 15px; }
         .summary-value { font-size: 1.8rem; font-weight: 800; display: block; }
 
-        /* LISTE ARRETS */
+        /* LEGENDE RATIO (NOUVEAU V68) */
+        .legend-bar {
+            grid-column: span 3;
+            background: white;
+            border-radius: 6px; border: 1px solid #eee;
+            padding: 10px; margin-top: 5px;
+            display: flex; justify-content: center; gap: 20px;
+            font-size: 0.8rem; color: var(--text);
+        }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
         #stops-list { list-style: none; padding: 0; }
+        
         .stop-item { 
-            background: white; padding: 10px; margin-bottom: 8px; border-radius: 4px; 
+            background: white; padding: 10px; margin-bottom: 8px; 
+            border-radius: 4px; 
             display: flex; justify-content: space-between; align-items: center; 
             border: 1px solid #ebedf0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); 
         }
@@ -87,7 +148,12 @@
         .stop-name { font-weight: bold; font-size: 0.95rem; }
         .stop-addr { font-size: 0.75rem; color: #7f8c8d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
-        .stop-meta { text-align: right; margin-right: 15px; min-width: 120px; display: flex; flex-direction: column; align-items: flex-end; }
+        /* TAGS & DATA */
+        .stop-meta { 
+            text-align: right; margin-right: 15px; 
+            min-width: 120px; 
+            display: flex; flex-direction: column; align-items: flex-end; 
+        }
         .stop-euro { font-weight: bold; color: var(--success); font-size: 0.9rem; }
         .stop-dist-tag { font-size: 0.75rem; color: #95a5a6; }
         
@@ -100,40 +166,50 @@
         .btn-icon { border: none; background: none; cursor: pointer; font-size: 1.1rem; padding: 5px; border-radius: 4px; }
         .btn-icon:hover { background-color: #f0f0f0; }
         .handle { cursor: grab; color: #b0bec5; font-size: 1.2rem; margin-right: 5px; }
+
         .return-item { background: #f8f9fa; border-left: 4px solid var(--primary); }
         .return-item .stop-name { color: var(--primary); }
 
-        /* LEGENDE */
-        .legend-bar {
-            grid-column: span 3; background: white; border-radius: 6px; border: 1px solid #eee;
-            padding: 10px; margin-top: 5px; display: flex; justify-content: center; gap: 20px;
-            font-size: 0.8rem; color: var(--text);
+        #map { 
+            height: 450px; width: 100%; 
+            border-radius: 6px; 
+            border: 1px solid #dcdfe6; 
+            background-color: #e5e9ec; 
+            display: block; 
         }
-        .legend-item { display: flex; align-items: center; gap: 6px; }
-        .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-
-        #map { height: 450px; width: 100%; border-radius: 6px; border: 1px solid #dcdfe6; background-color: #e5e9ec; display: block; }
-        .btn-main { background: var(--success); color: white; width: 100%; padding: 16px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 1rem; }
-        .btn-mini { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; }
         
+        .btn-main { 
+            background: var(--success); color: white; width: 100%; padding: 16px; border: none; 
+            border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 1rem; 
+        }
+        .btn-mini { 
+            padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; 
+        }
         #btn-validate-depot {
             background: var(--success); color: white; margin-top: 10px; width: auto; min-width: 200px;
-            display: block; margin: 15px auto 0 auto; border: none; border-radius: 20px; padding: 10px 30px; 
-            font-weight: bold; font-size: 0.9rem; opacity: 0.5; cursor: not-allowed; transition: all 0.3s; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: block; margin: 15px auto 0 auto;
+            border: none; border-radius: 20px; padding: 10px 30px; font-weight: bold; font-size: 0.9rem;
+            opacity: 0.5; cursor: not-allowed; transition: all 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         #btn-validate-depot.active { opacity: 1; cursor: pointer; transform: translateY(-1px); }
 
-        .dix-footer { margin-top: 40px; padding: 20px; background: white; border-radius: 6px; display: flex; justify-content: center; align-items: center; gap: 15px; color: #7f8c8d; font-size: 0.9rem; }
+        /* FOOTER */
+        .dix-footer {
+            margin-top: 40px; padding: 20px; background: white; 
+            border-radius: 6px; 
+            display: flex; justify-content: center; align-items: center; gap: 15px;
+            color: #7f8c8d; font-size: 0.9rem;
+        }
         .dix-logo-small { height: 45px; width: auto; vertical-align: middle; }
         .dix-link { color: var(--accent); text-decoration: none; font-weight: bold; cursor: pointer;}
+        .dix-link:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
 
     <div class="client-header">
         <div class="client-identity">
-            <img src="https://www.parcs-naturels-regionaux.fr/sites/federationpnr/files/styles/contenu/public/image/parc/sans_titre.png?itok=z_7I7Msh" alt="Logo PNR" class="client-logo">
+            <img src="https://www.parcs-naturels-regionaux.fr/sites/federationpnr/files/styles/contenu/public/image/parc/sans_titre.png?itok=z_7I7Msh" alt="Logo PNR Préalpes d'Azur" class="client-logo">
             <div>
                 <h1 style="margin:0; font-size:1.6rem; color:var(--success);">PNR des Préalpes d'Azur</h1>
                 <span style="color:var(--text); font-size:1rem;">Simulateur de Logistique en Circuit Court</span>
@@ -199,7 +275,9 @@
                     </div>
                     <div class="form-group" style="flex: 1;">
                         <label>Jour</label>
-                        <select id="tDay" onchange="saveProd()"><option>Lundi</option><option>Mardi</option><option>Mercredi</option><option>Jeudi</option><option>Vendredi</option><option>Samedi</option></select>
+                        <select id="tDay" onchange="saveProd()">
+                            <option>Lundi</option><option>Mardi</option><option>Mercredi</option><option>Jeudi</option><option>Vendredi</option><option>Samedi</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -228,7 +306,10 @@
             
             <div class="kpi-container">
                 <div class="summary-banner">
-                    <div class="banner-header"><span style="font-size:1.4rem;">📝</span><span id="kpi-tour-title" style="font-weight:700;">RÉCAPITULATIF GLOBAL</span></div>
+                    <div class="banner-header">
+                        <span style="font-size:1.4rem;">📝</span>
+                        <span id="kpi-tour-title" style="font-weight:700;">RÉCAPITULATIF GLOBAL</span>
+                    </div>
                     <div class="banner-metrics">
                         <div><small style="opacity:0.8">COÛT TOTAL TOURNÉE</small><br><span class="summary-value" id="rTotal">0 €</span></div>
                         <div><small style="opacity:0.8">CA TOTAL TOURNÉE</small><br><span class="summary-value" id="rVal">0 €</span></div>
@@ -275,7 +356,9 @@
             map.on('click', onMapClick);
             setTimeout(function(){ map.invalidateSize(); }, 500);
             Sortable.create(document.getElementById('stops-list'), { animation: 150, handle: '.handle', onEnd: reorderStops });
-            loadSaved(); setMode('prod'); checkProducerValidation();
+            loadSaved(); 
+            setMode('prod'); 
+            checkProducerValidation();
         };
 
         function checkProducerValidation() {
