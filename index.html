@@ -295,7 +295,9 @@
             <div class="kpi-container">
                 <div class="summary-banner">
                     <div class="banner-header">
-                        <span style="font-size:1.4rem;">📝</span> <span id="kpi-tour-title" style="font-weight:700;">RÉCAPITULATIF GLOBAL</span> </div>
+                        <span style="font-size:1.4rem;">📝</span>
+                        <span id="kpi-tour-title" style="font-weight:700;">RÉCAPITULATIF GLOBAL</span>
+                    </div>
                     <div class="banner-metrics">
                         <div><small style="opacity:0.8">COÛT TOTAL TOURNÉE</small><br><span class="summary-value" id="rTotal">0 €</span></div>
                         <div><small style="opacity:0.8">CA TOTAL TOURNÉE</small><br><span class="summary-value" id="rVal">0 €</span></div>
@@ -436,7 +438,6 @@
             } 
         }
 
-        // --- FONCTION TITRE V66 ---
         function updateStatsTitle() {
             const tourName = document.getElementById('tName').value.trim();
             const titleElem = document.getElementById('kpi-tour-title');
@@ -485,6 +486,12 @@
             if(pData.lat) L.marker([pData.lat, pData.lon], {icon: L.divIcon({html:'🏠', className:''})}).addTo(markers);
             
             stops.forEach((s, i) => {
+                // NETTOYAGE ADRESSE (V67)
+                let rawAddr = s.addr.split(',').map(p => p.trim());
+                let shortAddr = rawAddr.slice(0, 3).join(', ');
+                let zipMatch = s.addr.match(/\b\d{5}\b/);
+                if(zipMatch) shortAddr += " (" + zipMatch[0] + ")";
+
                 ul.innerHTML += `
                 <li class="stop-item" data-id="${s.id}">
                     <div class="stop-content">
@@ -492,7 +499,7 @@
                         ${s.icon} 
                         <div class="stop-info">
                             <span class="stop-name">${i+1}. ${s.client}</span>
-                            <span class="stop-addr">${s.addr}</span>
+                            <span class="stop-addr">${shortAddr}</span>
                         </div>
                     </div>
                     <div class="stop-meta">
@@ -509,13 +516,19 @@
             });
 
             if(pData.lat && stops.length > 0) {
+                // NETTOYAGE ADRESSE RETOUR
+                let rRaw = pData.addr.split(',').map(p => p.trim());
+                let rShort = rRaw.slice(0, 3).join(', ');
+                let rZip = pData.addr.match(/\b\d{5}\b/);
+                if(rZip) rShort += " (" + rZip[0] + ")";
+
                 ul.innerHTML += `
                 <li class="stop-item return-item">
                     <div class="stop-content">
                         <span style="font-size:1.2rem; margin-right:10px;">🏁</span>
                         <div class="stop-info">
                             <span class="stop-name">Retour au point de départ</span>
-                            <span class="stop-addr">${pData.addr.split(',')[0]}...</span>
+                            <span class="stop-addr">${rShort}</span>
                         </div>
                     </div>
                     <div class="stop-meta">
