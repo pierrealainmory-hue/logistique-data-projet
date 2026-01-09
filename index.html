@@ -3,35 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DIX Autrement - Simulateur Logistique V35.1</title>
+    <title>Simulateur Logistique - PNR Préalpes</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #e67e22; --success: #27ae60; --bg: #f4f7f9; --danger: #e74c3c; --info: #3498db; --text: #546e7a; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; padding: 20px; background: var(--bg); color: #333; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; padding: 20px; background: var(--bg); color: #333; display: flex; flex-direction: column; min-height: 100vh; }
         
-        /* NOUVEAU : BANDEAU MARQUE DIX AUTREMENT */
-        .brand-header {
+        /* BANDEAU CLIENT (PNR) */
+        .client-header {
             background: white; padding: 15px 25px; border-radius: 12px; margin-bottom: 20px;
             display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-left: 6px solid var(--accent);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-top: 6px solid var(--success);
         }
-        .brand-info { display: flex; align-items: center; gap: 20px; }
-        .brand-logo { 
-            height: 60px; width: auto; 
-            /* Si vous n'avez pas d'image, cela fait un carré gris propre */
-            background: #eee; padding: 5px; border-radius: 5px; color: #999; text-align: center; display: flex; align-items: center; 
-        } 
-        .contact-details { font-size: 0.9rem; color: var(--text); line-height: 1.4; text-align: right;}
-        .contact-details a { color: var(--info); text-decoration: none; font-weight: 600; }
-        .contact-details b { color: var(--primary); }
+        .client-identity { display: flex; align-items: center; gap: 25px; }
+        
+        /* Correction Logo : Plus de cadre gris, fond transparent */
+        .client-logo { 
+            height: 85px; width: auto; 
+            display: block; /* Supprime les espaces fantômes */
+        }
+        
+        .assistance-box { 
+            font-size: 0.85rem; color: var(--text); text-align: right; 
+            border-left: 1px solid #ddd; padding-left: 20px;
+        }
+        .assistance-title { font-weight: bold; color: var(--accent); text-transform: uppercase; font-size: 0.75rem; margin-bottom: 5px; display: block;}
+        .assistance-box a { color: var(--primary); text-decoration: none; }
 
         /* BANDEAU DEPOT */
         .header-band { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-top: 6px solid var(--primary); }
         .header-row { display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-end; flex-wrap: wrap; }
         .header-row:last-child { margin-bottom: 0; }
         
-        .main-container { display: flex; gap: 25px; }
+        .main-container { display: flex; gap: 25px; flex: 1; }
         .left-panel { flex: 1; min-width: 420px; }
         .right-panel { flex: 2; }
 
@@ -40,16 +45,14 @@
         .form-group label { font-weight: 600; color: var(--text); font-size: 0.75rem; }
         input, select { padding: 10px; border: 1px solid #dcdfe6; border-radius: 8px; font-size: 0.9rem; width: 100%; box-sizing: border-box; }
         
-        /* KPI CARDS */
+        /* KPI & LIST */
         .kpi-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px; }
         .kpi-card { background: white; padding: 15px; border-radius: 10px; border: 1px solid #e4e7ed; text-align: center; }
         .kpi-title { font-size: 0.7rem; font-weight: 700; color: var(--text); text-transform: uppercase; margin-bottom: 5px; }
         .kpi-value { font-size: 1.2rem; font-weight: 800; color: var(--primary); }
-        
         .summary-banner { grid-column: span 3; background: var(--primary); color: white; border-radius: 10px; padding: 20px; display: flex; justify-content: space-around; align-items: center; text-align: center; }
         .summary-value { font-size: 1.8rem; font-weight: 800; display: block; }
 
-        /* LISTE ARRETS */
         #stops-list { list-style: none; padding: 0; }
         .stop-item { background: white; padding: 12px; margin-bottom: 8px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #ebedf0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .handle { cursor: grab; color: #b0bec5; font-size: 1.2rem; margin-right: 10px; }
@@ -58,29 +61,39 @@
         #map { height: 450px; width: 100%; border-radius: 12px; border: 1px solid #dcdfe6; z-index: 1; }
         .btn-main { background: var(--success); color: white; width: 100%; padding: 16px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; }
         .btn-mini { padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; color: white; font-weight: bold; }
+
+        /* FOOTER DIX */
+        .dix-footer {
+            margin-top: 40px; padding: 20px; background: white; border-radius: 12px;
+            display: flex; justify-content: center; align-items: center; gap: 15px;
+            color: #7f8c8d; font-size: 0.9rem;
+        }
+        .dix-logo-small { height: 30px; width: auto; vertical-align: middle; }
+        .dix-link { color: var(--accent); text-decoration: none; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="brand-header">
-        <div class="brand-info">
-            <img src="https://www.parcs-naturels-regionaux.fr/sites/federationpnr/files/styles/contenu/public/image/parc/sans_titre.png?itok=z_7I7Msh" alt="Logo PNR PA" class="brand-logo" title="PNR PA">
+    <div class="client-header">
+        <div class="client-identity">
+            <img src="https://www.parcs-naturels-regionaux.fr/sites/federationpnr/files/styles/contenu/public/image/parc/sans_titre.png?itok=z_7I7Msh" alt="Logo PNR Préalpes d'Azur" class="client-logo">
             <div>
-                <h1 style="margin:0; font-size:1.5rem; color:var(--primary);">Parc naturel régional des Préalpes d'Azur</h1>
-                <span style="color:var(--text); font-size:0.9rem;">Etude sur l'optimisation des flux logistiques et le développement des circuits courts</span>
+                <h1 style="margin:0; font-size:1.6rem; color:var(--success);">PNR des Préalpes d'Azur</h1>
+                <span style="color:var(--text); font-size:1rem;">Simulateur de Logistique en Circuit Court</span>
             </div>
         </div>
-        <div class="contact-details">
+        
+        <div class="assistance-box">
+            <span class="assistance-title">🆘 Assistance Technique</span>
             <b>Pierre-Alain Mory</b><br>
-            📞 07 83 00 09 56<br>
-            ✉️ <a href="mailto:pierre.alain.mory@dix-autrement.fr">pierre.alain.mory@dix-autrement.fr</a><br>
-            🌍 <a href="http://www.dix-autrement.fr" target="_blank">www.dix-autrement.fr</a>
+            <a href="tel:0783000956">07 83 00 09 56</a><br>
+            <a href="mailto:pierre.alain.mory@dix-autrement.fr">pierre.alain.mory@dix-autrement.fr</a>
         </div>
     </div>
 
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h2 style="margin:0; font-size:1.2rem; color:#7f8c8d;">Outil de Simulation de Tournée</h2>
-        <button onclick="resetAll()" class="btn-mini" style="background:var(--danger);">Réinitialiser l'Outil</button>
+        <h2 style="margin:0; font-size:1.2rem; color:#7f8c8d;">Configuration de la Tournée</h2>
+        <button onclick="resetAll()" class="btn-mini" style="background:var(--danger);">Réinitialiser Tout</button>
     </div>
 
     <div class="header-band">
@@ -134,6 +147,15 @@
         </div>
     </div>
 
+    <div class="dix-footer">
+        <span>Outil conçu et réalisé par</span>
+        <a href="http://www.dix-autrement.fr" target="_blank" class="dix-link">
+            <img src="https://github.com/pierrealainmory-hue/logistique-data-projet/blob/main/logo%20dix%20solutions.jpg?raw=true" alt="Logo DIX" class="dix-logo-small">
+            DIX AUTREMENT
+        </a>
+        <span>| www.dix-autrement.fr</span>
+    </div>
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         const API = "https://update-github-csv-149052175314.europe-west1.run.app/";
@@ -150,7 +172,7 @@
             loadSaved(); setMode('stop');
         };
 
-        function updateTitle() { /* Gardé pour compatibilité, mais le titre principal est maintenant statique */ saveProd(); }
+        function updateTitle() { /* Titre statique */ saveProd(); }
         function resetAll() { if(confirm("Voulez-vous tout réinitialiser ?")) { localStorage.clear(); location.reload(); } }
         function setMode(m) { mode = m; document.getElementById('btn-t-prod').style.background = m==='prod' ? 'var(--accent)' : '#95a5a6'; document.getElementById('btn-t-stop').style.background = m==='stop' ? 'var(--accent)' : '#95a5a6'; }
 
