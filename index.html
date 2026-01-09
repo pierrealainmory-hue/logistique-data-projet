@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulateur Logistique - PNR Préalpes</title>
+    
+    <link rel="icon" href="https://github.com/pierrealainmory-hue/logistique-data-projet/blob/main/LogoEpurvertpetit.png?raw=true">
+
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
@@ -18,10 +21,10 @@
         }
         .client-identity { display: flex; align-items: center; gap: 25px; }
         
-        /* Correction Logo : Plus de cadre gris, fond transparent */
+        /* Logo sans cadre */
         .client-logo { 
             height: 85px; width: auto; 
-            display: block; /* Supprime les espaces fantômes */
+            display: block; 
         }
         
         .assistance-box { 
@@ -50,232 +53,4 @@
         .kpi-card { background: white; padding: 15px; border-radius: 10px; border: 1px solid #e4e7ed; text-align: center; }
         .kpi-title { font-size: 0.7rem; font-weight: 700; color: var(--text); text-transform: uppercase; margin-bottom: 5px; }
         .kpi-value { font-size: 1.2rem; font-weight: 800; color: var(--primary); }
-        .summary-banner { grid-column: span 3; background: var(--primary); color: white; border-radius: 10px; padding: 20px; display: flex; justify-content: space-around; align-items: center; text-align: center; }
-        .summary-value { font-size: 1.8rem; font-weight: 800; display: block; }
-
-        #stops-list { list-style: none; padding: 0; }
-        .stop-item { background: white; padding: 12px; margin-bottom: 8px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #ebedf0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        .handle { cursor: grab; color: #b0bec5; font-size: 1.2rem; margin-right: 10px; }
-        .stop-main { flex: 1; display: flex; align-items: center; gap: 10px; }
-
-        #map { height: 450px; width: 100%; border-radius: 12px; border: 1px solid #dcdfe6; z-index: 1; }
-        .btn-main { background: var(--success); color: white; width: 100%; padding: 16px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; }
-        .btn-mini { padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; color: white; font-weight: bold; }
-
-        /* FOOTER DIX */
-        .dix-footer {
-            margin-top: 40px; padding: 20px; background: white; border-radius: 12px;
-            display: flex; justify-content: center; align-items: center; gap: 15px;
-            color: #7f8c8d; font-size: 0.9rem;
-        }
-        .dix-logo-small { height: 30px; width: auto; vertical-align: middle; }
-        .dix-link { color: var(--accent); text-decoration: none; font-weight: bold; }
-    </style>
-</head>
-<body>
-
-    <div class="client-header">
-        <div class="client-identity">
-            <img src="https://www.parcs-naturels-regionaux.fr/sites/federationpnr/files/styles/contenu/public/image/parc/sans_titre.png?itok=z_7I7Msh" alt="Logo PNR Préalpes d'Azur" class="client-logo">
-            <div>
-                <h1 style="margin:0; font-size:1.6rem; color:var(--success);">PNR des Préalpes d'Azur</h1>
-                <span style="color:var(--text); font-size:1rem;">Simulateur de Logistique en Circuit Court</span>
-            </div>
-        </div>
-        
-        <div class="assistance-box">
-            <span class="assistance-title">🆘 Assistance Technique</span>
-            <b>Pierre-Alain Mory</b><br>
-            <a href="tel:0783000956">07 83 00 09 56</a><br>
-            <a href="mailto:pierre.alain.mory@dix-autrement.fr">pierre.alain.mory@dix-autrement.fr</a>
-        </div>
-    </div>
-
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h2 style="margin:0; font-size:1.2rem; color:#7f8c8d;">Configuration de la Tournée</h2>
-        <button onclick="resetAll()" class="btn-mini" style="background:var(--danger);">Réinitialiser Tout</button>
-    </div>
-
-    <div class="header-band">
-        <div class="header-row">
-            <div class="form-group" style="flex: 1.5;"><label>Nom Producteur / Dépôt</label><input type="text" id="pName" placeholder="Ex: Ferme du Soleil" onchange="updateTitle()"></div>
-            <div class="form-group"><label>Journée de Livraison</label><select id="pDay" onchange="saveProd()"><option>Lundi</option><option>Mardi</option><option>Mercredi</option><option>Jeudi</option><option>Vendredi</option><option>Samedi</option></select></div>
-            <div class="form-group" style="flex: 2;"><label>📍 Adresse du Dépôt</label><div style="display:flex; gap:5px;"><input type="text" id="pAddr" placeholder="Chercher une adresse..." style="flex:1;"><button class="btn-mini" style="background:var(--info);" onclick="searchAddress('prod')">🔍</button><button class="btn-mini" id="btn-t-prod" style="background:#95a5a6;" onclick="setMode('prod')">🎯</button></div></div>
-        </div>
-        <div class="header-row">
-            <div class="form-group" style="flex: 1.5;"><label>🚚 Type de Véhicule</label><select id="vType" onchange="saveProd()"><option>Petit utilitaire (< 3m³)</option><option selected>Fourgon compact (3-6m³)</option><option>Grand fourgon (6-12m³)</option><option>Petit camion (12-20m³)</option><option>Camion lourd (> 20m³)</option></select></div>
-            <div class="form-group"><label>📦 Prép. (min)</label><input type="number" id="tPrep" value="30" onchange="updateView()"></div>
-            <div class="form-group"><label>🚚 Charg. (min)</label><input type="number" id="tLoad" value="20" onchange="updateView()"></div>
-            <div class="form-group"><label>💶 Livreur (€/h)</label><input type="number" id="cH" value="18" onchange="updateView()"></div>
-            <div class="form-group"><label>⛽ Carburant (€/km)</label><input type="number" id="cK" value="0.60" step="0.05" onchange="updateView()"></div>
-        </div>
-    </div>
-
-    <div class="main-container">
-        <div class="left-panel">
-            <div class="card" style="border-left: 6px solid var(--success);">
-                <h3 style="margin-top:0; font-size:1.1rem;">📍 Ajouter un Arrêt</h3>
-                <div class="form-group"><label>Localisation</label><div style="display:flex; gap:5px;"><input type="text" id="sAddr" placeholder="Adresse du client..." style="flex:1;"><button class="btn-mini" style="background:var(--info);" onclick="searchAddress('stop')">🔍</button><button class="btn-mini" id="btn-t-stop" style="background:#95a5a6;" onclick="setMode('stop')">🎯</button></div></div>
-                <div style="display:flex; gap:10px; margin-top:15px;">
-                    <div class="form-group"><label>Opération</label><select id="sOpType"><option value="📦">📦 Livraison Client</option><option value="🚜">🚜 Collecte</option><option value="🏬">🏬 Point Relais</option></select></div>
-                    <div class="form-group"><label>Nom / Lieu</label><input type="text" id="sClient"></div>
-                </div>
-                <div style="display:flex; gap:10px; margin-top:10px;">
-                    <div class="form-group"><label>Valeur March. (€)</label><input type="number" id="sEuro" value="0"></div>
-                    <div class="form-group"><label>Volume (kg)</label><input type="number" id="sVol" value="0"></div>
-                    <div class="form-group"><label>Temps Arrêt (min)</label><input type="number" id="sTime" value="15"></div>
-                </div>
-                <button class="btn-main" style="background:var(--info); margin-top:20px;" onclick="addStop()">Ajouter à la tournée</button>
-            </div>
-            <h4 style="color:var(--text);">📋 Ordre de passage (Drag & Drop)</h4>
-            <ul id="stops-list"></ul>
-            <button class="btn-main" id="btnSend" onclick="sendData()" disabled>🚀 ENREGISTRER LA TOURNÉE</button>
-        </div>
-
-        <div class="right-panel">
-            <div id="map"></div>
-            <div class="kpi-container">
-                <div class="summary-banner">
-                    <div><small>COÛT LOGISTIQUE</small><br><span class="summary-value" id="rTotal">0 €</span></div>
-                    <div><small>CHIFFRE D'AFFAIRES</small><br><span class="summary-value" id="rVal">0 €</span></div>
-                </div>
-                <div class="kpi-card"><div class="kpi-title">Distance & Route</div><div class="kpi-value" id="rDist">0 km</div><div style="font-size:0.7rem;" id="rTime">0h00 conduite</div></div>
-                <div class="kpi-card"><div class="kpi-title">Frais de Route</div><div class="kpi-value" id="rCostTrans">0 €</div><div style="font-size:0.6rem; color:var(--text);">Carb. + Salaire route</div></div>
-                <div class="kpi-card"><div class="kpi-title">Frais Personnel</div><div class="kpi-value" id="rCostOps">0 €</div><div style="font-size:0.7rem;" id="rOps">0h00 service</div></div>
-                <div class="kpi-card" style="grid-column: span 3; border-top: 3px solid var(--accent);"><div class="kpi-title">RENTABILITÉ (Ratio Logistique)</div><div class="kpi-value" style="color:var(--accent); font-size:1.8rem;" id="rRatio">0 %</div></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="dix-footer">
-        <span>Outil conçu et réalisé par</span>
-        <a href="http://www.dix-autrement.fr" target="_blank" class="dix-link">
-            <img src="https://github.com/pierrealainmory-hue/logistique-data-projet/blob/main/logo%20dix%20solutions.jpg?raw=true" alt="Logo DIX" class="dix-logo-small">
-            DIX AUTREMENT
-        </a>
-        <span>| www.dix-autrement.fr</span>
-    </div>
-
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        const API = "https://update-github-csv-149052175314.europe-west1.run.app/";
-        let map, markers, routeLayer, stops = [], mode = 'stop', pData = { lat:null, lon:null, addr:"" }, sTemp = { lat:null, lon:null };
-
-        window.onload = function() {
-            map = L.map('map').setView([46.6, 1.88], 6);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-            markers = L.layerGroup().addTo(map);
-            routeLayer = L.layerGroup().addTo(map);
-            map.on('click', onMapClick);
-            
-            Sortable.create(document.getElementById('stops-list'), { animation: 150, handle: '.handle', onEnd: reorderStops });
-            loadSaved(); setMode('stop');
-        };
-
-        function updateTitle() { /* Titre statique */ saveProd(); }
-        function resetAll() { if(confirm("Voulez-vous tout réinitialiser ?")) { localStorage.clear(); location.reload(); } }
-        function setMode(m) { mode = m; document.getElementById('btn-t-prod').style.background = m==='prod' ? 'var(--accent)' : '#95a5a6'; document.getElementById('btn-t-stop').style.background = m==='stop' ? 'var(--accent)' : '#95a5a6'; }
-
-        function onMapClick(e) {
-            let lat = e.latlng.lat, lon = e.latlng.lng;
-            showTempMarker(lat, lon);
-            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`).then(r=>r.json()).then(d=>{
-                if(mode==='prod'){ pData={lat, lon, addr:d.display_name}; document.getElementById('pAddr').value=d.display_name; saveProd(); }
-                else { sTemp={lat, lon}; document.getElementById('sAddr').value=d.display_name; }
-                updateView();
-            });
-        }
-
-        function searchAddress(target) {
-            let q = document.getElementById(target==='prod'?'pAddr':'sAddr').value;
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`).then(r=>r.json()).then(res=>{
-                if(res.length>0){
-                    let lat=parseFloat(res[0].lat), lon=parseFloat(res[0].lon);
-                    showTempMarker(lat, lon); map.setView([lat, lon], 14);
-                    if(target==='prod'){ pData={lat, lon, addr:res[0].display_name}; document.getElementById('pAddr').value=res[0].display_name; saveProd(); }
-                    else { sTemp={lat, lon}; document.getElementById('sAddr').value=res[0].display_name; }
-                    updateView();
-                }
-            });
-        }
-
-        function showTempMarker(lat, lon) {
-            markers.clearLayers();
-            if(pData.lat) L.marker([pData.lat, pData.lon], {icon: L.divIcon({html:'🏠', className:''})}).addTo(markers);
-            stops.forEach(s => L.circleMarker([s.lat, s.lon], {radius:7, color:'var(--info)', fillOpacity:1}).addTo(markers));
-            L.circleMarker([lat, lon], {radius:10, color:'var(--accent)', weight:3, fillOpacity:0.5}).addTo(markers);
-        }
-
-        function saveProd() { pData.name=document.getElementById('pName').value; pData.day=document.getElementById('pDay').value; localStorage.setItem('pMem_v35', JSON.stringify(pData)); updateView(); }
-        function loadSaved() { let s=localStorage.getItem('pMem_v35'); if(s){ pData=JSON.parse(s); document.getElementById('pName').value=pData.name; document.getElementById('pAddr').value=pData.addr; if(pData.day) document.getElementById('pDay').value=pData.day; updateTitle(); } }
-
-        function addStop() {
-            if(!pData.lat || !sTemp.lat) return alert("Position manquante.");
-            stops.push({ client:document.getElementById('sClient').value||"Client", icon:document.getElementById('sOpType').value, euro:parseFloat(document.getElementById('sEuro').value)||0, vol:parseFloat(document.getElementById('sVol').value)||0, time:parseFloat(document.getElementById('sTime').value)||15, lat:sTemp.lat, lon:sTemp.lon, addr:document.getElementById('sAddr').value, id:Date.now() });
-            sTemp={lat:null, lon:null}; document.getElementById('sAddr').value=""; document.getElementById('sClient').value=""; updateView();
-        }
-
-        function reorderStops() {
-            let ns=[];
-            document.querySelectorAll('.stop-item').forEach(it=>{ ns.push(stops.find(s=>s.id===parseInt(it.getAttribute('data-id')))); });
-            stops=ns; updateView();
-        }
-
-        function updateView() {
-            markers.clearLayers(); routeLayer.clearLayers();
-            const ul=document.getElementById('stops-list'); ul.innerHTML="";
-            if(pData.lat) L.marker([pData.lat, pData.lon], {icon: L.divIcon({html:'🏠', className:''})}).addTo(markers);
-            stops.forEach((s, i) => {
-                ul.innerHTML += `<li class="stop-item" data-id="${s.id}"><div class="stop-main"><span class="handle">☰</span> ${s.icon} <b>${i+1}. ${s.client}</b></div><button onclick="stops.splice(${i},1);updateView()" style="border:none;background:none;color:red;cursor:pointer;">✕</button></li>`;
-                L.circleMarker([s.lat, s.lon], {radius:7, color:'var(--info)', fillOpacity:1}).addTo(markers);
-            });
-            if(pData.lat && stops.length > 0) calcRoute();
-            else updateStats(0,0);
-            document.getElementById('btnSend').disabled=(stops.length===0);
-        }
-
-        function calcRoute() {
-            let pts = [[pData.lon, pData.lat], ...stops.map(s=>[s.lon, s.lat]), [pData.lon, pData.lat]];
-            fetch(`https://router.project-osrm.org/route/v1/driving/${pts.map(p=>p.join(',')).join(';')}?overview=full&geometries=geojson`).then(r=>r.json()).then(res=>{
-                if(res.code==='Ok'){
-                    let rd=res.routes[0];
-                    L.polyline(rd.geometry.coordinates.map(c=>[c[1], c[0]]), {color:'var(--info)', weight:5}).addTo(routeLayer);
-                    map.fitBounds(L.featureGroup(markers.getLayers()).getBounds().pad(0.2));
-                    updateStats(rd.distance/1000, rd.duration/60);
-                }
-            });
-        }
-
-        function updateStats(dist, driveTime) {
-            const cH=parseFloat(document.getElementById('cH').value)||0, cK=parseFloat(document.getElementById('cK').value)||0, prep=parseFloat(document.getElementById('tPrep').value)||0, load=parseFloat(document.getElementById('tLoad').value)||0;
-            const sTime=stops.reduce((a,b)=>a+b.time, 0)+prep+load, ct=(dist*cK)+((driveTime/60)*cH), co=(sTime/60)*cH, tt=ct+co, v=stops.reduce((a,b)=>a+b.euro, 0);
-            document.getElementById('rDist').innerText=dist.toFixed(1)+" km";
-            document.getElementById('rTime').innerText=Math.floor(driveTime/60)+"h"+Math.round(driveTime%60).toString().padStart(2,'0');
-            document.getElementById('rOps').innerText=Math.floor(sTime/60)+"h"+Math.round(sTime%60).toString().padStart(2,'0');
-            document.getElementById('rCostTrans').innerText=ct.toFixed(2)+" €";
-            document.getElementById('rCostOps').innerText=co.toFixed(2)+" €";
-            document.getElementById('rTotal').innerText=tt.toFixed(2)+" €";
-            document.getElementById('rVal').innerText=v.toFixed(2)+" €";
-            document.getElementById('rRatio').innerText=v>0?(tt/v*100).toFixed(1)+" %":"0 %";
-        }
-
-        function sendData() {
-            const btn=document.getElementById('btnSend'); btn.disabled=true; btn.innerText="⏳ Envoi...";
-            const dateStr = new Date().toISOString().split('T')[0];
-            const tourId = (document.getElementById('pName').value||"ID").replace(/\s/g,'') + "_" + Date.now();
-            
-            const rows = [];
-            const common = { "Producteur": document.getElementById('pName').value, "Date de Livraison": dateStr, "Jour": document.getElementById('pDay').value, "Tournée ID": tourId, "Véhicule": document.getElementById('vType').value, "Cout Horaire (€/h)": parseFloat(document.getElementById('cH').value), "Cout Km (€/km)": parseFloat(document.getElementById('cK').value), "Temps Préparation (min)": parseFloat(document.getElementById('tPrep').value), "Temps Chargement Départ (min)": parseFloat(document.getElementById('tLoad').value) };
-
-            rows.push({...common, "Ordre d'Arrêt": 0, "Client / Point de Livraison": "Départ Dépôt", "Adresse Complète": pData.addr, "lat": pData.lat, "lon": pData.lon, "Type Arrêt": "Départ"});
-            stops.forEach((s, i) => { rows.push({...common, "Ordre d'Arrêt": i+1, "Client / Point de Livraison": s.client, "Adresse Complète": s.addr, "lat": s.lat, "lon": s.lon, "Montant (€)": s.euro, "Volume (Kg Normalisé)": s.vol, "Temps d'arrêt (min)": s.time, "Type Arrêt": s.icon}); });
-            rows.push({...common, "Ordre d'Arrêt": stops.length+1, "Client / Point de Livraison": "Retour Dépôt", "Adresse Complète": pData.addr, "lat": pData.lat, "lon": pData.lon, "Type Arrêt": "Retour"});
-
-            fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rows: rows }) })
-            .then(r => { if(r.ok) { alert("✅ Tournée enregistrée !"); stops=[]; updateView(); } })
-            .catch(() => alert("❌ Erreur de connexion"))
-            .finally(() => { btn.disabled = false; btn.innerText = "🚀 ENREGISTRER LA TOURNÉE"; });
-        }
-    </script>
-</body>
-</html>
+        .summary-banner { grid-column: span 3; background: var(--primary); color: white; border-radius: 10px; padding: 20px; display: flex; justify-content: space-around; align-items
