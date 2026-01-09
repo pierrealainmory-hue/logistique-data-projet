@@ -37,8 +37,8 @@
             border-radius: 6px; 
             margin-bottom: 20px; 
             box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
-            border-top: 6px solid var(--primary); /* Gris par défaut */
-            transition: all 0.4s ease; /* Transition douce */
+            border-top: 6px solid var(--primary); 
+            transition: all 0.4s ease; 
         }
         
         /* CLASSE AJOUTÉE QUAND VALIDÉ (LE "CHECK") */
@@ -57,7 +57,7 @@
             background: var(--success); color: white;
             font-size: 0.8rem; padding: 5px 10px; border-radius: 20px;
             margin-left: 15px; 
-            opacity: 0; transform: translateY(10px); /* Caché par défaut */
+            opacity: 0; transform: translateY(10px); 
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
@@ -157,7 +157,7 @@
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
         <div style="display:flex; align-items:center;">
             <h2 style="margin:0; font-size:1.2rem; color:#7f8c8d;">Configuration de la Tournée</h2>
-            <span id="depot-badge" class="validation-badge">✅ DÉPÔT VALIDÉ</span>
+            <span id="depot-badge" class="validation-badge">✅ Adresse de départ validée</span>
         </div>
         <button onclick="resetAll()" class="btn-mini" style="background:var(--danger);">Réinitialiser Tout</button>
     </div>
