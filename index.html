@@ -267,10 +267,10 @@
                     pData={lat, lon, addr:d.display_name}; 
                     document.getElementById('pAddr').value=d.display_name; 
                     checkProducerValidation(); 
-                    setMode('stop'); // Verrouillage auto
+                    setMode('stop'); 
                 }
                 else { 
-                    sTemp={lat, lon}; // Stocke le point temporaire
+                    sTemp={lat, lon}; 
                     document.getElementById('sAddr').value=d.display_name; 
                 }
                 updateView();
@@ -287,10 +287,10 @@
                         pData={lat, lon, addr:res[0].display_name}; 
                         document.getElementById('pAddr').value=res[0].display_name; 
                         checkProducerValidation();
-                        setMode('stop'); // Verrouillage auto
+                        setMode('stop'); 
                     }
                     else { 
-                        sTemp={lat, lon}; // Stocke le point temporaire
+                        sTemp={lat, lon}; 
                         document.getElementById('sAddr').value=res[0].display_name; 
                     }
                     updateView();
@@ -310,7 +310,12 @@
 
         function addStop() {
             if(!pData.lat || !sTemp.lat) return alert("Position manquante.");
-            stops.push({ client:document.getElementById('sClient').value||"Client", icon:document.getElementById('sOpType').value, euro:parseFloat(document.getElementById('sEuro').value)||0, vol:parseFloat(document.getElementById('sVol').value)||0, time:parseFloat(document.getElementById('sTime').value)||15, lat:sTemp.lat, lon:sTemp.lon, addr:document.getElementById('sAddr').value, id:Date.now() });
+            
+            // --- NOUVEAUTE V45 : NOM AUTOMATIQUE ---
+            let cName = document.getElementById('sClient').value.trim();
+            if(!cName) cName = "Arrêt " + (stops.length + 1);
+
+            stops.push({ client:cName, icon:document.getElementById('sOpType').value, euro:parseFloat(document.getElementById('sEuro').value)||0, vol:parseFloat(document.getElementById('sVol').value)||0, time:parseFloat(document.getElementById('sTime').value)||15, lat:sTemp.lat, lon:sTemp.lon, addr:document.getElementById('sAddr').value, id:Date.now() });
             sTemp={lat:null, lon:null}; document.getElementById('sAddr').value=""; document.getElementById('sClient').value=""; updateView();
         }
 
@@ -320,33 +325,17 @@
             stops=ns; updateView();
         }
 
-        // --- POINTS PLUS PETITS (V44) ---
         function updateView() {
             markers.clearLayers(); routeLayer.clearLayers();
             const ul=document.getElementById('stops-list'); ul.innerHTML="";
-            
-            // 1. DEPOT
             if(pData.lat) L.marker([pData.lat, pData.lon], {icon: L.divIcon({html:'🏠', className:''})}).addTo(markers);
-            
-            // 2. ARRETS VALIDES (PETITS POINTS BLEUS)
             stops.forEach((s, i) => {
                 ul.innerHTML += `<li class="stop-item" data-id="${s.id}"><div class="stop-main"><span class="handle">☰</span> ${s.icon} <b>${i+1}. ${s.client}</b></div><button onclick="stops.splice(${i},1);updateView()" style="border:none;background:none;color:red;cursor:pointer;">✕</button></li>`;
-                // Rayon réduit à 4
                 L.circleMarker([s.lat, s.lon], {radius:4, color:'var(--info)', fillOpacity:1}).addTo(markers);
             });
-
-            // 3. POINT TEMPORAIRE (PETIT POINT ROUGE)
             if(sTemp.lat) {
-                // Rayon réduit à 5
-                L.circleMarker([sTemp.lat, sTemp.lon], {
-                    radius: 5,
-                    color: '#e74c3c', // Rouge
-                    fillColor: '#c0392b',
-                    fillOpacity: 0.8,
-                    weight: 3
-                }).addTo(markers);
+                L.circleMarker([sTemp.lat, sTemp.lon], { radius: 5, color: '#e74c3c', fillColor: '#c0392b', fillOpacity: 0.8, weight: 3 }).addTo(markers);
             }
-
             if(pData.lat && stops.length > 0) calcRoute();
             else updateStats(0,0);
             document.getElementById('btnSend').disabled=(stops.length===0);
