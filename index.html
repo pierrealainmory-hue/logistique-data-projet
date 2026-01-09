@@ -97,11 +97,7 @@
         .input-valid { border-color: var(--success) !important; background-color: #fff !important; }
         
         /* KPI & LIST */
-        .kpi-header {
-            font-size: 1rem; font-weight: bold; color: var(--primary); 
-            margin-bottom: 10px; border-bottom: 2px solid #eee; padding-bottom: 5px;
-        }
-        .kpi-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 10px; }
+        .kpi-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px; }
         .kpi-card { 
             background: white; padding: 15px; 
             border-radius: 6px; 
@@ -109,10 +105,25 @@
         }
         .kpi-title { font-size: 0.7rem; font-weight: 700; color: var(--text); text-transform: uppercase; margin-bottom: 5px; }
         .kpi-value { font-size: 1.2rem; font-weight: 800; color: var(--primary); }
+        
+        /* NOUVEAU DESIGN BANDEAU RECAP */
         .summary-banner { 
-            grid-column: span 3; background: var(--primary); color: white; 
+            grid-column: span 3; 
+            background: var(--primary); color: white; 
             border-radius: 6px; 
-            padding: 20px; display: flex; justify-content: space-around; align-items: center; text-align: center; 
+            padding: 15px; 
+            display: flex; flex-direction: column; /* Vertical */
+            align-items: center; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .banner-header {
+            display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+            font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .banner-metrics {
+            display: flex; justify-content: space-around; width: 100%;
+            border-top: 1px solid rgba(255,255,255,0.2); /* Ligne de séparation */
+            padding-top: 15px;
         }
         .summary-value { font-size: 1.8rem; font-weight: 800; display: block; }
 
@@ -267,13 +278,18 @@
         <div class="right-panel">
             <div id="map"></div>
             
-            <div class="kpi-header" id="kpi-tour-title">Bilan Économique</div>
-            
             <div class="kpi-container">
                 <div class="summary-banner">
-                    <div><small>COÛT LOGISTIQUE</small><br><span class="summary-value" id="rTotal">0 €</span></div>
-                    <div><small>CHIFFRE D'AFFAIRES</small><br><span class="summary-value" id="rVal">0 €</span></div>
+                    <div class="banner-header">
+                        <span style="font-size:1.4rem;">📊</span>
+                        <span id="kpi-tour-title" style="font-weight:700;">BILAN ÉCONOMIQUE</span>
+                    </div>
+                    <div class="banner-metrics">
+                        <div><small style="opacity:0.8">COÛT LOGISTIQUE</small><br><span class="summary-value" id="rTotal">0 €</span></div>
+                        <div><small style="opacity:0.8">CHIFFRE D'AFFAIRES</small><br><span class="summary-value" id="rVal">0 €</span></div>
+                    </div>
                 </div>
+
                 <div class="kpi-card"><div class="kpi-title">Distance & Route</div><div class="kpi-value" id="rDist">0 km</div><div style="font-size:0.7rem;" id="rTime">0h00 conduite</div></div>
                 <div class="kpi-card"><div class="kpi-title">Frais Carburant</div><div class="kpi-value" id="rCostTrans">0 €</div><div style="font-size:0.6rem; color:var(--text);">Basé sur Conso x Prix</div></div>
                 <div class="kpi-card"><div class="kpi-title">Frais Personnel</div><div class="kpi-value" id="rCostOps">0 €</div><div style="font-size:0.7rem;" id="rOps">0h00 service</div></div>
@@ -408,12 +424,11 @@
             } 
         }
 
-        // --- NOUVEAU : MISE A JOUR DU TITRE KPI ---
         function updateStatsTitle() {
             const tourName = document.getElementById('tName').value.trim();
             const titleElem = document.getElementById('kpi-tour-title');
-            if(tourName) titleElem.innerText = "Bilan Économique : " + tourName;
-            else titleElem.innerText = "Bilan Économique";
+            if(tourName) titleElem.innerText = "BILAN : " + tourName.toUpperCase();
+            else titleElem.innerText = "BILAN ÉCONOMIQUE";
         }
 
         function addStop() {
@@ -447,35 +462,17 @@
         function updateView() {
             markers.clearLayers(); routeLayer.clearLayers();
             const ul=document.getElementById('stops-list'); ul.innerHTML="";
-            
             if(pData.lat) L.marker([pData.lat, pData.lon], {icon: L.divIcon({html:'🏠', className:''})}).addTo(markers);
-            
             stops.forEach((s, i) => {
-                ul.innerHTML += `
-                <li class="stop-item" data-id="${s.id}">
-                    <div class="stop-content">
-                        <span class="handle">☰</span>
-                        ${s.icon} 
-                        <div class="stop-info">
-                            <span class="stop-name">${i+1}. ${s.client}</span>
-                            <span class="stop-addr">${s.addr}</span>
-                        </div>
-                    </div>
-                    <div class="stop-actions">
-                        <button class="btn-icon" onclick="editStop(${i})" title="Modifier">✏️</button>
-                        <button class="btn-icon" onclick="stops.splice(${i},1);updateView()" title="Supprimer" style="color:#e74c3c;">✕</button>
-                    </div>
-                </li>`;
+                ul.innerHTML += `<li class="stop-item" data-id="${s.id}"><div class="stop-content"><span class="handle">☰</span>${s.icon}<div class="stop-info"><span class="stop-name">${i+1}. ${s.client}</span><span class="stop-addr">${s.addr}</span></div></div><div class="stop-actions"><button class="btn-icon" onclick="editStop(${i})" title="Modifier">✏️</button><button class="btn-icon" onclick="stops.splice(${i},1);updateView()" title="Supprimer" style="color:#e74c3c;">✕</button></div></li>`;
                 L.circleMarker([s.lat, s.lon], {radius:4, color:'var(--info)', fillOpacity:1}).addTo(markers);
             });
-
             if(sTemp.lat) {
                 L.circleMarker([sTemp.lat, sTemp.lon], { radius: 5, color: '#e74c3c', fillColor: '#c0392b', fillOpacity: 0.8, weight: 3 }).addTo(markers);
             }
-
             if(pData.lat && stops.length > 0) calcRoute();
             else updateStats(0,0);
-            updateStatsTitle(); // Force le titre au refresh
+            updateStatsTitle(); 
             document.getElementById('btnSend').disabled=(stops.length===0);
         }
 
