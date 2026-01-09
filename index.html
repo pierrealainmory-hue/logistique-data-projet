@@ -98,13 +98,24 @@
         .summary-value { font-size: 1.8rem; font-weight: 800; display: block; }
 
         #stops-list { list-style: none; padding: 0; }
+        
+        /* STYLE LISTE AMÉLIORÉ */
         .stop-item { 
             background: white; padding: 12px; margin-bottom: 8px; 
             border-radius: 4px; 
-            display: flex; justify-content: space-between; align-items: center; border: 1px solid #ebedf0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); 
+            display: flex; justify-content: space-between; align-items: center; 
+            border: 1px solid #ebedf0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); 
         }
-        .handle { cursor: grab; color: #b0bec5; font-size: 1.2rem; margin-right: 10px; }
-        .stop-main { flex: 1; display: flex; align-items: center; gap: 10px; }
+        .stop-content { display: flex; align-items: center; gap: 10px; flex: 1; overflow: hidden; }
+        .stop-info { display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
+        .stop-name { font-weight: bold; font-size: 0.95rem; }
+        .stop-addr { font-size: 0.75rem; color: #7f8c8d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px; }
+        
+        .stop-actions { display: flex; gap: 5px; }
+        .btn-icon { border: none; background: none; cursor: pointer; font-size: 1.1rem; padding: 5px; border-radius: 4px; }
+        .btn-icon:hover { background-color: #f0f0f0; }
+
+        .handle { cursor: grab; color: #b0bec5; font-size: 1.2rem; margin-right: 5px; }
 
         #map { 
             height: 450px; width: 100%; 
@@ -242,20 +253,12 @@
             const pAddrInput = document.getElementById('pAddr');
             const band = document.getElementById('prod-band');
             const badge = document.getElementById('depot-badge');
-
             let nameOk = pNameInput.value.trim().length > 0;
             let addrOk = pData.lat !== null && pAddrInput.value.trim().length > 0;
-
             if(nameOk) pNameInput.classList.add('input-valid'); else pNameInput.classList.remove('input-valid');
             if(addrOk) pAddrInput.classList.add('input-valid'); else pAddrInput.classList.remove('input-valid');
-
-            if(nameOk && addrOk) {
-                band.classList.add('validated');
-                badge.classList.add('show-badge');
-            } else {
-                band.classList.remove('validated');
-                badge.classList.remove('show-badge');
-            }
+            if(nameOk && addrOk) { band.classList.add('validated'); badge.classList.add('show-badge'); } 
+            else { band.classList.remove('validated'); badge.classList.remove('show-badge'); }
             saveProd();
         }
 
@@ -267,15 +270,10 @@
             let lat = e.latlng.lat, lon = e.latlng.lng;
             fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`).then(r=>r.json()).then(d=>{
                 if(mode==='prod'){ 
-                    pData={lat, lon, addr:d.display_name}; 
-                    document.getElementById('pAddr').value=d.display_name; 
-                    checkProducerValidation(); 
-                    setMode('stop'); 
+                    pData={lat, lon, addr:d.display_name}; document.getElementById('pAddr').value=d.display_name; 
+                    checkProducerValidation(); setMode('stop'); 
                 }
-                else { 
-                    sTemp={lat, lon}; 
-                    document.getElementById('sAddr').value=d.display_name; 
-                }
+                else { sTemp={lat, lon}; document.getElementById('sAddr').value=d.display_name; }
                 updateView();
             });
         }
@@ -287,39 +285,47 @@
                     let lat=parseFloat(res[0].lat), lon=parseFloat(res[0].lon);
                     map.setView([lat, lon], 14);
                     if(target==='prod'){ 
-                        pData={lat, lon, addr:res[0].display_name}; 
-                        document.getElementById('pAddr').value=res[0].display_name; 
-                        checkProducerValidation();
-                        setMode('stop'); 
+                        pData={lat, lon, addr:res[0].display_name}; document.getElementById('pAddr').value=res[0].display_name; 
+                        checkProducerValidation(); setMode('stop'); 
                     }
-                    else { 
-                        sTemp={lat, lon}; 
-                        document.getElementById('sAddr').value=res[0].display_name; 
-                    }
+                    else { sTemp={lat, lon}; document.getElementById('sAddr').value=res[0].display_name; }
                     updateView();
                 }
             });
         }
 
-        function showTempMarker(lat, lon) {
-            markers.clearLayers();
-            if(pData.lat) L.marker([pData.lat, pData.lon], {icon: L.divIcon({html:'🏠', className:''})}).addTo(markers);
-            stops.forEach(s => L.circleMarker([s.lat, s.lon], {radius:4, color:'var(--info)', fillOpacity:1}).addTo(markers));
-            L.circleMarker([lat, lon], {radius:5, color:'var(--accent)', weight:3, fillOpacity:0.5}).addTo(markers);
-        }
-
+        function showTempMarker(lat, lon) { /* géré dans updateView */ }
         function saveProd() { pData.name=document.getElementById('pName').value; pData.day=document.getElementById('pDay').value; localStorage.setItem('pMem_v36', JSON.stringify(pData)); updateView(); }
         function loadSaved() { let s=localStorage.getItem('pMem_v36'); if(s){ pData=JSON.parse(s); document.getElementById('pName').value=pData.name; document.getElementById('pAddr').value=pData.addr; if(pData.day) document.getElementById('pDay').value=pData.day; } }
 
         function addStop() {
             if(!pData.lat || !sTemp.lat) return alert("Position manquante.");
-            
-            // --- NOM AUTOMATIQUE ---
             let cName = document.getElementById('sClient').value.trim();
             if(!cName) cName = "Arrêt " + (stops.length + 1);
-
             stops.push({ client:cName, icon:document.getElementById('sOpType').value, euro:parseFloat(document.getElementById('sEuro').value)||0, vol:parseFloat(document.getElementById('sVol').value)||0, time:parseFloat(document.getElementById('sTime').value)||15, lat:sTemp.lat, lon:sTemp.lon, addr:document.getElementById('sAddr').value, id:Date.now() });
             sTemp={lat:null, lon:null}; document.getElementById('sAddr').value=""; document.getElementById('sClient').value=""; updateView();
+        }
+
+        // --- NOUVELLE FONCTION EDITER ---
+        function editStop(index) {
+            let s = stops[index];
+            // Remplir le formulaire
+            document.getElementById('sClient').value = s.client;
+            document.getElementById('sOpType').value = s.icon;
+            document.getElementById('sAddr').value = s.addr;
+            document.getElementById('sEuro').value = s.euro;
+            document.getElementById('sVol').value = s.vol;
+            document.getElementById('sTime').value = s.time;
+
+            // Remettre en point temporaire
+            sTemp = { lat: s.lat, lon: s.lon };
+
+            // Supprimer de la liste (pour qu'on puisse le ré-ajouter modifié)
+            stops.splice(index, 1);
+            
+            updateView();
+            // Focus sur le nom pour signaler qu'on édite
+            document.getElementById('sClient').focus();
         }
 
         function reorderStops() {
@@ -332,24 +338,31 @@
             markers.clearLayers(); routeLayer.clearLayers();
             const ul=document.getElementById('stops-list'); ul.innerHTML="";
             
-            // 1. DEPOT
             if(pData.lat) L.marker([pData.lat, pData.lon], {icon: L.divIcon({html:'🏠', className:''})}).addTo(markers);
             
-            // 2. ARRETS VALIDES
             stops.forEach((s, i) => {
-                ul.innerHTML += `<li class="stop-item" data-id="${s.id}"><div class="stop-main"><span class="handle">☰</span> ${s.icon} <b>${i+1}. ${s.client}</b></div><button onclick="stops.splice(${i},1);updateView()" style="border:none;background:none;color:red;cursor:pointer;">✕</button></li>`;
+                // --- LISTE AMELIOREE AVEC VILLE ET EDIT ---
+                ul.innerHTML += `
+                <li class="stop-item" data-id="${s.id}">
+                    <div class="stop-content">
+                        <span class="handle">☰</span>
+                        ${s.icon} 
+                        <div class="stop-info">
+                            <span class="stop-name">${i+1}. ${s.client}</span>
+                            <span class="stop-addr">${s.addr}</span>
+                        </div>
+                    </div>
+                    <div class="stop-actions">
+                        <button class="btn-icon" onclick="editStop(${i})" title="Modifier">✏️</button>
+                        <button class="btn-icon" onclick="stops.splice(${i},1);updateView()" title="Supprimer" style="color:#e74c3c;">✕</button>
+                    </div>
+                </li>`;
+                
                 L.circleMarker([s.lat, s.lon], {radius:4, color:'var(--info)', fillOpacity:1}).addTo(markers);
             });
 
-            // 3. POINT TEMPORAIRE
             if(sTemp.lat) {
-                L.circleMarker([sTemp.lat, sTemp.lon], {
-                    radius: 5,
-                    color: '#e74c3c', // Rouge
-                    fillColor: '#c0392b',
-                    fillOpacity: 0.8,
-                    weight: 3
-                }).addTo(markers);
+                L.circleMarker([sTemp.lat, sTemp.lon], { radius: 5, color: '#e74c3c', fillColor: '#c0392b', fillOpacity: 0.8, weight: 3 }).addTo(markers);
             }
 
             if(pData.lat && stops.length > 0) calcRoute();
