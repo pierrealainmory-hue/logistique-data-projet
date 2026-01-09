@@ -136,10 +136,10 @@
         .stop-name { font-weight: bold; font-size: 0.95rem; }
         .stop-addr { font-size: 0.75rem; color: #7f8c8d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
-        /* TAGS & DATA - Ajustement largeur V65 */
+        /* TAGS & DATA */
         .stop-meta { 
             text-align: right; margin-right: 15px; 
-            min-width: 120px; /* Plus large pour le texte Ratio Logistique */
+            min-width: 120px; 
             display: flex; flex-direction: column; align-items: flex-end; 
         }
         .stop-euro { font-weight: bold; color: var(--success); font-size: 0.9rem; }
@@ -295,12 +295,10 @@
             <div class="kpi-container">
                 <div class="summary-banner">
                     <div class="banner-header">
-                        <span style="font-size:1.4rem;">📊</span>
-                        <span id="kpi-tour-title" style="font-weight:700;">BILAN ÉCONOMIQUE</span>
-                    </div>
+                        <span style="font-size:1.4rem;">📝</span> <span id="kpi-tour-title" style="font-weight:700;">RÉCAPITULATIF GLOBAL</span> </div>
                     <div class="banner-metrics">
-                        <div><small style="opacity:0.8">COÛT LOGISTIQUE</small><br><span class="summary-value" id="rTotal">0 €</span></div>
-                        <div><small style="opacity:0.8">CHIFFRE D'AFFAIRES</small><br><span class="summary-value" id="rVal">0 €</span></div>
+                        <div><small style="opacity:0.8">COÛT TOTAL TOURNÉE</small><br><span class="summary-value" id="rTotal">0 €</span></div>
+                        <div><small style="opacity:0.8">CA TOTAL TOURNÉE</small><br><span class="summary-value" id="rVal">0 €</span></div>
                     </div>
                 </div>
 
@@ -438,11 +436,12 @@
             } 
         }
 
+        // --- FONCTION TITRE V66 ---
         function updateStatsTitle() {
             const tourName = document.getElementById('tName').value.trim();
             const titleElem = document.getElementById('kpi-tour-title');
-            if(tourName) titleElem.innerText = "BILAN : " + tourName.toUpperCase();
-            else titleElem.innerText = "BILAN ÉCONOMIQUE";
+            if(tourName) titleElem.innerText = "RÉCAPITULATIF GLOBAL : " + tourName.toUpperCase();
+            else titleElem.innerText = "RÉCAPITULATIF GLOBAL";
         }
 
         function addStop() {
@@ -566,7 +565,7 @@
 
                             if(s.euro > 0) {
                                 ratio = (totalLegCost / s.euro) * 100;
-                                ratioText = "Ratio Logistique " + ratio.toFixed(0) + " %"; // TEXTE COMPLET
+                                ratioText = "Ratio Logistique " + ratio.toFixed(0) + " %"; 
                                 if(ratio < 10) ratioClass = "ratio-good";
                                 else if(ratio < 30) ratioClass = "ratio-mid";
                             } else {
