@@ -61,6 +61,10 @@
         .input-valid { border-color: var(--success) !important; background-color: #fff !important; }
         
         /* KPI & RESULTATS */
+        .kpi-header {
+            font-size: 1rem; font-weight: bold; color: var(--primary); 
+            margin-bottom: 10px; border-bottom: 2px solid #eee; padding-bottom: 5px;
+        }
         .kpi-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 10px; }
         .kpi-card { background: white; padding: 15px; border-radius: 6px; border: 1px solid #e4e7ed; text-align: center; }
         .kpi-title { font-size: 0.7rem; font-weight: 700; color: var(--text); text-transform: uppercase; margin-bottom: 5px; }
@@ -103,6 +107,17 @@
         .return-item { background: #f8f9fa; border-left: 4px solid var(--primary); }
         .return-item .stop-name { color: var(--primary); }
 
+        /* LISTE DES TOURNEES (V71) */
+        #tours-list-container { max-height: 200px; overflow-y: auto; margin-bottom: 15px; border: 1px solid #eee; border-radius: 4px; }
+        .tour-row {
+            padding: 10px; border-bottom: 1px solid #eee; background: #fff;
+            display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background 0.2s;
+        }
+        .tour-row:hover { background: #f9f9f9; }
+        .tour-row.active { background: #f4ecf7; border-left: 3px solid var(--lib); }
+        .tour-info { font-size: 0.85rem; }
+        .tour-metrics { font-size: 0.75rem; color: #7f8c8d; }
+        
         .legend-bar {
             grid-column: span 3; background: white; border-radius: 6px; border: 1px solid #eee;
             padding: 10px; margin-top: 5px; display: flex; justify-content: center; gap: 20px;
@@ -115,6 +130,18 @@
         .btn-main { background: var(--success); color: white; width: 100%; padding: 16px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 1rem; }
         .btn-mini { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; }
         
+        #btn-save-local {
+            background: var(--success); color: white; margin-top: 10px; width: 100%;
+            border: none; border-radius: 6px; padding: 15px; 
+            font-weight: bold; font-size: 1rem; cursor: pointer; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        #btn-export-project {
+            background: var(--lib); color: white; width: 100%;
+            border: none; border-radius: 4px; padding: 12px; margin-top: 10px;
+            font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+
         #btn-validate-depot {
             background: var(--success); color: white; margin-top: 10px; width: auto; min-width: 200px;
             display: block; margin: 15px auto 0 auto; border: none; border-radius: 20px; padding: 10px 30px; 
@@ -191,21 +218,21 @@
         <div class="left-panel blocked-area" id="locked-section">
             
             <div class="card" style="border-left: 6px solid var(--lib); margin-bottom: 20px;">
-                <h3 style="margin-top:0; font-size:1.1rem; color:var(--lib);">📂 Mes Tournées</h3>
-                <div style="display:flex; gap:10px; margin-bottom:10px;">
-                    <select id="tourSelect" onchange="loadSelectedTour()" style="flex:2; font-weight:bold;">
-                        <option value="">-- Sélectionner --</option>
-                    </select>
-                    <button class="btn-mini" onclick="deleteCurrentTour()" title="Supprimer" style="background:var(--danger);">🗑️</button>
+                <h3 style="margin-top:0; font-size:1.1rem; color:var(--lib);">📂 Mes Tournées Enregistrées</h3>
+                
+                <div id="tours-list-container">
+                    <div style="padding:10px; color:#999; font-style:italic; text-align:center;">Aucune tournée enregistrée</div>
                 </div>
+
                 <div style="display:flex; gap:10px;">
-                    <button class="btn-mini" onclick="newTour()" style="background:#95a5a6; flex:1;">➕ Nouvelle</button>
-                    <button class="btn-mini" onclick="saveCurrentTour()" style="background:var(--lib); flex:1;">💾 Sauvegarder</button>
+                    <button class="btn-mini" onclick="newTour()" style="background:#95a5a6; flex:1;">➕ Nouvelle Tournée</button>
                 </div>
+                
+                <button id="btn-export-project" onclick="sendProjectData()">🚀 ENVOYER LE PROJET AU PNR (CSV)</button>
             </div>
 
             <div class="card" style="border-left: 6px solid var(--accent); margin-bottom: 20px;">
-                <h3 style="margin-top:0; font-size:1.1rem; color:var(--accent);">📅 Détails de la Tournée</h3>
+                <h3 style="margin-top:0; font-size:1.1rem; color:var(--accent);">📅 Édition de la Tournée</h3>
                 <div style="display:flex; gap:10px;">
                     <div class="form-group" style="flex: 1.5;">
                         <label>Nom de la Tournée</label>
@@ -236,7 +263,8 @@
             </div>
             <h4 style="color:var(--text);">📋 Ordre de passage (Drag & Drop)</h4>
             <ul id="stops-list"></ul>
-            <button class="btn-main" id="btnSend" onclick="sendData()" disabled>🚀 ENREGISTRER LA TOURNÉE</button>
+            
+            <button id="btn-save-local" onclick="saveCurrentTour()">💾 SAUVEGARDER CETTE TOURNÉE</button>
         </div>
 
         <div class="right-panel">
@@ -282,8 +310,12 @@
     <script>
         const API = "https://update-github-csv-149052175314.europe-west1.run.app/";
         let map, markers, routeLayer, stops = [], mode = 'prod', pData = { lat:null, lon:null, addr:"" }, sTemp = { lat:null, lon:null };
+        let lastRouteData = null; 
+        
+        // V71 : VARIABLES MULTI-TOURNEES
         let savedTours = [];
-        let currentTourId = null; // ID de la tournée en cours
+        let currentTourId = null; 
+        let currentStats = { cost:0, ca:0, ratio:0 }; // Pour stocker les totaux
 
         window.onload = function() {
             map = L.map('map').setView([43.76, 6.90], 10);
@@ -294,20 +326,16 @@
             setTimeout(function(){ map.invalidateSize(); }, 500);
             Sortable.create(document.getElementById('stops-list'), { animation: 150, handle: '.handle', onEnd: reorderStops });
             
-            // CHARGEMENT INITIAL (V71)
             loadGlobalDepot(); 
-            loadToursLibrary(); // Charge la liste des tournées
+            loadToursLibrary(); 
             setMode('prod'); 
             checkProducerValidation();
         };
 
-        // --- GESTIONNAIRE DE TOURNEES (V71) ---
-        
-        // 1. Sauvegarder/Charger le DEPOT (Global)
+        // --- GESTIONNAIRE DE PROJET (V71) ---
         function saveDepot() {
             pData.name = document.getElementById('pName').value;
             pData.addr = document.getElementById('pAddr').value;
-            // On sauve aussi les params véhicule
             const depotSettings = {
                 pData: pData,
                 veh: {
@@ -345,55 +373,60 @@
             }
         }
 
-        // 2. Gestion de la BIBLIOTHEQUE de tournées
         function loadToursLibrary() {
             let s = localStorage.getItem('logistique_tours_v71');
             savedTours = s ? JSON.parse(s) : [];
-            updateTourDropdown();
+            renderToursList();
         }
 
-        function updateTourDropdown() {
-            const sel = document.getElementById('tourSelect');
-            sel.innerHTML = '<option value="">-- Sélectionner --</option>';
+        function renderToursList() {
+            const container = document.getElementById('tours-list-container');
+            if(savedTours.length === 0) {
+                container.innerHTML = '<div style="padding:10px; color:#999; font-style:italic; text-align:center;">Aucune tournée enregistrée</div>';
+                return;
+            }
+            container.innerHTML = '';
             savedTours.forEach(t => {
-                let opt = document.createElement('option');
-                opt.value = t.id;
-                opt.text = (t.name || "Sans nom") + " (" + t.day + ")";
-                if(t.id === currentTourId) opt.selected = true;
-                sel.add(opt);
+                const div = document.createElement('div');
+                div.className = 'tour-row ' + (t.id === currentTourId ? 'active' : '');
+                div.innerHTML = `
+                    <div>
+                        <div class="tour-info"><strong>${t.name}</strong> (${t.day})</div>
+                        <div class="tour-metrics">CA: ${t.stats.ca.toFixed(0)}€ | Coût: ${t.stats.cost.toFixed(0)}€ | Ratio: ${t.stats.ratio}%</div>
+                    </div>
+                    <div style="display:flex; gap:5px;">
+                        <button class="btn-mini" style="background:var(--lib); padding:4px 8px;" onclick="loadTour('${t.id}')">✏️</button>
+                        <button class="btn-mini" style="background:var(--danger); padding:4px 8px;" onclick="deleteTour('${t.id}')">✕</button>
+                    </div>
+                `;
+                container.appendChild(div);
             });
         }
 
         function saveCurrentTour() {
             const tName = document.getElementById('tName').value;
-            if(!tName) return alert("Veuillez donner un nom à la tournée avant de sauvegarder.");
+            if(!tName) return alert("Veuillez donner un nom à la tournée.");
             
             const tourData = {
-                id: currentTourId || Date.now().toString(), // Nouvel ID ou existant
+                id: currentTourId || Date.now().toString(),
                 name: tName,
                 day: document.getElementById('tDay').value,
-                stops: stops
+                stops: stops,
+                stats: currentStats // On sauve les stats calculées
             };
 
-            // Mise à jour ou Ajout
             const idx = savedTours.findIndex(t => t.id === tourData.id);
             if(idx >= 0) savedTours[idx] = tourData;
             else savedTours.push(tourData);
 
-            currentTourId = tourData.id; // On fixe l'ID courant
+            currentTourId = tourData.id; 
             localStorage.setItem('logistique_tours_v71', JSON.stringify(savedTours));
-            
-            // On sauvegarde aussi le dépôt au cas où
             saveDepot();
-            
-            updateTourDropdown();
-            alert("✅ Tournée sauvegardée !");
+            renderToursList();
+            alert("✅ Tournée sauvegardée dans votre liste !");
         }
 
-        function loadSelectedTour() {
-            const id = document.getElementById('tourSelect').value;
-            if(!id) return;
-
+        function loadTour(id) {
             const tour = savedTours.find(t => t.id === id);
             if(tour) {
                 currentTourId = tour.id;
@@ -402,31 +435,30 @@
                 stops = tour.stops || [];
                 updateView();
                 updateStatsTitle();
+                renderToursList();
             }
         }
 
         function newTour() {
-            if(stops.length > 0 && !confirm("Voulez-vous vider la tournée actuelle pour en créer une nouvelle ?")) return;
-            currentTourId = null; // Reset ID -> Nouvelle entité
-            document.getElementById('tourSelect').value = "";
+            if(stops.length > 0 && !confirm("Créer une nouvelle tournée (la carte sera vidée) ?")) return;
+            currentTourId = null;
             document.getElementById('tName').value = "";
             document.getElementById('tDay').value = "Lundi";
             stops = [];
             updateView();
             updateStatsTitle();
+            renderToursList();
         }
 
-        function deleteCurrentTour() {
-            if(!currentTourId) return alert("Aucune tournée enregistrée sélectionnée.");
-            if(!confirm("Supprimer définitivement cette tournée ?")) return;
-
-            savedTours = savedTours.filter(t => t.id !== currentTourId);
+        function deleteTour(id) {
+            if(!confirm("Supprimer cette tournée ?")) return;
+            savedTours = savedTours.filter(t => t.id !== id);
             localStorage.setItem('logistique_tours_v71', JSON.stringify(savedTours));
-            newTour(); // Retour à vide
-            updateTourDropdown();
+            if(currentTourId === id) newTour();
+            else renderToursList();
         }
 
-        // --- FIN V71 ---
+        // --- END V71 MANAGERS ---
 
         function checkProducerValidation() {
             const pNameInput = document.getElementById('pName');
@@ -443,7 +475,7 @@
             } else {
                 band.classList.remove('validated'); badge.classList.remove('show-badge'); btnValide.classList.remove('active'); btnValide.disabled = true;
             }
-            saveDepot(); // Save global depot on change
+            saveDepot();
         }
 
         function lockDepot() {
@@ -502,6 +534,8 @@
             });
         }
 
+        function showTempMarker(lat, lon) { }
+        
         function updateStatsTitle() {
             const tourName = document.getElementById('tName').value.trim();
             const titleElem = document.getElementById('kpi-tour-title');
@@ -608,7 +642,7 @@
             if(pData.lat && stops.length > 0) calcRoute();
             else updateStats(0,0);
             updateStatsTitle(); 
-            document.getElementById('btnSend').disabled=(stops.length===0);
+            // document.getElementById('btnSend').disabled=(stops.length===0); // On ne désactive plus le bouton global
         }
 
         function calcRoute() {
@@ -616,6 +650,7 @@
             fetch(`https://router.project-osrm.org/route/v1/driving/${pts.map(p=>p.join(',')).join(';')}?overview=full&geometries=geojson`).then(r=>r.json()).then(res=>{
                 if(res.code==='Ok'){
                     let rd=res.routes[0];
+                    lastRouteData = rd; // STOCKAGE POUR CSV
                     L.polyline(rd.geometry.coordinates.map(c=>[c[1], c[0]]), {color:'var(--info)', weight:5}).addTo(routeLayer);
                     map.fitBounds(L.featureGroup(markers.getLayers()).getBounds().pad(0.2));
                     updateStats(rd.distance/1000, rd.duration/60);
@@ -625,38 +660,27 @@
                     const fuelPrice = parseFloat(document.getElementById('fPrice').value) || 0;
 
                     if(rd.legs && rd.legs.length > 0) {
-                        
                         stops.forEach((s, i) => {
                             let legDist = rd.legs[i].distance / 1000; 
                             let legDur = rd.legs[i].duration / 60; 
-                            
                             const costFuel = (legDist / 100) * conso * fuelPrice;
                             const costTime = ((legDur + s.time) / 60) * cH;
                             const totalLegCost = costFuel + costTime;
-                            
                             let ratio = 0;
                             let ratioText = "N/A";
                             let ratioClass = "ratio-bad";
-
                             if(s.euro > 0) {
                                 ratio = (totalLegCost / s.euro) * 100;
                                 ratioText = "Ratio Logistique " + ratio.toFixed(0) + " %"; 
-                                if(ratio < 10) ratioClass = "ratio-good";
-                                else if(ratio < 30) ratioClass = "ratio-mid";
+                                if(ratio < 10) ratioClass = "ratio-good"; else if(ratio < 30) ratioClass = "ratio-mid";
                             } else {
                                 ratioText = "Ratio Logistique ∞";
                             }
-
                             let elDist = document.getElementById(`dist-stop-${i}`);
                             if(elDist) elDist.innerText = legDist.toFixed(1) + " km";
-                            
                             let elRatio = document.getElementById(`ratio-stop-${i}`);
-                            if(elRatio) {
-                                elRatio.innerText = ratioText;
-                                elRatio.className = "ratio-tag " + ratioClass;
-                            }
+                            if(elRatio) { elRatio.innerText = ratioText; elRatio.className = "ratio-tag " + ratioClass; }
                         });
-
                         let returnLegIndex = stops.length;
                         if(rd.legs[returnLegIndex]) {
                             let retDist = rd.legs[returnLegIndex].distance / 1000;
@@ -664,7 +688,6 @@
                             const retFuel = (retDist / 100) * conso * fuelPrice;
                             const retTime = (retDur / 60) * cH;
                             const retTotal = retFuel + retTime;
-
                             let elRetDist = document.getElementById('dist-return');
                             if(elRetDist) elRetDist.innerText = retDist.toFixed(1) + " km";
                             let elRetCost = document.getElementById('return-cost');
@@ -688,6 +711,11 @@
             const totalCost = fuelCost + laborCost;
             const ca = stops.reduce((a,b)=>a+b.euro, 0);
 
+            // SAVE GLOBALS FOR SAVED TOUR LIST
+            currentStats.cost = totalCost;
+            currentStats.ca = ca;
+            currentStats.ratio = ca > 0 ? (totalCost/ca*100).toFixed(1) : 0;
+
             document.getElementById('rDist').innerText=dist.toFixed(1)+" km";
             document.getElementById('rTime').innerText=Math.floor(driveTime/60)+"h"+Math.round(driveTime%60).toString().padStart(2,'0');
             document.getElementById('rOps').innerText=Math.floor(sTime/60)+"h"+Math.round(sTime%60).toString().padStart(2,'0');
@@ -695,15 +723,24 @@
             document.getElementById('rCostOps').innerText=laborCost.toFixed(2)+" €"; 
             document.getElementById('rTotal').innerText=totalCost.toFixed(2)+" €";
             document.getElementById('rVal').innerText=ca.toFixed(2)+" €";
-            document.getElementById('rRatio').innerText=ca>0?(totalCost/ca*100).toFixed(1)+" %":"0 %";
+            document.getElementById('rRatio').innerText=currentStats.ratio+" %";
         }
 
-        function sendData() {
-            const btn=document.getElementById('btnSend'); btn.disabled=true; btn.innerText="⏳ Envoi...";
+        function sendProjectData() {
+            const btn=document.getElementById('btn-export-project'); btn.disabled=true; btn.innerText="⏳ Envoi du projet...";
             const dateStr = new Date().toISOString().split('T')[0];
-            const tourId = (document.getElementById('pName').value||"ID").replace(/\s/g,'') + "_" + Date.now();
-            
             const rows = [];
+
+            // ON EXPORTE UNIQUEMENT LA TOURNEE ACTIVE POUR EVITER LES DOUBLONS
+            // SI L'UTILISATEUR VEUT TOUT ENVOYER, IL DEVRAIT POUVOIR LE FAIRE, MAIS ICI ON VA ENVOYER LA TOURNEE COURANTE
+            // COMME DEMANDE DANS LE PROMPT "ENREGISTRER LA TOURNEE" VIA CSV
+            
+            // CONFIGURATION COUTS
+            const cH = parseFloat(document.getElementById('cH').value) || 0;
+            const conso = parseFloat(document.getElementById('vCons').value) || 0;
+            const prixCarb = parseFloat(document.getElementById('fPrice').value) || 0;
+            const tourId = currentTourId || ("TEMP_" + Date.now());
+
             const common = { 
                 "Producteur": document.getElementById('pName').value, 
                 "Nom Tournée": document.getElementById('tName').value, 
@@ -712,24 +749,62 @@
                 "Tournée ID": tourId, 
                 "Véhicule": document.getElementById('vType').value, 
                 "Type Carburant": document.getElementById('fType').value, 
-                "Conso (L/100km)": parseFloat(document.getElementById('vCons').value), 
-                "Prix Carburant (€/L)": parseFloat(document.getElementById('fPrice').value), 
+                "Conso (L/100km)": conso, 
+                "Prix Carburant (€/L)": prixCarb, 
                 "Type Livreur": document.getElementById('driverType').value,
-                "Cout Horaire (€/h)": parseFloat(document.getElementById('cH').value), 
+                "Cout Horaire (€/h)": cH, 
                 "Temps Préparation (min)": parseFloat(document.getElementById('tPrep').value), 
                 "Temps Chargement Départ (min)": parseFloat(document.getElementById('tLoad').value) 
             };
 
-            rows.push({...common, "Ordre d'Arrêt": 0, "Client / Point de Livraison": "Départ Dépôt", "Adresse Complète": pData.addr, "lat": pData.lat, "lon": pData.lon, "Type Arrêt": "Départ", "Montant (€)": 0, "Volume (Kg Normalisé)": 0, "Temps d'arrêt (min)": 0});
-            stops.forEach((s, i) => { 
-                rows.push({...common, "Ordre d'Arrêt": i+1, "Client / Point de Livraison": s.client, "Adresse Complète": s.addr, "lat": s.lat, "lon": s.lon, "Montant (€)": s.euro, "Volume (Kg Normalisé)": s.vol, "Temps d'arrêt (min)": s.time, "Type Arrêt": s.icon}); 
+            rows.push({
+                ...common, 
+                "Ordre d'Arrêt": 0, "Client / Point de Livraison": "Départ Dépôt", 
+                "Adresse Complète": pData.addr, "lat": pData.lat, "lon": pData.lon, "Type Arrêt": "Départ", 
+                "Montant (€)": 0, "Volume (Kg)": 0, "Temps d'arrêt (min)": 0,
+                "Distance_Etape_km": 0, "Temps_Trajet_min": 0, "Cout_Transport_Etape": 0, "Cout_Arret_Etape": 0, "Cout_Total_Etape": 0, "Ratio_Etape_%": 0
             });
-            rows.push({...common, "Ordre d'Arrêt": stops.length+1, "Client / Point de Livraison": "Retour Dépôt", "Adresse Complète": pData.addr, "lat": pData.lat, "lon": pData.lon, "Type Arrêt": "Retour", "Montant (€)": 0, "Volume (Kg Normalisé)": 0, "Temps d'arrêt (min)": 0});
+
+            stops.forEach((s, i) => { 
+                let distKm = 0, timeMin = 0, costTrans = 0, costStop = 0, ratio = 0;
+                if(lastRouteData && lastRouteData.legs && lastRouteData.legs[i]) {
+                    distKm = lastRouteData.legs[i].distance / 1000;
+                    timeMin = lastRouteData.legs[i].duration / 60;
+                    const fuelCost = (distKm / 100) * conso * prixCarb;
+                    const driveLabor = (timeMin / 60) * cH;
+                    costTrans = fuelCost + driveLabor;
+                    costStop = (s.time / 60) * cH;
+                    if(s.euro > 0) ratio = ((costTrans + costStop) / s.euro) * 100;
+                }
+                rows.push({
+                    ...common, 
+                    "Ordre d'Arrêt": i+1, "Client / Point de Livraison": s.client, "Adresse Complète": s.addr, 
+                    "lat": s.lat, "lon": s.lon, "Montant (€)": s.euro, "Volume (Kg)": s.vol, "Temps d'arrêt (min)": s.time, "Type Arrêt": s.icon,
+                    "Distance_Etape_km": distKm.toFixed(2), "Temps_Trajet_min": timeMin.toFixed(1),
+                    "Cout_Transport_Etape": costTrans.toFixed(2), "Cout_Arret_Etape": costStop.toFixed(2),
+                    "Cout_Total_Etape": (costTrans + costStop).toFixed(2), "Ratio_Etape_%": ratio.toFixed(1)
+                }); 
+            });
+
+            if(lastRouteData && lastRouteData.legs && lastRouteData.legs[stops.length]) {
+                let leg = lastRouteData.legs[stops.length];
+                let distKm = leg.distance / 1000;
+                let timeMin = leg.duration / 60;
+                let costTrans = ((distKm / 100) * conso * prixCarb) + ((timeMin / 60) * cH);
+                rows.push({
+                    ...common, 
+                    "Ordre d'Arrêt": stops.length+1, "Client / Point de Livraison": "Retour Dépôt", "Adresse Complète": pData.addr, 
+                    "lat": pData.lat, "lon": pData.lon, "Type Arrêt": "Retour", 
+                    "Montant (€)": 0, "Volume (Kg)": 0, "Temps d'arrêt (min)": 0,
+                    "Distance_Etape_km": distKm.toFixed(2), "Temps_Trajet_min": timeMin.toFixed(1),
+                    "Cout_Transport_Etape": costTrans.toFixed(2), "Cout_Arret_Etape": 0, "Cout_Total_Etape": costTrans.toFixed(2), "Ratio_Etape_%": 0
+                });
+            }
 
             fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rows: rows }) })
-            .then(r => { if(r.ok) { alert("✅ Tournée enregistrée !"); stops=[]; updateView(); } })
+            .then(r => { if(r.ok) { alert("✅ Projet envoyé avec succès !"); } })
             .catch(() => alert("❌ Erreur de connexion"))
-            .finally(() => { btn.disabled = false; btn.innerText = "🚀 ENREGISTRER LA TOURNÉE"; });
+            .finally(() => { btn.disabled = false; btn.innerText = "🚀 ENVOYER LE PROJET AU PNR (CSV)"; });
         }
     </script>
 </body>
