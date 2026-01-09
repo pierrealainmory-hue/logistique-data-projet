@@ -106,40 +106,42 @@
         .kpi-title { font-size: 0.7rem; font-weight: 700; color: var(--text); text-transform: uppercase; margin-bottom: 5px; }
         .kpi-value { font-size: 1.2rem; font-weight: 800; color: var(--primary); }
         
-        /* NOUVEAU DESIGN BANDEAU RECAP */
         .summary-banner { 
             grid-column: span 3; 
             background: var(--primary); color: white; 
             border-radius: 6px; 
             padding: 15px; 
-            display: flex; flex-direction: column; /* Vertical */
+            display: flex; flex-direction: column; 
             align-items: center; 
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
-        .banner-header {
-            display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
-            font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px;
-        }
-        .banner-metrics {
-            display: flex; justify-content: space-around; width: 100%;
-            border-top: 1px solid rgba(255,255,255,0.2); /* Ligne de séparation */
-            padding-top: 15px;
-        }
+        .banner-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; }
+        .banner-metrics { display: flex; justify-content: space-around; width: 100%; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 15px; }
         .summary-value { font-size: 1.8rem; font-weight: 800; display: block; }
 
         #stops-list { list-style: none; padding: 0; }
         
+        /* STYLE LISTE AMÉLIORÉ (V60) */
         .stop-item { 
-            background: white; padding: 12px; margin-bottom: 8px; 
+            background: white; padding: 10px; margin-bottom: 8px; 
             border-radius: 4px; 
             display: flex; justify-content: space-between; align-items: center; 
             border: 1px solid #ebedf0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); 
         }
         .stop-content { display: flex; align-items: center; gap: 10px; flex: 1; overflow: hidden; }
-        .stop-info { display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
+        .stop-info { display: flex; flex-direction: column; justify-content: center; overflow: hidden; flex:1; }
         .stop-name { font-weight: bold; font-size: 0.95rem; }
-        .stop-addr { font-size: 0.75rem; color: #7f8c8d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px; }
-        .stop-actions { display: flex; gap: 5px; }
+        .stop-addr { font-size: 0.75rem; color: #7f8c8d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        /* NOUVEAU BLOC DATA DROITE */
+        .stop-meta {
+            text-align: right; margin-right: 15px; min-width: 70px;
+            display: flex; flex-direction: column; align-items: flex-end;
+        }
+        .stop-euro { font-weight: bold; color: var(--success); font-size: 0.9rem; }
+        .stop-dist-tag { font-size: 0.75rem; color: #95a5a6; }
+
+        .stop-actions { display: flex; gap: 2px; }
         .btn-icon { border: none; background: none; cursor: pointer; font-size: 1.1rem; padding: 5px; border-radius: 4px; }
         .btn-icon:hover { background-color: #f0f0f0; }
         .handle { cursor: grab; color: #b0bec5; font-size: 1.2rem; margin-right: 5px; }
@@ -459,23 +461,47 @@
             stops=ns; updateView();
         }
 
+        // --- UPDATE VIEW MODIFIE POUR AFFICHER VALEUR ET KM DANS LA LISTE ---
         function updateView() {
             markers.clearLayers(); routeLayer.clearLayers();
             const ul=document.getElementById('stops-list'); ul.innerHTML="";
+            
             if(pData.lat) L.marker([pData.lat, pData.lon], {icon: L.divIcon({html:'🏠', className:''})}).addTo(markers);
+            
             stops.forEach((s, i) => {
-                ul.innerHTML += `<li class="stop-item" data-id="${s.id}"><div class="stop-content"><span class="handle">☰</span>${s.icon}<div class="stop-info"><span class="stop-name">${i+1}. ${s.client}</span><span class="stop-addr">${s.addr}</span></div></div><div class="stop-actions"><button class="btn-icon" onclick="editStop(${i})" title="Modifier">✏️</button><button class="btn-icon" onclick="stops.splice(${i},1);updateView()" title="Supprimer" style="color:#e74c3c;">✕</button></div></li>`;
+                ul.innerHTML += `
+                <li class="stop-item" data-id="${s.id}">
+                    <div class="stop-content">
+                        <span class="handle">☰</span>
+                        ${s.icon} 
+                        <div class="stop-info">
+                            <span class="stop-name">${i+1}. ${s.client}</span>
+                            <span class="stop-addr">${s.addr}</span>
+                        </div>
+                    </div>
+                    <div class="stop-meta">
+                        <span class="stop-euro">${s.euro} €</span>
+                        <span class="stop-dist-tag" id="dist-stop-${i}">... km</span>
+                    </div>
+                    <div class="stop-actions">
+                        <button class="btn-icon" onclick="editStop(${i})" title="Modifier">✏️</button>
+                        <button class="btn-icon" onclick="stops.splice(${i},1);updateView()" title="Supprimer" style="color:#e74c3c;">✕</button>
+                    </div>
+                </li>`;
                 L.circleMarker([s.lat, s.lon], {radius:4, color:'var(--info)', fillOpacity:1}).addTo(markers);
             });
+
             if(sTemp.lat) {
                 L.circleMarker([sTemp.lat, sTemp.lon], { radius: 5, color: '#e74c3c', fillColor: '#c0392b', fillOpacity: 0.8, weight: 3 }).addTo(markers);
             }
+
             if(pData.lat && stops.length > 0) calcRoute();
             else updateStats(0,0);
             updateStatsTitle(); 
             document.getElementById('btnSend').disabled=(stops.length===0);
         }
 
+        // --- CALC ROUTE MODIFIE POUR METTRE A JOUR LES DISTANCES DANS LA LISTE ---
         function calcRoute() {
             let pts = [[pData.lon, pData.lat], ...stops.map(s=>[s.lon, s.lat]), [pData.lon, pData.lat]];
             fetch(`https://router.project-osrm.org/route/v1/driving/${pts.map(p=>p.join(',')).join(';')}?overview=full&geometries=geojson`).then(r=>r.json()).then(res=>{
@@ -484,6 +510,16 @@
                     L.polyline(rd.geometry.coordinates.map(c=>[c[1], c[0]]), {color:'var(--info)', weight:5}).addTo(routeLayer);
                     map.fitBounds(L.featureGroup(markers.getLayers()).getBounds().pad(0.2));
                     updateStats(rd.distance/1000, rd.duration/60);
+                    
+                    // MISE A JOUR DES DISTANCES INDIVIDUELLES DANS LA LISTE
+                    if(rd.legs && rd.legs.length > 0) {
+                        stops.forEach((s, i) => {
+                            // Leg 0 = Depot -> Stop 1. Donc stop[0] correspond à leg[0]
+                            let legDist = rd.legs[i].distance / 1000;
+                            let el = document.getElementById(`dist-stop-${i}`);
+                            if(el) el.innerText = legDist.toFixed(1) + " km";
+                        });
+                    }
                 }
             });
         }
