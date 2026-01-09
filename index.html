@@ -40,7 +40,7 @@
             border-top: 6px solid var(--primary); 
             transition: all 0.4s ease; 
             position: relative; 
-            z-index: 100; /* Priorité haute pour passer au dessus si besoin */
+            z-index: 100; 
         }
         .header-band.validated {
             border-top-color: var(--success);
@@ -70,16 +70,9 @@
         .sep { color: #bdc3c7; font-weight: normal; }
 
         .main-container { display: flex; gap: 25px; flex: 1; }
-        
-        /* Gestion des panneaux */
         .left-panel { flex: 1; min-width: 420px; transition: opacity 0.3s; }
-        .right-panel { 
-            flex: 2; 
-            min-width: 300px; /* Sécurité pour que la carte ne disparaisse pas */
-            display: flex; flex-direction: column; 
-        }
+        .right-panel { flex: 2; min-width: 300px; display: flex; flex-direction: column; }
 
-        /* --- CLASSE DE VERROUILLAGE (GRISÉ) --- */
         .blocked-area {
             opacity: 0.4;
             pointer-events: none; 
@@ -136,14 +129,12 @@
         .btn-icon:hover { background-color: #f0f0f0; }
         .handle { cursor: grab; color: #b0bec5; font-size: 1.2rem; margin-right: 5px; }
 
-        /* CORRECTIF CARTE V56 */
         #map { 
             height: 450px; width: 100%; 
             border-radius: 6px; 
             border: 1px solid #dcdfe6; 
-            /* Pas de z-index ici pour laisser Leaflet gérer */
             background-color: #e5e9ec; 
-            display: block; /* Force le block */
+            display: block; 
         }
         
         .btn-main { 
@@ -309,19 +300,16 @@
         let map, markers, routeLayer, stops = [], mode = 'prod', pData = { lat:null, lon:null, addr:"" }, sTemp = { lat:null, lon:null };
 
         window.onload = function() {
-            // INITIALISATION DE LA CARTE
             map = L.map('map').setView([43.76, 6.90], 10);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
             markers = L.layerGroup().addTo(map);
             routeLayer = L.layerGroup().addTo(map);
             map.on('click', onMapClick);
             
-            // CORRECTIF V56 : FORCER LA TAILLE APRES LE CHARGEMENT POUR EVITER LE GRIS
             setTimeout(function(){ map.invalidateSize(); }, 500);
 
             Sortable.create(document.getElementById('stops-list'), { animation: 150, handle: '.handle', onEnd: reorderStops });
             loadSaved(); 
-            // Au démarrage, on est en mode prod par défaut, le reste est bloqué
             setMode('prod'); 
             checkProducerValidation();
         };
@@ -353,42 +341,47 @@
             saveProd();
         }
 
-        // --- GESTION DU VERROUILLAGE ---
+        // --- GESTION DU VERROUILLAGE & FORMATAGE ADRESSE ---
         function lockDepot() {
             document.getElementById('header-form').style.display = 'none';
             document.getElementById('header-summary').style.display = 'flex';
             
             const name = document.getElementById('pName').value;
-            // On prend les 2 premières parties de l'adresse pour avoir Rue + Ville
-            const addr = document.getElementById('pAddr').value.split(',').slice(0, 2).join(',');
             
-            // Calcul temps total
+            // LOGIQUE D'AFFICHAGE DE L'ADRESSE (CORRECTIF V57)
+            let rawAddr = document.getElementById('pAddr').value;
+            let addrParts = rawAddr.split(',').map(s => s.trim());
+            
+            // On prend les 3 premiers segments (Num, Rue, Lieu-dit)
+            let shortAddr = addrParts.slice(0, 3).join(', ');
+            
+            // On cherche le code postal (5 chiffres)
+            let zipMatch = rawAddr.match(/\b\d{5}\b/);
+            if(zipMatch) {
+                shortAddr += " (" + zipMatch[0] + ")";
+            }
+
             const tPrep = parseFloat(document.getElementById('tPrep').value) || 0;
             const tLoad = parseFloat(document.getElementById('tLoad').value) || 0;
             const totalTime = tPrep + tLoad;
 
-            // HTML du résumé
             document.getElementById('summary-content').innerHTML = `
                 <span>✅ <strong>${name}</strong></span>
                 <span class="sep">|</span>
-                <span>📍 ${addr}</span>
+                <span>📍 ${shortAddr}</span>
                 <span class="sep">|</span>
                 <span>⏱️ ${totalTime} min (Prép+Chg)</span>
             `;
             
-            // DÉVERROUILLER LA SECTION ARRETS
             document.getElementById('locked-section').classList.remove('blocked-area');
             setMode('stop');
             
-            // Petit refresh carte au cas où
             setTimeout(function(){ map.invalidateSize(); }, 200);
         }
 
         function unlockDepot() {
             document.getElementById('header-form').style.display = 'block';
             document.getElementById('header-summary').style.display = 'none';
-            
-            // RE-VERROUILLER LA SECTION ARRETS
             document.getElementById('locked-section').classList.add('blocked-area');
             setMode('prod');
         }
