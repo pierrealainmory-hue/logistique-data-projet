@@ -136,11 +136,30 @@
         .btn-mini { 
             padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; 
         }
+
+        /* --- DESIGN BOUTON VALIDER LE DÉPÔT --- */
         #btn-validate-depot {
-            background: var(--success); color: white; margin-top: 10px; width: 100%;
-            opacity: 0.5; cursor: not-allowed; transition: opacity 0.3s;
+            background: var(--success); 
+            color: white; 
+            border: none;
+            border-radius: 20px; /* Plus arrondi */
+            padding: 10px 30px; /* Plus petit */
+            font-weight: bold;
+            font-size: 0.9rem;
+            
+            /* Centrage */
+            display: block;
+            margin: 15px auto 0 auto; 
+            width: auto; /* S'adapte au texte */
+            min-width: 200px;
+
+            opacity: 0.5; 
+            cursor: not-allowed; 
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-        #btn-validate-depot.active { opacity: 1; cursor: pointer; }
+        #btn-validate-depot.active { opacity: 1; cursor: pointer; transform: translateY(-1px); }
+        #btn-validate-depot.active:active { transform: translateY(1px); }
 
         /* FOOTER */
         .dix-footer {
@@ -209,7 +228,7 @@
                 <div class="form-group"><label>⏱️ Chargement (min)</label><input type="number" id="tLoad" value="20" onchange="updateView()"></div>
             </div>
 
-            <button id="btn-validate-depot" class="btn-main" onclick="lockDepot()">✅ VALIDER LE DÉPÔT & PASSER AUX ARRÊTS</button>
+            <button id="btn-validate-depot" onclick="lockDepot()">✅ Valider le Dépôt & Passer aux Arrêts</button>
         </div>
 
         <div id="header-summary">
