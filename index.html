@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
-        :root { --primary: #2c3e50; --accent: #e67e22; --success: #27ae60; --bg: #f4f7f9; --danger: #e74c3c; --info: #3498db; --text: #546e7a; }
+        :root { --primary: #2c3e50; --accent: #e67e22; --success: #27ae60; --bg: #f4f7f9; --danger: #e74c3c; --info: #3498db; --text: #546e7a; --locked: #bdc3c7; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; padding: 20px; background: var(--bg); color: #333; display: flex; flex-direction: column; min-height: 100vh; }
         
         /* BANDEAU CLIENT */
@@ -39,6 +39,7 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
             border-top: 6px solid var(--primary); 
             transition: all 0.4s ease; 
+            position: relative; z-index: 10; /* Toujours au dessus quand actif */
         }
         .header-band.validated {
             border-top-color: var(--success);
@@ -62,17 +63,21 @@
         .show-badge { opacity: 1; transform: translateY(0); }
 
         /* SECTION RESUME (COLLAPSED) */
-        #header-summary {
-            display: none; 
-            align-items: center;
-            justify-content: space-between;
-        }
+        #header-summary { display: none; align-items: center; justify-content: space-between; }
         .summary-text { font-size: 1rem; color: var(--primary); }
         .summary-text strong { color: var(--success); }
 
         .main-container { display: flex; gap: 25px; flex: 1; }
-        .left-panel { flex: 1; min-width: 420px; }
+        .left-panel { flex: 1; min-width: 420px; transition: opacity 0.3s; }
         .right-panel { flex: 2; }
+
+        /* --- CLASSE DE VERROUILLAGE (GRISÉ) --- */
+        .blocked-area {
+            opacity: 0.4;
+            pointer-events: none; /* Empêche tout clic */
+            filter: grayscale(100%);
+            user-select: none;
+        }
 
         .card { 
             background: white; padding: 20px; 
@@ -136,30 +141,13 @@
         .btn-mini { 
             padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; 
         }
-
-        /* --- DESIGN BOUTON VALIDER LE DÉPÔT --- */
         #btn-validate-depot {
-            background: var(--success); 
-            color: white; 
-            border: none;
-            border-radius: 20px; /* Plus arrondi */
-            padding: 10px 30px; /* Plus petit */
-            font-weight: bold;
-            font-size: 0.9rem;
-            
-            /* Centrage */
-            display: block;
-            margin: 15px auto 0 auto; 
-            width: auto; /* S'adapte au texte */
-            min-width: 200px;
-
-            opacity: 0.5; 
-            cursor: not-allowed; 
-            transition: all 0.3s;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            background: var(--success); color: white; margin-top: 10px; width: auto; min-width: 200px;
+            display: block; margin: 15px auto 0 auto;
+            border: none; border-radius: 20px; padding: 10px 30px; font-weight: bold; font-size: 0.9rem;
+            opacity: 0.5; cursor: not-allowed; transition: all 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         #btn-validate-depot.active { opacity: 1; cursor: pointer; transform: translateY(-1px); }
-        #btn-validate-depot.active:active { transform: translateY(1px); }
 
         /* FOOTER */
         .dix-footer {
@@ -239,7 +227,7 @@
     </div>
 
     <div class="main-container">
-        <div class="left-panel">
+        <div class="left-panel blocked-area" id="locked-section">
             
             <div class="card" style="border-left: 6px solid var(--accent); margin-bottom: 20px;">
                 <h3 style="margin-top:0; font-size:1.1rem; color:var(--accent);">📅 Ma Tournée</h3>
@@ -306,7 +294,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         const API = "https://update-github-csv-149052175314.europe-west1.run.app/";
-        let map, markers, routeLayer, stops = [], mode = 'stop', pData = { lat:null, lon:null, addr:"" }, sTemp = { lat:null, lon:null };
+        let map, markers, routeLayer, stops = [], mode = 'prod', pData = { lat:null, lon:null, addr:"" }, sTemp = { lat:null, lon:null };
 
         window.onload = function() {
             map = L.map('map').setView([43.76, 6.90], 10);
@@ -315,8 +303,10 @@
             routeLayer = L.layerGroup().addTo(map);
             map.on('click', onMapClick);
             Sortable.create(document.getElementById('stops-list'), { animation: 150, handle: '.handle', onEnd: reorderStops });
-            loadSaved(); setMode('stop');
-            setTimeout(checkProducerValidation, 500);
+            loadSaved(); 
+            // Au démarrage, on est en mode prod par défaut, le reste est bloqué
+            setMode('prod'); 
+            checkProducerValidation();
         };
 
         function checkProducerValidation() {
@@ -346,27 +336,46 @@
             saveProd();
         }
 
+        // --- GESTION DU VERROUILLAGE ---
         function lockDepot() {
             document.getElementById('header-form').style.display = 'none';
             document.getElementById('header-summary').style.display = 'flex';
+            
             const name = document.getElementById('pName').value;
             const veh = document.getElementById('vType').value;
             const addr = document.getElementById('pAddr').value.split(',')[0]; 
             document.getElementById('summary-content').innerHTML = `✅ <strong>${name}</strong> <span style="color:#ccc">|</span> 📍 ${addr} <span style="color:#ccc">|</span> 🚚 ${veh}`;
+            
+            // DÉVERROUILLER LA SECTION ARRETS
+            document.getElementById('locked-section').classList.remove('blocked-area');
             setMode('stop');
         }
 
         function unlockDepot() {
             document.getElementById('header-form').style.display = 'block';
             document.getElementById('header-summary').style.display = 'none';
+            
+            // RE-VERROUILLER LA SECTION ARRETS
+            document.getElementById('locked-section').classList.add('blocked-area');
             setMode('prod');
         }
 
         function updateTitle() { checkProducerValidation(); }
         function resetAll() { if(confirm("Voulez-vous tout réinitialiser ?")) { localStorage.clear(); location.reload(); } }
-        function setMode(m) { mode = m; document.getElementById('btn-t-prod').style.background = m==='prod' ? 'var(--accent)' : '#95a5a6'; document.getElementById('btn-t-stop').style.background = m==='stop' ? 'var(--accent)' : '#95a5a6'; }
+        
+        function setMode(m) { 
+            mode = m; 
+            document.getElementById('btn-t-prod').style.background = m==='prod' ? 'var(--accent)' : '#95a5a6'; 
+            document.getElementById('btn-t-stop').style.background = m==='stop' ? 'var(--accent)' : '#95a5a6'; 
+        }
 
         function onMapClick(e) {
+            // Si on est verrouillé sur la carte (pas en mode prod et section bloquée), on ne fait rien pour les arrêts
+            // Mais si on est en mode prod, on place le dépôt
+            if (mode === 'stop' && document.getElementById('locked-section').classList.contains('blocked-area')) {
+                return; // Empêche de placer des points si pas validé
+            }
+
             let lat = e.latlng.lat, lon = e.latlng.lng;
             fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`).then(r=>r.json()).then(d=>{
                 if(mode==='prod'){ 
