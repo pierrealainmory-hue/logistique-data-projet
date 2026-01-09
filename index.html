@@ -104,8 +104,9 @@
             display: flex; justify-content: center; align-items: center; gap: 15px;
             color: #7f8c8d; font-size: 0.9rem;
         }
-        .dix-logo-small { height: 35px; width: auto; vertical-align: middle; } /* Logo un peu plus grand */
-        .dix-link { color: var(--accent); text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 10px; }
+        .dix-logo-small { height: 35px; width: auto; vertical-align: middle; }
+        .dix-link { color: var(--accent); text-decoration: none; font-weight: bold; cursor: pointer;}
+        .dix-link:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -122,8 +123,7 @@
             <span class="assistance-title">🆘 Assistance Technique</span>
             <b>Pierre-Alain Mory</b><br>
             <a href="tel:0783000956">07 83 00 09 56</a><br>
-            <a href="mailto:pierre.alain.mory@dix-autrement.fr">pierre.alain.mory@dix-autrement.fr</a><br>
-            <b>www.dix-autrement.fr</b>
+            <a href="mailto:pierre.alain.mory@dix-autrement.fr">pierre.alain.mory@dix-autrement.fr</a>
         </div>
     </div>
 
@@ -188,7 +188,8 @@
         <a href="http://www.dix-autrement.fr" target="_blank" class="dix-link">
             <img src="https://github.com/pierrealainmory-hue/logistique-data-projet/blob/main/LogoEpurvertpetit.png?raw=true" alt="Logo DIX" class="dix-logo-small">
         </a>
-        <span>| www.dix-autrement.fr</span>
+        <span>| </span>
+        <a href="http://www.dix-autrement.fr" target="_blank" class="dix-link">www.dix-autrement.fr</a>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -261,105 +262,4 @@
             const ul=document.getElementById('stops-list'); ul.innerHTML="";
             if(pData.lat) L.marker([pData.lat, pData.lon], {icon: L.divIcon({html:'🏠', className:''})}).addTo(markers);
             stops.forEach((s, i) => {
-                ul.innerHTML += `<li class="stop-item" data-id="${s.id}"><div class="stop-main"><span class="handle">☰</span> ${s.icon} <b>${i+1}. ${s.client}</b></div><button onclick="stops.splice(${i},1);updateView()" style="border:none;background:none;color:red;cursor:pointer;">✕</button></li>`;
-                L.circleMarker([s.lat, s.lon], {radius:7, color:'var(--info)', fillOpacity:1}).addTo(markers);
-            });
-            if(pData.lat && stops.length > 0) calcRoute();
-            else updateStats(0,0);
-            document.getElementById('btnSend').disabled=(stops.length===0);
-        }
-
-        function calcRoute() {
-            let pts = [[pData.lon, pData.lat], ...stops.map(s=>[s.lon, s.lat]), [pData.lon, pData.lat]];
-            fetch(`https://router.project-osrm.org/route/v1/driving/${pts.map(p=>p.join(',')).join(';')}?overview=full&geometries=geojson`).then(r=>r.json()).then(res=>{
-                if(res.code==='Ok'){
-                    let rd=res.routes[0];
-                    L.polyline(rd.geometry.coordinates.map(c=>[c[1], c[0]]), {color:'var(--info)', weight:5}).addTo(routeLayer);
-                    map.fitBounds(L.featureGroup(markers.getLayers()).getBounds().pad(0.2));
-                    updateStats(rd.distance/1000, rd.duration/60);
-                }
-            });
-        }
-
-        function updateStats(dist, driveTime) {
-            const cH=parseFloat(document.getElementById('cH').value)||0, cK=parseFloat(document.getElementById('cK').value)||0, prep=parseFloat(document.getElementById('tPrep').value)||0, load=parseFloat(document.getElementById('tLoad').value)||0;
-            const sTime=stops.reduce((a,b)=>a+b.time, 0)+prep+load, ct=(dist*cK)+((driveTime/60)*cH), co=(sTime/60)*cH, tt=ct+co, v=stops.reduce((a,b)=>a+b.euro, 0);
-            document.getElementById('rDist').innerText=dist.toFixed(1)+" km";
-            document.getElementById('rTime').innerText=Math.floor(driveTime/60)+"h"+Math.round(driveTime%60).toString().padStart(2,'0');
-            document.getElementById('rOps').innerText=Math.floor(sTime/60)+"h"+Math.round(sTime%60).toString().padStart(2,'0');
-            document.getElementById('rCostTrans').innerText=ct.toFixed(2)+" €";
-            document.getElementById('rCostOps').innerText=co.toFixed(2)+" €";
-            document.getElementById('rTotal').innerText=tt.toFixed(2)+" €";
-            document.getElementById('rVal').innerText=v.toFixed(2)+" €";
-            document.getElementById('rRatio').innerText=v>0?(tt/v*100).toFixed(1)+" %":"0 %";
-        }
-
-        // --- ENVOI DES DONNÉES AU CSV ---
-        function sendData() {
-            const btn=document.getElementById('btnSend'); btn.disabled=true; btn.innerText="⏳ Envoi...";
-            const dateStr = new Date().toISOString().split('T')[0];
-            const tourId = (document.getElementById('pName').value||"ID").replace(/\s/g,'') + "_" + Date.now();
-            
-            const rows = [];
-            
-            // DONNÉES COMMUNES (Répétées sur chaque ligne)
-            const common = { 
-                "Producteur": document.getElementById('pName').value, 
-                "Date de Livraison": dateStr, 
-                "Jour": document.getElementById('pDay').value, 
-                "Tournée ID": tourId, 
-                "Véhicule": document.getElementById('vType').value, 
-                "Cout Horaire (€/h)": parseFloat(document.getElementById('cH').value), 
-                "Cout Km (€/km)": parseFloat(document.getElementById('cK').value), 
-                "Temps Préparation (min)": parseFloat(document.getElementById('tPrep').value), 
-                "Temps Chargement Départ (min)": parseFloat(document.getElementById('tLoad').value) 
-            };
-
-            // 1. LIGNE DÉPART
-            rows.push({
-                ...common, 
-                "Ordre d'Arrêt": 0, 
-                "Client / Point de Livraison": "Départ Dépôt", 
-                "Adresse Complète": pData.addr, 
-                "lat": pData.lat, 
-                "lon": pData.lon, 
-                "Type Arrêt": "Départ",
-                "Montant (€)": 0, "Volume (Kg Normalisé)": 0, "Temps d'arrêt (min)": 0
-            });
-
-            // 2. LIGNES ARRÊTS CLIENTS
-            stops.forEach((s, i) => { 
-                rows.push({
-                    ...common, 
-                    "Ordre d'Arrêt": i+1, 
-                    "Client / Point de Livraison": s.client, 
-                    "Adresse Complète": s.addr, 
-                    "lat": s.lat, 
-                    "lon": s.lon, 
-                    "Montant (€)": s.euro, 
-                    "Volume (Kg Normalisé)": s.vol, 
-                    "Temps d'arrêt (min)": s.time, 
-                    "Type Arrêt": s.icon
-                }); 
-            });
-
-            // 3. LIGNE RETOUR
-            rows.push({
-                ...common, 
-                "Ordre d'Arrêt": stops.length+1, 
-                "Client / Point de Livraison": "Retour Dépôt", 
-                "Adresse Complète": pData.addr, 
-                "lat": pData.lat, 
-                "lon": pData.lon, 
-                "Type Arrêt": "Retour",
-                "Montant (€)": 0, "Volume (Kg Normalisé)": 0, "Temps d'arrêt (min)": 0
-            });
-
-            fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rows: rows }) })
-            .then(r => { if(r.ok) { alert("✅ Tournée enregistrée !"); stops=[]; updateView(); } })
-            .catch(() => alert("❌ Erreur de connexion"))
-            .finally(() => { btn.disabled = false; btn.innerText = "🚀 ENREGISTRER LA TOURNÉE"; });
-        }
-    </script>
-</body>
-</html>
+                ul.innerHTML += `<li class="stop-item" data-id="${s.id}"><div class="stop-main"><span class="handle">☰</span> ${s.icon} <b>${i+1}. ${s.client}</b></div><button onclick="stops.splice(${i},1);updateView()" style="border:none;background:none;color:red;cursor:pointer;">✕</button>
