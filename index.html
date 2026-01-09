@@ -10,136 +10,75 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
-        :root { --primary: #2c3e50; --accent: #e67e22; --success: #27ae60; --bg: #f4f7f9; --danger: #e74c3c; --info: #3498db; --text: #546e7a; --locked: #bdc3c7; }
+        :root { --primary: #2c3e50; --accent: #e67e22; --success: #27ae60; --bg: #f4f7f9; --danger: #e74c3c; --info: #3498db; --lib: #8e44ad; --text: #546e7a; --locked: #bdc3c7; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; padding: 20px; background: var(--bg); color: #333; display: flex; flex-direction: column; min-height: 100vh; }
         
-        /* BANDEAU CLIENT */
+        /* HEADER */
         .client-header {
-            background: white; padding: 15px 25px; 
-            border-radius: 6px; 
-            margin-bottom: 20px;
+            background: white; padding: 15px 25px; border-radius: 6px; margin-bottom: 20px;
             display: flex; justify-content: space-between; align-items: center;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-top: 6px solid var(--success);
         }
         .client-identity { display: flex; align-items: center; gap: 25px; }
         .client-logo { height: 85px; width: auto; display: block; }
         
-        .assistance-box { 
-            font-size: 0.85rem; color: var(--text); text-align: right; 
-            border-left: 1px solid #ddd; padding-left: 20px;
-        }
+        .assistance-box { font-size: 0.85rem; color: var(--text); text-align: right; border-left: 1px solid #ddd; padding-left: 20px; }
         .assistance-title { font-weight: bold; color: var(--accent); text-transform: uppercase; font-size: 0.75rem; margin-bottom: 5px; display: block;}
         .assistance-box a { color: var(--primary); text-decoration: none; }
 
         /* BANDEAU DEPOT */
         .header-band { 
-            background: white; padding: 20px; 
-            border-radius: 6px; 
-            margin-bottom: 20px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
-            border-top: 6px solid var(--primary); 
-            transition: all 0.4s ease; 
-            position: relative; 
-            z-index: 100; 
+            background: white; padding: 20px; border-radius: 6px; margin-bottom: 20px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-top: 6px solid var(--primary); 
+            transition: all 0.4s ease; position: relative; z-index: 100; 
         }
-        .header-band.validated {
-            border-top-color: var(--success);
-            background-color: #f6fffa; 
-            box-shadow: 0 4px 20px rgba(39, 174, 96, 0.15);
-        }
-
+        .header-band.validated { border-top-color: var(--success); background-color: #f6fffa; box-shadow: 0 4px 20px rgba(39, 174, 96, 0.15); }
         .header-row { display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-end; flex-wrap: wrap; }
-        .header-row:last-child { margin-bottom: 0; }
         
-        /* BADGE */
         .validation-badge {
-            display: inline-block;
-            background: var(--success); color: white;
-            font-size: 0.8rem; padding: 5px 10px; border-radius: 20px;
-            margin-left: 15px; 
-            opacity: 0; transform: translateY(10px); 
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: inline-block; background: var(--success); color: white;
+            font-size: 0.8rem; padding: 5px 10px; border-radius: 20px; margin-left: 15px; 
+            opacity: 0; transform: translateY(10px); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         .show-badge { opacity: 1; transform: translateY(0); }
 
-        /* SECTION RESUME (COLLAPSED) */
         #header-summary { display: none; align-items: center; justify-content: space-between; }
         .summary-text { font-size: 0.95rem; color: var(--primary); display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
-        .summary-text strong { color: var(--success); }
         .sep { color: #bdc3c7; font-weight: normal; }
 
+        /* LAYOUT */
         .main-container { display: flex; gap: 25px; flex: 1; }
         .left-panel { flex: 1; min-width: 420px; transition: opacity 0.3s; }
         .right-panel { flex: 2; min-width: 300px; display: flex; flex-direction: column; }
+        .blocked-area { opacity: 0.4; pointer-events: none; filter: grayscale(100%); user-select: none; }
 
-        .blocked-area {
-            opacity: 0.4;
-            pointer-events: none; 
-            filter: grayscale(100%);
-            user-select: none;
-        }
-
-        .card { 
-            background: white; padding: 20px; 
-            border-radius: 6px; 
-            margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #eef2f7; 
-        }
+        .card { background: white; padding: 20px; border-radius: 6px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #eef2f7; }
         .form-group { flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 140px; }
         .form-group label { font-weight: 600; color: var(--text); font-size: 0.75rem; }
         
-        input, select { 
-            padding: 10px; border: 1px solid #dcdfe6; 
-            border-radius: 4px; 
-            font-size: 0.9rem; width: 100%; box-sizing: border-box; 
-            transition: border 0.3s;
-        }
+        input, select { padding: 10px; border: 1px solid #dcdfe6; border-radius: 4px; font-size: 0.9rem; width: 100%; box-sizing: border-box; transition: border 0.3s; }
         .input-valid { border-color: var(--success) !important; background-color: #fff !important; }
         
-        /* KPI & LIST */
-        .kpi-header {
-            font-size: 1rem; font-weight: bold; color: var(--primary); 
-            margin-bottom: 10px; border-bottom: 2px solid #eee; padding-bottom: 5px;
-        }
+        /* KPI & RESULTATS */
         .kpi-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 10px; }
-        .kpi-card { 
-            background: white; padding: 15px; 
-            border-radius: 6px; 
-            border: 1px solid #e4e7ed; text-align: center; 
-        }
+        .kpi-card { background: white; padding: 15px; border-radius: 6px; border: 1px solid #e4e7ed; text-align: center; }
         .kpi-title { font-size: 0.7rem; font-weight: 700; color: var(--text); text-transform: uppercase; margin-bottom: 5px; }
         .kpi-value { font-size: 1.2rem; font-weight: 800; color: var(--primary); }
         
         .summary-banner { 
-            grid-column: span 3; 
-            background: var(--primary); color: white; 
-            border-radius: 6px; 
-            padding: 15px; 
-            display: flex; flex-direction: column; 
-            align-items: center; 
+            grid-column: span 3; background: var(--primary); color: white; 
+            border-radius: 6px; padding: 15px; display: flex; flex-direction: column; align-items: center; 
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
         .banner-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; }
         .banner-metrics { display: flex; justify-content: space-around; width: 100%; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 15px; }
         .summary-value { font-size: 1.8rem; font-weight: 800; display: block; }
 
-        /* LEGENDE RATIO (NOUVEAU V68) */
-        .legend-bar {
-            grid-column: span 3;
-            background: white;
-            border-radius: 6px; border: 1px solid #eee;
-            padding: 10px; margin-top: 5px;
-            display: flex; justify-content: center; gap: 20px;
-            font-size: 0.8rem; color: var(--text);
-        }
-        .legend-item { display: flex; align-items: center; gap: 6px; }
-        .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-
+        /* LISTE ARRETS */
         #stops-list { list-style: none; padding: 0; }
-        
         .stop-item { 
-            background: white; padding: 10px; margin-bottom: 8px; 
-            border-radius: 4px; 
+            background: white; padding: 10px; margin-bottom: 8px; border-radius: 4px; 
             display: flex; justify-content: space-between; align-items: center; 
             border: 1px solid #ebedf0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); 
         }
@@ -148,12 +87,7 @@
         .stop-name { font-weight: bold; font-size: 0.95rem; }
         .stop-addr { font-size: 0.75rem; color: #7f8c8d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
-        /* TAGS & DATA */
-        .stop-meta { 
-            text-align: right; margin-right: 15px; 
-            min-width: 120px; 
-            display: flex; flex-direction: column; align-items: flex-end; 
-        }
+        .stop-meta { text-align: right; margin-right: 15px; min-width: 130px; display: flex; flex-direction: column; align-items: flex-end; }
         .stop-euro { font-weight: bold; color: var(--success); font-size: 0.9rem; }
         .stop-dist-tag { font-size: 0.75rem; color: #95a5a6; }
         
@@ -166,50 +100,39 @@
         .btn-icon { border: none; background: none; cursor: pointer; font-size: 1.1rem; padding: 5px; border-radius: 4px; }
         .btn-icon:hover { background-color: #f0f0f0; }
         .handle { cursor: grab; color: #b0bec5; font-size: 1.2rem; margin-right: 5px; }
-
         .return-item { background: #f8f9fa; border-left: 4px solid var(--primary); }
         .return-item .stop-name { color: var(--primary); }
 
-        #map { 
-            height: 450px; width: 100%; 
-            border-radius: 6px; 
-            border: 1px solid #dcdfe6; 
-            background-color: #e5e9ec; 
-            display: block; 
+        .legend-bar {
+            grid-column: span 3; background: white; border-radius: 6px; border: 1px solid #eee;
+            padding: 10px; margin-top: 5px; display: flex; justify-content: center; gap: 20px;
+            font-size: 0.8rem; color: var(--text);
         }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+        #map { height: 450px; width: 100%; border-radius: 6px; border: 1px solid #dcdfe6; background-color: #e5e9ec; display: block; }
+        .btn-main { background: var(--success); color: white; width: 100%; padding: 16px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 1rem; }
+        .btn-mini { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; }
         
-        .btn-main { 
-            background: var(--success); color: white; width: 100%; padding: 16px; border: none; 
-            border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 1rem; 
-        }
-        .btn-mini { 
-            padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; 
-        }
         #btn-validate-depot {
             background: var(--success); color: white; margin-top: 10px; width: auto; min-width: 200px;
-            display: block; margin: 15px auto 0 auto;
-            border: none; border-radius: 20px; padding: 10px 30px; font-weight: bold; font-size: 0.9rem;
-            opacity: 0.5; cursor: not-allowed; transition: all 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: block; margin: 15px auto 0 auto; border: none; border-radius: 20px; padding: 10px 30px; 
+            font-weight: bold; font-size: 0.9rem; opacity: 0.5; cursor: not-allowed; transition: all 0.3s; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         #btn-validate-depot.active { opacity: 1; cursor: pointer; transform: translateY(-1px); }
 
-        /* FOOTER */
-        .dix-footer {
-            margin-top: 40px; padding: 20px; background: white; 
-            border-radius: 6px; 
-            display: flex; justify-content: center; align-items: center; gap: 15px;
-            color: #7f8c8d; font-size: 0.9rem;
-        }
+        .dix-footer { margin-top: 40px; padding: 20px; background: white; border-radius: 6px; display: flex; justify-content: center; align-items: center; gap: 15px; color: #7f8c8d; font-size: 0.9rem; }
         .dix-logo-small { height: 45px; width: auto; vertical-align: middle; }
         .dix-link { color: var(--accent); text-decoration: none; font-weight: bold; cursor: pointer;}
-        .dix-link:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
 
     <div class="client-header">
         <div class="client-identity">
-            <img src="https://www.parcs-naturels-regionaux.fr/sites/federationpnr/files/styles/contenu/public/image/parc/sans_titre.png?itok=z_7I7Msh" alt="Logo PNR Préalpes d'Azur" class="client-logo">
+            <img src="https://www.parcs-naturels-regionaux.fr/sites/federationpnr/files/styles/contenu/public/image/parc/sans_titre.png?itok=z_7I7Msh" alt="Logo PNR" class="client-logo">
             <div>
                 <h1 style="margin:0; font-size:1.6rem; color:var(--success);">PNR des Préalpes d'Azur</h1>
                 <span style="color:var(--text); font-size:1rem;">Simulateur de Logistique en Circuit Court</span>
@@ -238,7 +161,7 @@
                 <div class="form-group" style="flex: 2;"><label>📍 Adresse du Dépôt</label><div style="display:flex; gap:5px;"><input type="text" id="pAddr" placeholder="Chercher une adresse..." style="flex:1;"><button class="btn-mini" style="background:var(--info);" onclick="searchAddress('prod')">🔍</button><button class="btn-mini" id="btn-t-prod" style="background:#95a5a6;" onclick="setMode('prod')">🎯</button></div></div>
             </div>
             <div class="header-row" style="background: #f8f9fa; padding: 10px; border-radius: 4px; border: 1px solid #eee;">
-                <div class="form-group" style="flex: 1.5;"><label>🚚 Type de Véhicule</label><select id="vType" onchange="saveProd()"><option>Petit utilitaire (< 3m³)</option><option selected>Fourgon compact (3-6m³)</option><option>Grand fourgon (6-12m³)</option><option>Petit camion (12-20m³)</option><option>Camion lourd (> 20m³)</option></select></div>
+                <div class="form-group" style="flex: 1.5;"><label>🚚 Type de Véhicule</label><select id="vType" onchange="saveDepot()"><option>Petit utilitaire (< 3m³)</option><option selected>Fourgon compact (3-6m³)</option><option>Grand fourgon (6-12m³)</option><option>Petit camion (12-20m³)</option><option>Camion lourd (> 20m³)</option></select></div>
                 <div class="form-group"><label>⛽ Énergie</label><select id="fType" onchange="updateView()"><option>Diesel</option><option>Essence</option><option>Électrique</option><option>GNV / Gaz</option><option>Hybride</option></select></div>
                 <div class="form-group"><label>💧 Conso. (L/100km)</label><input type="number" id="vCons" value="8.5" step="0.1" onchange="updateView()"></div>
                 <div class="form-group"><label>💳 Prix (€/L)</label><input type="number" id="fPrice" value="1.75" step="0.01" onchange="updateView()"></div>
@@ -266,16 +189,31 @@
 
     <div class="main-container">
         <div class="left-panel blocked-area" id="locked-section">
+            
+            <div class="card" style="border-left: 6px solid var(--lib); margin-bottom: 20px;">
+                <h3 style="margin-top:0; font-size:1.1rem; color:var(--lib);">📂 Mes Tournées</h3>
+                <div style="display:flex; gap:10px; margin-bottom:10px;">
+                    <select id="tourSelect" onchange="loadSelectedTour()" style="flex:2; font-weight:bold;">
+                        <option value="">-- Sélectionner --</option>
+                    </select>
+                    <button class="btn-mini" onclick="deleteCurrentTour()" title="Supprimer" style="background:var(--danger);">🗑️</button>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn-mini" onclick="newTour()" style="background:#95a5a6; flex:1;">➕ Nouvelle</button>
+                    <button class="btn-mini" onclick="saveCurrentTour()" style="background:var(--lib); flex:1;">💾 Sauvegarder</button>
+                </div>
+            </div>
+
             <div class="card" style="border-left: 6px solid var(--accent); margin-bottom: 20px;">
-                <h3 style="margin-top:0; font-size:1.1rem; color:var(--accent);">📅 Ma Tournée</h3>
+                <h3 style="margin-top:0; font-size:1.1rem; color:var(--accent);">📅 Détails de la Tournée</h3>
                 <div style="display:flex; gap:10px;">
                     <div class="form-group" style="flex: 1.5;">
                         <label>Nom de la Tournée</label>
-                        <input type="text" id="tName" placeholder="Ex: Tournée des Écoles" oninput="updateStatsTitle(); saveProd();">
+                        <input type="text" id="tName" placeholder="Ex: Tournée des Écoles" oninput="updateStatsTitle()">
                     </div>
                     <div class="form-group" style="flex: 1;">
                         <label>Jour</label>
-                        <select id="tDay" onchange="saveProd()">
+                        <select id="tDay">
                             <option>Lundi</option><option>Mardi</option><option>Mercredi</option><option>Jeudi</option><option>Vendredi</option><option>Samedi</option>
                         </select>
                     </div>
@@ -306,10 +244,7 @@
             
             <div class="kpi-container">
                 <div class="summary-banner">
-                    <div class="banner-header">
-                        <span style="font-size:1.4rem;">📝</span>
-                        <span id="kpi-tour-title" style="font-weight:700;">RÉCAPITULATIF GLOBAL</span>
-                    </div>
+                    <div class="banner-header"><span style="font-size:1.4rem;">📝</span><span id="kpi-tour-title" style="font-weight:700;">RÉCAPITULATIF GLOBAL</span></div>
                     <div class="banner-metrics">
                         <div><small style="opacity:0.8">COÛT TOTAL TOURNÉE</small><br><span class="summary-value" id="rTotal">0 €</span></div>
                         <div><small style="opacity:0.8">CA TOTAL TOURNÉE</small><br><span class="summary-value" id="rVal">0 €</span></div>
@@ -347,6 +282,8 @@
     <script>
         const API = "https://update-github-csv-149052175314.europe-west1.run.app/";
         let map, markers, routeLayer, stops = [], mode = 'prod', pData = { lat:null, lon:null, addr:"" }, sTemp = { lat:null, lon:null };
+        let savedTours = [];
+        let currentTourId = null; // ID de la tournée en cours
 
         window.onload = function() {
             map = L.map('map').setView([43.76, 6.90], 10);
@@ -356,10 +293,140 @@
             map.on('click', onMapClick);
             setTimeout(function(){ map.invalidateSize(); }, 500);
             Sortable.create(document.getElementById('stops-list'), { animation: 150, handle: '.handle', onEnd: reorderStops });
-            loadSaved(); 
+            
+            // CHARGEMENT INITIAL (V71)
+            loadGlobalDepot(); 
+            loadToursLibrary(); // Charge la liste des tournées
             setMode('prod'); 
             checkProducerValidation();
         };
+
+        // --- GESTIONNAIRE DE TOURNEES (V71) ---
+        
+        // 1. Sauvegarder/Charger le DEPOT (Global)
+        function saveDepot() {
+            pData.name = document.getElementById('pName').value;
+            pData.addr = document.getElementById('pAddr').value;
+            // On sauve aussi les params véhicule
+            const depotSettings = {
+                pData: pData,
+                veh: {
+                    type: document.getElementById('vType').value,
+                    fuel: document.getElementById('fType').value,
+                    cons: document.getElementById('vCons').value,
+                    price: document.getElementById('fPrice').value,
+                    driver: document.getElementById('driverType').value,
+                    cH: document.getElementById('cH').value,
+                    tPrep: document.getElementById('tPrep').value,
+                    tLoad: document.getElementById('tLoad').value
+                }
+            };
+            localStorage.setItem('logistique_depot_v71', JSON.stringify(depotSettings));
+            updateView();
+        }
+
+        function loadGlobalDepot() {
+            let s = localStorage.getItem('logistique_depot_v71');
+            if(s) {
+                const d = JSON.parse(s);
+                pData = d.pData || { lat:null, lon:null, addr:"" };
+                document.getElementById('pName').value = pData.name || "";
+                document.getElementById('pAddr').value = pData.addr || "";
+                if(d.veh) {
+                    document.getElementById('vType').value = d.veh.type;
+                    document.getElementById('fType').value = d.veh.fuel;
+                    document.getElementById('vCons').value = d.veh.cons;
+                    document.getElementById('fPrice').value = d.veh.price;
+                    document.getElementById('driverType').value = d.veh.driver;
+                    document.getElementById('cH').value = d.veh.cH;
+                    document.getElementById('tPrep').value = d.veh.tPrep;
+                    document.getElementById('tLoad').value = d.veh.tLoad;
+                }
+            }
+        }
+
+        // 2. Gestion de la BIBLIOTHEQUE de tournées
+        function loadToursLibrary() {
+            let s = localStorage.getItem('logistique_tours_v71');
+            savedTours = s ? JSON.parse(s) : [];
+            updateTourDropdown();
+        }
+
+        function updateTourDropdown() {
+            const sel = document.getElementById('tourSelect');
+            sel.innerHTML = '<option value="">-- Sélectionner --</option>';
+            savedTours.forEach(t => {
+                let opt = document.createElement('option');
+                opt.value = t.id;
+                opt.text = (t.name || "Sans nom") + " (" + t.day + ")";
+                if(t.id === currentTourId) opt.selected = true;
+                sel.add(opt);
+            });
+        }
+
+        function saveCurrentTour() {
+            const tName = document.getElementById('tName').value;
+            if(!tName) return alert("Veuillez donner un nom à la tournée avant de sauvegarder.");
+            
+            const tourData = {
+                id: currentTourId || Date.now().toString(), // Nouvel ID ou existant
+                name: tName,
+                day: document.getElementById('tDay').value,
+                stops: stops
+            };
+
+            // Mise à jour ou Ajout
+            const idx = savedTours.findIndex(t => t.id === tourData.id);
+            if(idx >= 0) savedTours[idx] = tourData;
+            else savedTours.push(tourData);
+
+            currentTourId = tourData.id; // On fixe l'ID courant
+            localStorage.setItem('logistique_tours_v71', JSON.stringify(savedTours));
+            
+            // On sauvegarde aussi le dépôt au cas où
+            saveDepot();
+            
+            updateTourDropdown();
+            alert("✅ Tournée sauvegardée !");
+        }
+
+        function loadSelectedTour() {
+            const id = document.getElementById('tourSelect').value;
+            if(!id) return;
+
+            const tour = savedTours.find(t => t.id === id);
+            if(tour) {
+                currentTourId = tour.id;
+                document.getElementById('tName').value = tour.name;
+                document.getElementById('tDay').value = tour.day;
+                stops = tour.stops || [];
+                updateView();
+                updateStatsTitle();
+            }
+        }
+
+        function newTour() {
+            if(stops.length > 0 && !confirm("Voulez-vous vider la tournée actuelle pour en créer une nouvelle ?")) return;
+            currentTourId = null; // Reset ID -> Nouvelle entité
+            document.getElementById('tourSelect').value = "";
+            document.getElementById('tName').value = "";
+            document.getElementById('tDay').value = "Lundi";
+            stops = [];
+            updateView();
+            updateStatsTitle();
+        }
+
+        function deleteCurrentTour() {
+            if(!currentTourId) return alert("Aucune tournée enregistrée sélectionnée.");
+            if(!confirm("Supprimer définitivement cette tournée ?")) return;
+
+            savedTours = savedTours.filter(t => t.id !== currentTourId);
+            localStorage.setItem('logistique_tours_v71', JSON.stringify(savedTours));
+            newTour(); // Retour à vide
+            updateTourDropdown();
+        }
+
+        // --- FIN V71 ---
 
         function checkProducerValidation() {
             const pNameInput = document.getElementById('pName');
@@ -376,7 +443,7 @@
             } else {
                 band.classList.remove('validated'); badge.classList.remove('show-badge'); btnValide.classList.remove('active'); btnValide.disabled = true;
             }
-            saveProd();
+            saveDepot(); // Save global depot on change
         }
 
         function lockDepot() {
@@ -433,27 +500,6 @@
                     updateView();
                 }
             });
-        }
-
-        function showTempMarker(lat, lon) { }
-        
-        function saveProd() { 
-            pData.name=document.getElementById('pName').value; 
-            pData.tName=document.getElementById('tName').value; 
-            pData.tDay=document.getElementById('tDay').value;   
-            pData.addr=document.getElementById('pAddr').value; 
-            localStorage.setItem('pMem_v51', JSON.stringify(pData)); 
-            updateView(); 
-        }
-        function loadSaved() { 
-            let s=localStorage.getItem('pMem_v51'); 
-            if(s){ 
-                pData=JSON.parse(s); 
-                document.getElementById('pName').value=pData.name || ""; 
-                document.getElementById('tName').value=pData.tName || ""; 
-                document.getElementById('tDay').value=pData.tDay || "Lundi"; 
-                document.getElementById('pAddr').value=pData.addr || ""; 
-            } 
         }
 
         function updateStatsTitle() {
