@@ -177,11 +177,14 @@
         <div class="left-panel">
             <div class="card" style="border-left: 6px solid var(--success);">
                 <h3 style="margin-top:0; font-size:1.1rem;">📍 Ajouter un Arrêt</h3>
-                <div class="form-group"><label>Localisation</label><div style="display:flex; gap:5px;"><input type="text" id="sAddr" placeholder="Adresse du client..." style="flex:1;"><button class="btn-mini" style="background:var(--info);" onclick="searchAddress('stop')">🔍</button><button class="btn-mini" id="btn-t-stop" style="background:#95a5a6;" onclick="setMode('stop')">🎯</button></div></div>
-                <div style="display:flex; gap:10px; margin-top:15px;">
-                    <div class="form-group"><label>Opération</label><select id="sOpType"><option value="📦">📦 Livraison Client</option><option value="🚜">🚜 Collecte</option><option value="🏬">🏬 Point Relais</option></select></div>
-                    <div class="form-group"><label>Nom / Lieu</label><input type="text" id="sClient"></div>
+                
+                <div style="display:flex; gap:10px; margin-bottom:10px;">
+                    <div class="form-group" style="flex:1.5;"><label>Nom / Lieu</label><input type="text" id="sClient" placeholder="Ex: Restaurant Chez Paul"></div>
+                    <div class="form-group" style="flex:1;"><label>Opération</label><select id="sOpType"><option value="📦">📦 Livraison Client</option><option value="🚜">🚜 Collecte</option><option value="🏬">🏬 Point Relais</option></select></div>
                 </div>
+
+                <div class="form-group"><label>Localisation</label><div style="display:flex; gap:5px;"><input type="text" id="sAddr" placeholder="Adresse du client..." style="flex:1;"><button class="btn-mini" style="background:var(--info);" onclick="searchAddress('stop')">🔍</button><button class="btn-mini" id="btn-t-stop" style="background:#95a5a6;" onclick="setMode('stop')">🎯</button></div></div>
+                
                 <div style="display:flex; gap:10px; margin-top:10px;">
                     <div class="form-group"><label>Valeur March. (€)</label><input type="number" id="sEuro" value="0"></div>
                     <div class="form-group"><label>Volume (kg)</label><input type="number" id="sVol" value="0"></div>
@@ -311,7 +314,7 @@
         function addStop() {
             if(!pData.lat || !sTemp.lat) return alert("Position manquante.");
             
-            // --- NOUVEAUTE V45 : NOM AUTOMATIQUE ---
+            // --- NOM AUTOMATIQUE ---
             let cName = document.getElementById('sClient').value.trim();
             if(!cName) cName = "Arrêt " + (stops.length + 1);
 
@@ -328,14 +331,27 @@
         function updateView() {
             markers.clearLayers(); routeLayer.clearLayers();
             const ul=document.getElementById('stops-list'); ul.innerHTML="";
+            
+            // 1. DEPOT
             if(pData.lat) L.marker([pData.lat, pData.lon], {icon: L.divIcon({html:'🏠', className:''})}).addTo(markers);
+            
+            // 2. ARRETS VALIDES
             stops.forEach((s, i) => {
                 ul.innerHTML += `<li class="stop-item" data-id="${s.id}"><div class="stop-main"><span class="handle">☰</span> ${s.icon} <b>${i+1}. ${s.client}</b></div><button onclick="stops.splice(${i},1);updateView()" style="border:none;background:none;color:red;cursor:pointer;">✕</button></li>`;
                 L.circleMarker([s.lat, s.lon], {radius:4, color:'var(--info)', fillOpacity:1}).addTo(markers);
             });
+
+            // 3. POINT TEMPORAIRE
             if(sTemp.lat) {
-                L.circleMarker([sTemp.lat, sTemp.lon], { radius: 5, color: '#e74c3c', fillColor: '#c0392b', fillOpacity: 0.8, weight: 3 }).addTo(markers);
+                L.circleMarker([sTemp.lat, sTemp.lon], {
+                    radius: 5,
+                    color: '#e74c3c', // Rouge
+                    fillColor: '#c0392b',
+                    fillOpacity: 0.8,
+                    weight: 3
+                }).addTo(markers);
             }
+
             if(pData.lat && stops.length > 0) calcRoute();
             else updateStats(0,0);
             document.getElementById('btnSend').disabled=(stops.length===0);
