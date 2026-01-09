@@ -63,7 +63,7 @@
 
         /* SECTION RESUME (COLLAPSED) */
         #header-summary {
-            display: none; /* Caché par défaut */
+            display: none; 
             align-items: center;
             justify-content: space-between;
         }
@@ -108,7 +108,6 @@
 
         #stops-list { list-style: none; padding: 0; }
         
-        /* STYLE LISTE AMÉLIORÉ */
         .stop-item { 
             background: white; padding: 12px; margin-bottom: 8px; 
             border-radius: 4px; 
@@ -119,11 +118,9 @@
         .stop-info { display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
         .stop-name { font-weight: bold; font-size: 0.95rem; }
         .stop-addr { font-size: 0.75rem; color: #7f8c8d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px; }
-        
         .stop-actions { display: flex; gap: 5px; }
         .btn-icon { border: none; background: none; cursor: pointer; font-size: 1.1rem; padding: 5px; border-radius: 4px; }
         .btn-icon:hover { background-color: #f0f0f0; }
-        
         .handle { cursor: grab; color: #b0bec5; font-size: 1.2rem; margin-right: 5px; }
 
         #map { 
@@ -139,7 +136,6 @@
         .btn-mini { 
             padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; 
         }
-        /* Bouton Valider le dépôt */
         #btn-validate-depot {
             background: var(--success); color: white; margin-top: 10px; width: 100%;
             opacity: 0.5; cursor: not-allowed; transition: opacity 0.3s;
@@ -189,7 +185,6 @@
         <div id="header-form">
             <div class="header-row">
                 <div class="form-group" style="flex: 1.5;"><label>Nom Producteur / Dépôt</label><input type="text" id="pName" placeholder="Ex: Ferme du Soleil" oninput="checkProducerValidation()"></div>
-                <div class="form-group"><label>Journée de Livraison</label><select id="pDay" onchange="saveProd()"><option>Lundi</option><option>Mardi</option><option>Mercredi</option><option>Jeudi</option><option>Vendredi</option><option>Samedi</option></select></div>
                 <div class="form-group" style="flex: 2;"><label>📍 Adresse du Dépôt</label><div style="display:flex; gap:5px;"><input type="text" id="pAddr" placeholder="Chercher une adresse..." style="flex:1;"><button class="btn-mini" style="background:var(--info);" onclick="searchAddress('prod')">🔍</button><button class="btn-mini" id="btn-t-prod" style="background:#95a5a6;" onclick="setMode('prod')">🎯</button></div></div>
             </div>
 
@@ -226,6 +221,23 @@
 
     <div class="main-container">
         <div class="left-panel">
+            
+            <div class="card" style="border-left: 6px solid var(--accent); margin-bottom: 20px;">
+                <h3 style="margin-top:0; font-size:1.1rem; color:var(--accent);">📅 Ma Tournée</h3>
+                <div style="display:flex; gap:10px;">
+                    <div class="form-group" style="flex: 1.5;">
+                        <label>Nom de la Tournée</label>
+                        <input type="text" id="tName" placeholder="Ex: Tournée des Écoles" onchange="saveProd()">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Jour</label>
+                        <select id="tDay" onchange="saveProd()">
+                            <option>Lundi</option><option>Mardi</option><option>Mercredi</option><option>Jeudi</option><option>Vendredi</option><option>Samedi</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
             <div class="card" style="border-left: 6px solid var(--success);">
                 <h3 style="margin-top:0; font-size:1.1rem;">📍 Ajouter un Arrêt</h3>
                 
@@ -284,7 +296,7 @@
             routeLayer = L.layerGroup().addTo(map);
             map.on('click', onMapClick);
             Sortable.create(document.getElementById('stops-list'), { animation: 150, handle: '.handle', onEnd: reorderStops });
-            loadSaved(); setMode('stop'); // Démarrage sans forcer le mode prod pour laisser le choix
+            loadSaved(); setMode('stop');
             setTimeout(checkProducerValidation, 500);
         };
 
@@ -304,7 +316,7 @@
             if(nameOk && addrOk) {
                 band.classList.add('validated');
                 badge.classList.add('show-badge');
-                btnValide.classList.add('active'); // Active le bouton Valider
+                btnValide.classList.add('active');
                 btnValide.disabled = false;
             } else {
                 band.classList.remove('validated');
@@ -315,31 +327,23 @@
             saveProd();
         }
 
-        // --- NOUVELLES FONCTIONS DE REPLI ---
         function lockDepot() {
-            // Replie le formulaire, affiche le résumé
             document.getElementById('header-form').style.display = 'none';
             document.getElementById('header-summary').style.display = 'flex';
             
-            // Construit le texte de résumé
             const name = document.getElementById('pName').value;
-            const day = document.getElementById('pDay').value;
             const veh = document.getElementById('vType').value;
-            const addr = document.getElementById('pAddr').value.split(',')[0]; // Juste la rue/ville
+            const addr = document.getElementById('pAddr').value.split(',')[0]; 
             
             document.getElementById('summary-content').innerHTML = `
-                ✅ <strong>${name}</strong> (${day}) <span style="color:#ccc">|</span> 📍 ${addr} <span style="color:#ccc">|</span> 🚚 ${veh}
+                ✅ <strong>${name}</strong> <span style="color:#ccc">|</span> 📍 ${addr} <span style="color:#ccc">|</span> 🚚 ${veh}
             `;
-            
-            // Passe en mode Arrêt
             setMode('stop');
         }
 
         function unlockDepot() {
-            // Rouvre le formulaire
             document.getElementById('header-form').style.display = 'block';
             document.getElementById('header-summary').style.display = 'none';
-            // Passe en mode Prod pour permettre de changer l'adresse
             setMode('prod');
         }
 
@@ -348,7 +352,6 @@
         
         function setMode(m) { 
             mode = m; 
-            // Mise à jour visuelle des boutons cible
             document.getElementById('btn-t-prod').style.background = m==='prod' ? 'var(--accent)' : '#95a5a6'; 
             document.getElementById('btn-t-stop').style.background = m==='stop' ? 'var(--accent)' : '#95a5a6'; 
         }
@@ -384,8 +387,26 @@
         }
 
         function showTempMarker(lat, lon) { }
-        function saveProd() { pData.name=document.getElementById('pName').value; pData.day=document.getElementById('pDay').value; localStorage.setItem('pMem_v36', JSON.stringify(pData)); updateView(); }
-        function loadSaved() { let s=localStorage.getItem('pMem_v36'); if(s){ pData=JSON.parse(s); document.getElementById('pName').value=pData.name; document.getElementById('pAddr').value=pData.addr; if(pData.day) document.getElementById('pDay').value=pData.day; } }
+        
+        // SAVE & LOAD MISE A JOUR V51
+        function saveProd() { 
+            pData.name=document.getElementById('pName').value; 
+            pData.tName=document.getElementById('tName').value; // Nouveau
+            pData.tDay=document.getElementById('tDay').value;   // Nouveau
+            pData.addr=document.getElementById('pAddr').value; 
+            localStorage.setItem('pMem_v51', JSON.stringify(pData)); 
+            updateView(); 
+        }
+        function loadSaved() { 
+            let s=localStorage.getItem('pMem_v51'); 
+            if(s){ 
+                pData=JSON.parse(s); 
+                document.getElementById('pName').value=pData.name || ""; 
+                document.getElementById('tName').value=pData.tName || ""; // Nouveau
+                document.getElementById('tDay').value=pData.tDay || "Lundi"; // Nouveau
+                document.getElementById('pAddr').value=pData.addr || ""; 
+            } 
+        }
 
         function addStop() {
             if(!pData.lat || !sTemp.lat) return alert("Position manquante.");
@@ -492,8 +513,9 @@
             const rows = [];
             const common = { 
                 "Producteur": document.getElementById('pName').value, 
+                "Nom Tournée": document.getElementById('tName').value, // Nouveau CSV
+                "Jour Tournée": document.getElementById('tDay').value, // Nouveau CSV
                 "Date de Livraison": dateStr, 
-                "Jour": document.getElementById('pDay').value, 
                 "Tournée ID": tourId, 
                 "Véhicule": document.getElementById('vType').value, 
                 "Type Carburant": document.getElementById('fType').value, 
