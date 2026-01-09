@@ -184,7 +184,7 @@
         
         <div id="header-form">
             <div class="header-row">
-                <div class="form-group" style="flex: 1.5;"><label>Nom Producteur / Dépôt</label><input type="text" id="pName" placeholder="Ex: Ferme du Soleil" oninput="checkProducerValidation()"></div>
+                <div class="form-group" style="flex: 1.5;"><label>Nom de la ferme ou du point de départ</label><input type="text" id="pName" placeholder="Ex: Ferme du Soleil" oninput="checkProducerValidation()"></div>
                 <div class="form-group" style="flex: 2;"><label>📍 Adresse du Dépôt</label><div style="display:flex; gap:5px;"><input type="text" id="pAddr" placeholder="Chercher une adresse..." style="flex:1;"><button class="btn-mini" style="background:var(--info);" onclick="searchAddress('prod')">🔍</button><button class="btn-mini" id="btn-t-prod" style="background:#95a5a6;" onclick="setMode('prod')">🎯</button></div></div>
             </div>
 
@@ -330,14 +330,10 @@
         function lockDepot() {
             document.getElementById('header-form').style.display = 'none';
             document.getElementById('header-summary').style.display = 'flex';
-            
             const name = document.getElementById('pName').value;
             const veh = document.getElementById('vType').value;
             const addr = document.getElementById('pAddr').value.split(',')[0]; 
-            
-            document.getElementById('summary-content').innerHTML = `
-                ✅ <strong>${name}</strong> <span style="color:#ccc">|</span> 📍 ${addr} <span style="color:#ccc">|</span> 🚚 ${veh}
-            `;
+            document.getElementById('summary-content').innerHTML = `✅ <strong>${name}</strong> <span style="color:#ccc">|</span> 📍 ${addr} <span style="color:#ccc">|</span> 🚚 ${veh}`;
             setMode('stop');
         }
 
@@ -349,12 +345,7 @@
 
         function updateTitle() { checkProducerValidation(); }
         function resetAll() { if(confirm("Voulez-vous tout réinitialiser ?")) { localStorage.clear(); location.reload(); } }
-        
-        function setMode(m) { 
-            mode = m; 
-            document.getElementById('btn-t-prod').style.background = m==='prod' ? 'var(--accent)' : '#95a5a6'; 
-            document.getElementById('btn-t-stop').style.background = m==='stop' ? 'var(--accent)' : '#95a5a6'; 
-        }
+        function setMode(m) { mode = m; document.getElementById('btn-t-prod').style.background = m==='prod' ? 'var(--accent)' : '#95a5a6'; document.getElementById('btn-t-stop').style.background = m==='stop' ? 'var(--accent)' : '#95a5a6'; }
 
         function onMapClick(e) {
             let lat = e.latlng.lat, lon = e.latlng.lng;
@@ -388,11 +379,10 @@
 
         function showTempMarker(lat, lon) { }
         
-        // SAVE & LOAD MISE A JOUR V51
         function saveProd() { 
             pData.name=document.getElementById('pName').value; 
-            pData.tName=document.getElementById('tName').value; // Nouveau
-            pData.tDay=document.getElementById('tDay').value;   // Nouveau
+            pData.tName=document.getElementById('tName').value; 
+            pData.tDay=document.getElementById('tDay').value;   
             pData.addr=document.getElementById('pAddr').value; 
             localStorage.setItem('pMem_v51', JSON.stringify(pData)); 
             updateView(); 
@@ -402,8 +392,8 @@
             if(s){ 
                 pData=JSON.parse(s); 
                 document.getElementById('pName').value=pData.name || ""; 
-                document.getElementById('tName').value=pData.tName || ""; // Nouveau
-                document.getElementById('tDay').value=pData.tDay || "Lundi"; // Nouveau
+                document.getElementById('tName').value=pData.tName || ""; 
+                document.getElementById('tDay').value=pData.tDay || "Lundi"; 
                 document.getElementById('pAddr').value=pData.addr || ""; 
             } 
         }
@@ -513,8 +503,8 @@
             const rows = [];
             const common = { 
                 "Producteur": document.getElementById('pName').value, 
-                "Nom Tournée": document.getElementById('tName').value, // Nouveau CSV
-                "Jour Tournée": document.getElementById('tDay').value, // Nouveau CSV
+                "Nom Tournée": document.getElementById('tName').value, 
+                "Jour Tournée": document.getElementById('tDay').value, 
                 "Date de Livraison": dateStr, 
                 "Tournée ID": tourId, 
                 "Véhicule": document.getElementById('vType').value, 
