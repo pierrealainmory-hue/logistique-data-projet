@@ -31,33 +31,37 @@
         .assistance-title { font-weight: bold; color: var(--accent); text-transform: uppercase; font-size: 0.75rem; margin-bottom: 5px; display: block;}
         .assistance-box a { color: var(--primary); text-decoration: none; }
 
-        /* BANDEAU DEPOT */
+        /* BANDEAU DEPOT - NOUVEAU STYLE DYNAMIQUE */
         .header-band { 
             background: white; padding: 20px; 
             border-radius: 6px; 
-            margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-top: 6px solid var(--primary); 
-            transition: border-top-color 0.3s;
+            margin-bottom: 20px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+            border-top: 6px solid var(--primary); /* Gris par défaut */
+            transition: all 0.4s ease; /* Transition douce */
         }
+        
+        /* CLASSE AJOUTÉE QUAND VALIDÉ (LE "CHECK") */
+        .header-band.validated {
+            border-top-color: var(--success);
+            background-color: #f6fffa; /* Fond vert très pâle */
+            box-shadow: 0 4px 20px rgba(39, 174, 96, 0.15);
+        }
+
         .header-row { display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-end; flex-wrap: wrap; }
         .header-row:last-child { margin-bottom: 0; }
         
-        /* VALIDATION VISUELLE */
-        .input-valid {
-            border: 2px solid var(--success) !important;
-            background-color: #f0f9eb !important;
-            color: var(--success) !important;
-            font-weight: 600;
-        }
-        .input-valid::placeholder { color: var(--success); opacity: 0.7; }
-
+        /* BADGE DE VALIDATION */
         .validation-badge {
             display: inline-block;
             background: var(--success); color: white;
-            font-size: 0.75rem; padding: 4px 8px; border-radius: 4px;
-            margin-left: 10px; opacity: 0; transition: opacity 0.3s;
-            text-transform: uppercase; font-weight: bold;
+            font-size: 0.8rem; padding: 5px 10px; border-radius: 20px;
+            margin-left: 15px; 
+            opacity: 0; transform: translateY(10px); /* Caché par défaut */
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        .show-badge { opacity: 1; }
+        .show-badge { opacity: 1; transform: translateY(0); }
 
         .main-container { display: flex; gap: 25px; flex: 1; }
         .left-panel { flex: 1; min-width: 420px; }
@@ -71,12 +75,15 @@
         .form-group { flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 140px; }
         .form-group label { font-weight: 600; color: var(--text); font-size: 0.75rem; }
         
+        /* INPUTS */
         input, select { 
             padding: 10px; border: 1px solid #dcdfe6; 
             border-radius: 4px; 
             font-size: 0.9rem; width: 100%; box-sizing: border-box; 
-            transition: all 0.2s;
+            transition: border 0.3s;
         }
+        /* Bordure verte sur les inputs valides */
+        .input-valid { border-color: var(--success) !important; background-color: #fff !important; }
         
         /* KPI & LIST */
         .kpi-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px; }
@@ -150,7 +157,7 @@
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
         <div style="display:flex; align-items:center;">
             <h2 style="margin:0; font-size:1.2rem; color:#7f8c8d;">Configuration de la Tournée</h2>
-            <span id="depot-badge" class="validation-badge">✅ Dépôt Validé</span>
+            <span id="depot-badge" class="validation-badge">✅ DÉPÔT VALIDÉ</span>
         </div>
         <button onclick="resetAll()" class="btn-mini" style="background:var(--danger);">Réinitialiser Tout</button>
     </div>
@@ -158,7 +165,7 @@
     <div class="header-band" id="prod-band">
         <div class="header-row">
             <div class="form-group" style="flex: 1.5;"><label>Nom Producteur / Dépôt</label><input type="text" id="pName" placeholder="Ex: Ferme du Soleil" oninput="checkProducerValidation()"></div>
-            <div class="form-group"><label>Journée de Livraison</label><select id="pDay" onchange="checkProducerValidation()"><option>Lundi</option><option>Mardi</option><option>Mercredi</option><option>Jeudi</option><option>Vendredi</option><option>Samedi</option></select></div>
+            <div class="form-group"><label>Journée de Livraison</label><select id="pDay" onchange="saveProd()"><option>Lundi</option><option>Mardi</option><option>Mercredi</option><option>Jeudi</option><option>Vendredi</option><option>Samedi</option></select></div>
             <div class="form-group" style="flex: 2;"><label>📍 Adresse du Dépôt</label><div style="display:flex; gap:5px;"><input type="text" id="pAddr" placeholder="Chercher une adresse..." style="flex:1;"><button class="btn-mini" style="background:var(--info);" onclick="searchAddress('prod')">🔍</button><button class="btn-mini" id="btn-t-prod" style="background:#95a5a6;" onclick="setMode('prod')">🎯</button></div></div>
         </div>
         <div class="header-row">
@@ -231,38 +238,33 @@
             
             Sortable.create(document.getElementById('stops-list'), { animation: 150, handle: '.handle', onEnd: reorderStops });
             
-            // Chargement et vérification
-            loadSaved(); 
-            setMode('stop');
+            loadSaved(); setMode('stop');
             
-            // Forcer la vérification visuelle au démarrage (après chargement du localStorage)
+            // Validation au démarrage
             setTimeout(checkProducerValidation, 500);
         };
 
-        // --- NOUVEAU : SYSTEME DE VALIDATION VISUELLE ---
+        // --- VALIDATION VISUELLE DU BANDEAU ---
         function checkProducerValidation() {
             const pNameInput = document.getElementById('pName');
             const pAddrInput = document.getElementById('pAddr');
             const band = document.getElementById('prod-band');
             const badge = document.getElementById('depot-badge');
 
+            // Conditions : Nom rempli + Latitude connue (donc adresse validée par API)
             let nameOk = pNameInput.value.trim().length > 0;
             let addrOk = pData.lat !== null && pAddrInput.value.trim().length > 0;
 
-            // 1. Validation Nom
-            if(nameOk) pNameInput.classList.add('input-valid');
-            else pNameInput.classList.remove('input-valid');
+            // Styles Inputs
+            if(nameOk) pNameInput.classList.add('input-valid'); else pNameInput.classList.remove('input-valid');
+            if(addrOk) pAddrInput.classList.add('input-valid'); else pAddrInput.classList.remove('input-valid');
 
-            // 2. Validation Adresse (doit être géolocalisée)
-            if(addrOk) pAddrInput.classList.add('input-valid');
-            else pAddrInput.classList.remove('input-valid');
-
-            // 3. Statut Global
+            // Style Global Bandeau (Le Check)
             if(nameOk && addrOk) {
-                band.style.borderTopColor = "var(--success)";
-                badge.classList.add('show-badge');
+                band.classList.add('validated'); // Active le fond vert et la bordure verte
+                badge.classList.add('show-badge'); // Affiche le badge
             } else {
-                band.style.borderTopColor = "var(--primary)";
+                band.classList.remove('validated');
                 badge.classList.remove('show-badge');
             }
             saveProd();
@@ -279,7 +281,7 @@
                 if(mode==='prod'){ 
                     pData={lat, lon, addr:d.display_name}; 
                     document.getElementById('pAddr').value=d.display_name; 
-                    checkProducerValidation(); // Validation immédiate
+                    checkProducerValidation(); 
                 }
                 else { sTemp={lat, lon}; document.getElementById('sAddr').value=d.display_name; }
                 updateView();
@@ -295,7 +297,7 @@
                     if(target==='prod'){ 
                         pData={lat, lon, addr:res[0].display_name}; 
                         document.getElementById('pAddr').value=res[0].display_name; 
-                        checkProducerValidation(); // Validation immédiate
+                        checkProducerValidation();
                     }
                     else { sTemp={lat, lon}; document.getElementById('sAddr').value=res[0].display_name; }
                     updateView();
