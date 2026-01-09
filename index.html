@@ -36,10 +36,29 @@
             background: white; padding: 20px; 
             border-radius: 6px; 
             margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-top: 6px solid var(--primary); 
+            transition: border-top-color 0.3s;
         }
         .header-row { display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-end; flex-wrap: wrap; }
         .header-row:last-child { margin-bottom: 0; }
         
+        /* VALIDATION VISUELLE */
+        .input-valid {
+            border: 2px solid var(--success) !important;
+            background-color: #f0f9eb !important;
+            color: var(--success) !important;
+            font-weight: 600;
+        }
+        .input-valid::placeholder { color: var(--success); opacity: 0.7; }
+
+        .validation-badge {
+            display: inline-block;
+            background: var(--success); color: white;
+            font-size: 0.75rem; padding: 4px 8px; border-radius: 4px;
+            margin-left: 10px; opacity: 0; transition: opacity 0.3s;
+            text-transform: uppercase; font-weight: bold;
+        }
+        .show-badge { opacity: 1; }
+
         .main-container { display: flex; gap: 25px; flex: 1; }
         .left-panel { flex: 1; min-width: 420px; }
         .right-panel { flex: 2; }
@@ -52,11 +71,11 @@
         .form-group { flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 140px; }
         .form-group label { font-weight: 600; color: var(--text); font-size: 0.75rem; }
         
-        /* INPUTS MODERNES */
         input, select { 
             padding: 10px; border: 1px solid #dcdfe6; 
             border-radius: 4px; 
             font-size: 0.9rem; width: 100%; box-sizing: border-box; 
+            transition: all 0.2s;
         }
         
         /* KPI & LIST */
@@ -88,7 +107,7 @@
             height: 450px; width: 100%; 
             border-radius: 6px; 
             border: 1px solid #dcdfe6; z-index: 1; 
-            background-color: #e5e9ec; /* Couleur de fond si la carte charge mal */
+            background-color: #e5e9ec; 
         }
         .btn-main { 
             background: var(--success); color: white; width: 100%; padding: 16px; border: none; 
@@ -105,7 +124,6 @@
             display: flex; justify-content: center; align-items: center; gap: 15px;
             color: #7f8c8d; font-size: 0.9rem;
         }
-        /* Logo DIX Solutions un peu plus grand pour la lisibilité */
         .dix-logo-small { height: 45px; width: auto; vertical-align: middle; }
         .dix-link { color: var(--accent); text-decoration: none; font-weight: bold; cursor: pointer;}
         .dix-link:hover { text-decoration: underline; }
@@ -130,14 +148,17 @@
     </div>
 
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h2 style="margin:0; font-size:1.2rem; color:#7f8c8d;">Configuration de la Tournée</h2>
+        <div style="display:flex; align-items:center;">
+            <h2 style="margin:0; font-size:1.2rem; color:#7f8c8d;">Configuration de la Tournée</h2>
+            <span id="depot-badge" class="validation-badge">✅ Dépôt Validé</span>
+        </div>
         <button onclick="resetAll()" class="btn-mini" style="background:var(--danger);">Réinitialiser Tout</button>
     </div>
 
-    <div class="header-band">
+    <div class="header-band" id="prod-band">
         <div class="header-row">
-            <div class="form-group" style="flex: 1.5;"><label>Nom Producteur / Dépôt</label><input type="text" id="pName" placeholder="Ex: Ferme du Soleil" onchange="updateTitle()"></div>
-            <div class="form-group"><label>Journée de Livraison</label><select id="pDay" onchange="saveProd()"><option>Lundi</option><option>Mardi</option><option>Mercredi</option><option>Jeudi</option><option>Vendredi</option><option>Samedi</option></select></div>
+            <div class="form-group" style="flex: 1.5;"><label>Nom Producteur / Dépôt</label><input type="text" id="pName" placeholder="Ex: Ferme du Soleil" oninput="checkProducerValidation()"></div>
+            <div class="form-group"><label>Journée de Livraison</label><select id="pDay" onchange="checkProducerValidation()"><option>Lundi</option><option>Mardi</option><option>Mercredi</option><option>Jeudi</option><option>Vendredi</option><option>Samedi</option></select></div>
             <div class="form-group" style="flex: 2;"><label>📍 Adresse du Dépôt</label><div style="display:flex; gap:5px;"><input type="text" id="pAddr" placeholder="Chercher une adresse..." style="flex:1;"><button class="btn-mini" style="background:var(--info);" onclick="searchAddress('prod')">🔍</button><button class="btn-mini" id="btn-t-prod" style="background:#95a5a6;" onclick="setMode('prod')">🎯</button></div></div>
         </div>
         <div class="header-row">
@@ -199,10 +220,8 @@
         const API = "https://update-github-csv-149052175314.europe-west1.run.app/";
         let map, markers, routeLayer, stops = [], mode = 'stop', pData = { lat:null, lon:null, addr:"" }, sTemp = { lat:null, lon:null };
 
-        // INITIALISATION AU CHARGEMENT
         window.onload = function() {
-            // Centrage PNR Préalpes d'Azur (Coordonnées approx. Castellane/Grasse)
-            // Zoom 10 pour voir la zone
+            // Centrage Carte sur PNR Préalpes
             map = L.map('map').setView([43.76, 6.90], 10);
             
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
@@ -211,10 +230,45 @@
             map.on('click', onMapClick);
             
             Sortable.create(document.getElementById('stops-list'), { animation: 150, handle: '.handle', onEnd: reorderStops });
-            loadSaved(); setMode('stop');
+            
+            // Chargement et vérification
+            loadSaved(); 
+            setMode('stop');
+            
+            // Forcer la vérification visuelle au démarrage (après chargement du localStorage)
+            setTimeout(checkProducerValidation, 500);
         };
 
-        function updateTitle() { saveProd(); }
+        // --- NOUVEAU : SYSTEME DE VALIDATION VISUELLE ---
+        function checkProducerValidation() {
+            const pNameInput = document.getElementById('pName');
+            const pAddrInput = document.getElementById('pAddr');
+            const band = document.getElementById('prod-band');
+            const badge = document.getElementById('depot-badge');
+
+            let nameOk = pNameInput.value.trim().length > 0;
+            let addrOk = pData.lat !== null && pAddrInput.value.trim().length > 0;
+
+            // 1. Validation Nom
+            if(nameOk) pNameInput.classList.add('input-valid');
+            else pNameInput.classList.remove('input-valid');
+
+            // 2. Validation Adresse (doit être géolocalisée)
+            if(addrOk) pAddrInput.classList.add('input-valid');
+            else pAddrInput.classList.remove('input-valid');
+
+            // 3. Statut Global
+            if(nameOk && addrOk) {
+                band.style.borderTopColor = "var(--success)";
+                badge.classList.add('show-badge');
+            } else {
+                band.style.borderTopColor = "var(--primary)";
+                badge.classList.remove('show-badge');
+            }
+            saveProd();
+        }
+
+        function updateTitle() { checkProducerValidation(); }
         function resetAll() { if(confirm("Voulez-vous tout réinitialiser ?")) { localStorage.clear(); location.reload(); } }
         function setMode(m) { mode = m; document.getElementById('btn-t-prod').style.background = m==='prod' ? 'var(--accent)' : '#95a5a6'; document.getElementById('btn-t-stop').style.background = m==='stop' ? 'var(--accent)' : '#95a5a6'; }
 
@@ -222,7 +276,11 @@
             let lat = e.latlng.lat, lon = e.latlng.lng;
             showTempMarker(lat, lon);
             fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`).then(r=>r.json()).then(d=>{
-                if(mode==='prod'){ pData={lat, lon, addr:d.display_name}; document.getElementById('pAddr').value=d.display_name; saveProd(); }
+                if(mode==='prod'){ 
+                    pData={lat, lon, addr:d.display_name}; 
+                    document.getElementById('pAddr').value=d.display_name; 
+                    checkProducerValidation(); // Validation immédiate
+                }
                 else { sTemp={lat, lon}; document.getElementById('sAddr').value=d.display_name; }
                 updateView();
             });
@@ -234,7 +292,11 @@
                 if(res.length>0){
                     let lat=parseFloat(res[0].lat), lon=parseFloat(res[0].lon);
                     showTempMarker(lat, lon); map.setView([lat, lon], 14);
-                    if(target==='prod'){ pData={lat, lon, addr:res[0].display_name}; document.getElementById('pAddr').value=res[0].display_name; saveProd(); }
+                    if(target==='prod'){ 
+                        pData={lat, lon, addr:res[0].display_name}; 
+                        document.getElementById('pAddr').value=res[0].display_name; 
+                        checkProducerValidation(); // Validation immédiate
+                    }
                     else { sTemp={lat, lon}; document.getElementById('sAddr').value=res[0].display_name; }
                     updateView();
                 }
@@ -249,7 +311,7 @@
         }
 
         function saveProd() { pData.name=document.getElementById('pName').value; pData.day=document.getElementById('pDay').value; localStorage.setItem('pMem_v36', JSON.stringify(pData)); updateView(); }
-        function loadSaved() { let s=localStorage.getItem('pMem_v36'); if(s){ pData=JSON.parse(s); document.getElementById('pName').value=pData.name; document.getElementById('pAddr').value=pData.addr; if(pData.day) document.getElementById('pDay').value=pData.day; updateTitle(); } }
+        function loadSaved() { let s=localStorage.getItem('pMem_v36'); if(s){ pData=JSON.parse(s); document.getElementById('pName').value=pData.name; document.getElementById('pAddr').value=pData.addr; if(pData.day) document.getElementById('pDay').value=pData.day; } }
 
         function addStop() {
             if(!pData.lat || !sTemp.lat) return alert("Position manquante.");
@@ -301,15 +363,12 @@
             document.getElementById('rRatio').innerText=v>0?(tt/v*100).toFixed(1)+" %":"0 %";
         }
 
-        // --- ENVOI DES DONNÉES AU CSV ---
         function sendData() {
             const btn=document.getElementById('btnSend'); btn.disabled=true; btn.innerText="⏳ Envoi...";
             const dateStr = new Date().toISOString().split('T')[0];
             const tourId = (document.getElementById('pName').value||"ID").replace(/\s/g,'') + "_" + Date.now();
             
             const rows = [];
-            
-            // DONNÉES COMMUNES (Répétées sur chaque ligne)
             const common = { 
                 "Producteur": document.getElementById('pName').value, 
                 "Date de Livraison": dateStr, 
@@ -322,45 +381,11 @@
                 "Temps Chargement Départ (min)": parseFloat(document.getElementById('tLoad').value) 
             };
 
-            // 1. LIGNE DÉPART
-            rows.push({
-                ...common, 
-                "Ordre d'Arrêt": 0, 
-                "Client / Point de Livraison": "Départ Dépôt", 
-                "Adresse Complète": pData.addr, 
-                "lat": pData.lat, 
-                "lon": pData.lon, 
-                "Type Arrêt": "Départ",
-                "Montant (€)": 0, "Volume (Kg Normalisé)": 0, "Temps d'arrêt (min)": 0
-            });
-
-            // 2. LIGNES ARRÊTS CLIENTS
+            rows.push({...common, "Ordre d'Arrêt": 0, "Client / Point de Livraison": "Départ Dépôt", "Adresse Complète": pData.addr, "lat": pData.lat, "lon": pData.lon, "Type Arrêt": "Départ", "Montant (€)": 0, "Volume (Kg Normalisé)": 0, "Temps d'arrêt (min)": 0});
             stops.forEach((s, i) => { 
-                rows.push({
-                    ...common, 
-                    "Ordre d'Arrêt": i+1, 
-                    "Client / Point de Livraison": s.client, 
-                    "Adresse Complète": s.addr, 
-                    "lat": s.lat, 
-                    "lon": s.lon, 
-                    "Montant (€)": s.euro, 
-                    "Volume (Kg Normalisé)": s.vol, 
-                    "Temps d'arrêt (min)": s.time, 
-                    "Type Arrêt": s.icon
-                }); 
+                rows.push({...common, "Ordre d'Arrêt": i+1, "Client / Point de Livraison": s.client, "Adresse Complète": s.addr, "lat": s.lat, "lon": s.lon, "Montant (€)": s.euro, "Volume (Kg Normalisé)": s.vol, "Temps d'arrêt (min)": s.time, "Type Arrêt": s.icon}); 
             });
-
-            // 3. LIGNE RETOUR
-            rows.push({
-                ...common, 
-                "Ordre d'Arrêt": stops.length+1, 
-                "Client / Point de Livraison": "Retour Dépôt", 
-                "Adresse Complète": pData.addr, 
-                "lat": pData.lat, 
-                "lon": pData.lon, 
-                "Type Arrêt": "Retour",
-                "Montant (€)": 0, "Volume (Kg Normalisé)": 0, "Temps d'arrêt (min)": 0
-            });
+            rows.push({...common, "Ordre d'Arrêt": stops.length+1, "Client / Point de Livraison": "Retour Dépôt", "Adresse Complète": pData.addr, "lat": pData.lat, "lon": pData.lon, "Type Arrêt": "Retour", "Montant (€)": 0, "Volume (Kg Normalisé)": 0, "Temps d'arrêt (min)": 0});
 
             fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rows: rows }) })
             .then(r => { if(r.ok) { alert("✅ Tournée enregistrée !"); stops=[]; updateView(); } })
