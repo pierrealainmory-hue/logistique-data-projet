@@ -136,16 +136,21 @@
         .stop-name { font-weight: bold; font-size: 0.95rem; }
         .stop-addr { font-size: 0.75rem; color: #7f8c8d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
-        .stop-meta { text-align: right; margin-right: 15px; min-width: 70px; display: flex; flex-direction: column; align-items: flex-end; }
+        .stop-meta { text-align: right; margin-right: 15px; min-width: 90px; display: flex; flex-direction: column; align-items: flex-end; }
         .stop-euro { font-weight: bold; color: var(--success); font-size: 0.9rem; }
         .stop-dist-tag { font-size: 0.75rem; color: #95a5a6; }
+        
+        /* RATIO */
+        .ratio-tag { font-size: 0.7rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; margin-top: 2px; }
+        .ratio-good { background: #d5f5e3; color: #27ae60; }
+        .ratio-mid { background: #fdebd0; color: #e67e22; }
+        .ratio-bad { background: #fadbd8; color: #e74c3c; }
 
         .stop-actions { display: flex; gap: 2px; }
         .btn-icon { border: none; background: none; cursor: pointer; font-size: 1.1rem; padding: 5px; border-radius: 4px; }
         .btn-icon:hover { background-color: #f0f0f0; }
         .handle { cursor: grab; color: #b0bec5; font-size: 1.2rem; margin-right: 5px; }
 
-        /* STYLE POUR LE RETOUR (V61) */
         .return-item { background: #f8f9fa; border-left: 4px solid var(--primary); }
         .return-item .stop-name { color: var(--primary); }
 
@@ -464,7 +469,6 @@
             stops=ns; updateView();
         }
 
-        // --- UPDATE VIEW MODIFIE POUR INCLURE LA LIGNE RETOUR ---
         function updateView() {
             markers.clearLayers(); routeLayer.clearLayers();
             const ul=document.getElementById('stops-list'); ul.innerHTML="";
@@ -485,6 +489,7 @@
                     <div class="stop-meta">
                         <span class="stop-euro">${s.euro} €</span>
                         <span class="stop-dist-tag" id="dist-stop-${i}">... km</span>
+                        <div class="ratio-tag" id="ratio-stop-${i}">...</div>
                     </div>
                     <div class="stop-actions">
                         <button class="btn-icon" onclick="editStop(${i})" title="Modifier">✏️</button>
@@ -494,7 +499,7 @@
                 L.circleMarker([s.lat, s.lon], {radius:4, color:'var(--info)', fillOpacity:1}).addTo(markers);
             });
 
-            // AJOUT DE LA LIGNE RETOUR (V61)
+            // LIGNE RETOUR AVEC COÛT SPECIFIQUE
             if(pData.lat && stops.length > 0) {
                 ul.innerHTML += `
                 <li class="stop-item return-item">
@@ -506,7 +511,7 @@
                         </div>
                     </div>
                     <div class="stop-meta">
-                        <span class="stop-euro" style="color:#7f8c8d;">0 €</span>
+                        <span class="stop-euro" style="color:#7f8c8d;" id="return-cost">0 €</span>
                         <span class="stop-dist-tag" id="dist-return">... km</span>
                     </div>
                     <div class="stop-actions" style="width:60px;"></div>
@@ -523,7 +528,7 @@
             document.getElementById('btnSend').disabled=(stops.length===0);
         }
 
-        // --- CALC ROUTE MODIFIE POUR LE RETOUR ---
+        // --- CALCUL DES RATIOS ET COUTS PAR ETAPE ---
         function calcRoute() {
             let pts = [[pData.lon, pData.lat], ...stops.map(s=>[s.lon, s.lat]), [pData.lon, pData.lat]];
             fetch(`https://router.project-osrm.org/route/v1/driving/${pts.map(p=>p.join(',')).join(';')}?overview=full&geometries=geojson`).then(r=>r.json()).then(res=>{
@@ -533,19 +538,69 @@
                     map.fitBounds(L.featureGroup(markers.getLayers()).getBounds().pad(0.2));
                     updateStats(rd.distance/1000, rd.duration/60);
                     
-                    // Mise à jour des distances individuelles
+                    // VARIABLES POUR LE CALCUL MICRO
+                    const cH = parseFloat(document.getElementById('cH').value) || 0;
+                    const conso = parseFloat(document.getElementById('vCons').value) || 0;
+                    const fuelPrice = parseFloat(document.getElementById('fPrice').value) || 0;
+
+                    // MISE A JOUR DES DISTANCES ET RATIOS DANS LA LISTE
                     if(rd.legs && rd.legs.length > 0) {
+                        
+                        // BOUCLE SUR LES ARRETS (Sauf retour)
                         stops.forEach((s, i) => {
-                            let legDist = rd.legs[i].distance / 1000;
-                            let el = document.getElementById(`dist-stop-${i}`);
-                            if(el) el.innerText = legDist.toFixed(1) + " km";
+                            let legDist = rd.legs[i].distance / 1000; // km
+                            let legDur = rd.legs[i].duration / 60; // min
+                            
+                            // Coût spécifique de ce segment (Trajet + Arrêt)
+                            // 1. Carburant du trajet vers ce point
+                            const costFuel = (legDist / 100) * conso * fuelPrice;
+                            
+                            // 2. Temps (Conduite vers ce point + Temps passé sur place)
+                            const costTime = ((legDur + s.time) / 60) * cH;
+                            
+                            const totalLegCost = costFuel + costTime;
+                            
+                            // Ratio : Coût / Valeur Marchandise
+                            let ratio = 0;
+                            let ratioText = "N/A";
+                            let ratioClass = "ratio-bad";
+
+                            if(s.euro > 0) {
+                                ratio = (totalLegCost / s.euro) * 100;
+                                ratioText = ratio.toFixed(0) + " %";
+                                if(ratio < 10) ratioClass = "ratio-good";
+                                else if(ratio < 30) ratioClass = "ratio-mid";
+                            } else {
+                                ratioText = "∞"; // Coût infini si pas de CA
+                            }
+
+                            // Update DOM
+                            let elDist = document.getElementById(`dist-stop-${i}`);
+                            if(elDist) elDist.innerText = legDist.toFixed(1) + " km";
+                            
+                            let elRatio = document.getElementById(`ratio-stop-${i}`);
+                            if(elRatio) {
+                                elRatio.innerText = ratioText;
+                                elRatio.className = "ratio-tag " + ratioClass;
+                            }
                         });
-                        // Mise à jour distance retour (dernière leg)
+
+                        // GESTION DU RETOUR (Dernier segment)
                         let returnLegIndex = stops.length;
                         if(rd.legs[returnLegIndex]) {
                             let retDist = rd.legs[returnLegIndex].distance / 1000;
-                            let elRet = document.getElementById('dist-return');
-                            if(elRet) elRet.innerText = retDist.toFixed(1) + " km";
+                            let retDur = rd.legs[returnLegIndex].duration / 60;
+                            
+                            // Coût du retour (Juste trajet, pas d'arrêt)
+                            const retFuel = (retDist / 100) * conso * fuelPrice;
+                            const retTime = (retDur / 60) * cH;
+                            const retTotal = retFuel + retTime;
+
+                            let elRetDist = document.getElementById('dist-return');
+                            if(elRetDist) elRetDist.innerText = retDist.toFixed(1) + " km";
+                            
+                            let elRetCost = document.getElementById('return-cost');
+                            if(elRetCost) elRetCost.innerText = "-" + retTotal.toFixed(2) + " €";
                         }
                     }
                 }
