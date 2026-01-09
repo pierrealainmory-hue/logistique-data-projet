@@ -39,7 +39,8 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
             border-top: 6px solid var(--primary); 
             transition: all 0.4s ease; 
-            position: relative; z-index: 10; 
+            position: relative; 
+            z-index: 100; /* Priorité haute pour passer au dessus si besoin */
         }
         .header-band.validated {
             border-top-color: var(--success);
@@ -69,8 +70,14 @@
         .sep { color: #bdc3c7; font-weight: normal; }
 
         .main-container { display: flex; gap: 25px; flex: 1; }
+        
+        /* Gestion des panneaux */
         .left-panel { flex: 1; min-width: 420px; transition: opacity 0.3s; }
-        .right-panel { flex: 2; }
+        .right-panel { 
+            flex: 2; 
+            min-width: 300px; /* Sécurité pour que la carte ne disparaisse pas */
+            display: flex; flex-direction: column; 
+        }
 
         /* --- CLASSE DE VERROUILLAGE (GRISÉ) --- */
         .blocked-area {
@@ -129,12 +136,16 @@
         .btn-icon:hover { background-color: #f0f0f0; }
         .handle { cursor: grab; color: #b0bec5; font-size: 1.2rem; margin-right: 5px; }
 
+        /* CORRECTIF CARTE V56 */
         #map { 
             height: 450px; width: 100%; 
             border-radius: 6px; 
-            border: 1px solid #dcdfe6; z-index: 1; 
+            border: 1px solid #dcdfe6; 
+            /* Pas de z-index ici pour laisser Leaflet gérer */
             background-color: #e5e9ec; 
+            display: block; /* Force le block */
         }
+        
         .btn-main { 
             background: var(--success); color: white; width: 100%; padding: 16px; border: none; 
             border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 1rem; 
@@ -298,11 +309,16 @@
         let map, markers, routeLayer, stops = [], mode = 'prod', pData = { lat:null, lon:null, addr:"" }, sTemp = { lat:null, lon:null };
 
         window.onload = function() {
+            // INITIALISATION DE LA CARTE
             map = L.map('map').setView([43.76, 6.90], 10);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
             markers = L.layerGroup().addTo(map);
             routeLayer = L.layerGroup().addTo(map);
             map.on('click', onMapClick);
+            
+            // CORRECTIF V56 : FORCER LA TAILLE APRES LE CHARGEMENT POUR EVITER LE GRIS
+            setTimeout(function(){ map.invalidateSize(); }, 500);
+
             Sortable.create(document.getElementById('stops-list'), { animation: 150, handle: '.handle', onEnd: reorderStops });
             loadSaved(); 
             // Au démarrage, on est en mode prod par défaut, le reste est bloqué
@@ -363,6 +379,9 @@
             // DÉVERROUILLER LA SECTION ARRETS
             document.getElementById('locked-section').classList.remove('blocked-area');
             setMode('stop');
+            
+            // Petit refresh carte au cas où
+            setTimeout(function(){ map.invalidateSize(); }, 200);
         }
 
         function unlockDepot() {
@@ -384,10 +403,8 @@
         }
 
         function onMapClick(e) {
-            // Si on est verrouillé sur la carte (pas en mode prod et section bloquée), on ne fait rien pour les arrêts
-            // Mais si on est en mode prod, on place le dépôt
             if (mode === 'stop' && document.getElementById('locked-section').classList.contains('blocked-area')) {
-                return; // Empêche de placer des points si pas validé
+                return; 
             }
 
             let lat = e.latlng.lat, lon = e.latlng.lng;
@@ -555,4 +572,21 @@
                 "Prix Carburant (€/L)": parseFloat(document.getElementById('fPrice').value), 
                 "Type Livreur": document.getElementById('driverType').value,
                 "Cout Horaire (€/h)": parseFloat(document.getElementById('cH').value), 
-                "Temps Préparation (min)": parseFloat(document.getElementById('tPrep
+                "Temps Préparation (min)": parseFloat(document.getElementById('tPrep').value), 
+                "Temps Chargement Départ (min)": parseFloat(document.getElementById('tLoad').value) 
+            };
+
+            rows.push({...common, "Ordre d'Arrêt": 0, "Client / Point de Livraison": "Départ Dépôt", "Adresse Complète": pData.addr, "lat": pData.lat, "lon": pData.lon, "Type Arrêt": "Départ", "Montant (€)": 0, "Volume (Kg Normalisé)": 0, "Temps d'arrêt (min)": 0});
+            stops.forEach((s, i) => { 
+                rows.push({...common, "Ordre d'Arrêt": i+1, "Client / Point de Livraison": s.client, "Adresse Complète": s.addr, "lat": s.lat, "lon": s.lon, "Montant (€)": s.euro, "Volume (Kg Normalisé)": s.vol, "Temps d'arrêt (min)": s.time, "Type Arrêt": s.icon}); 
+            });
+            rows.push({...common, "Ordre d'Arrêt": stops.length+1, "Client / Point de Livraison": "Retour Dépôt", "Adresse Complète": pData.addr, "lat": pData.lat, "lon": pData.lon, "Type Arrêt": "Retour", "Montant (€)": 0, "Volume (Kg Normalisé)": 0, "Temps d'arrêt (min)": 0});
+
+            fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rows: rows }) })
+            .then(r => { if(r.ok) { alert("✅ Tournée enregistrée !"); stops=[]; updateView(); } })
+            .catch(() => alert("❌ Erreur de connexion"))
+            .finally(() => { btn.disabled = false; btn.innerText = "🚀 ENREGISTRER LA TOURNÉE"; });
+        }
+    </script>
+</body>
+</html>
