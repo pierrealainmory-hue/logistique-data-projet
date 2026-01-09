@@ -97,7 +97,11 @@
         .input-valid { border-color: var(--success) !important; background-color: #fff !important; }
         
         /* KPI & LIST */
-        .kpi-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px; }
+        .kpi-header {
+            font-size: 1rem; font-weight: bold; color: var(--primary); 
+            margin-bottom: 10px; border-bottom: 2px solid #eee; padding-bottom: 5px;
+        }
+        .kpi-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 10px; }
         .kpi-card { 
             background: white; padding: 15px; 
             border-radius: 6px; 
@@ -121,7 +125,6 @@
 
         #stops-list { list-style: none; padding: 0; }
         
-        /* STYLE LISTE AMÉLIORÉ (V60) */
         .stop-item { 
             background: white; padding: 10px; margin-bottom: 8px; 
             border-radius: 4px; 
@@ -133,11 +136,7 @@
         .stop-name { font-weight: bold; font-size: 0.95rem; }
         .stop-addr { font-size: 0.75rem; color: #7f8c8d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
-        /* NOUVEAU BLOC DATA DROITE */
-        .stop-meta {
-            text-align: right; margin-right: 15px; min-width: 70px;
-            display: flex; flex-direction: column; align-items: flex-end;
-        }
+        .stop-meta { text-align: right; margin-right: 15px; min-width: 70px; display: flex; flex-direction: column; align-items: flex-end; }
         .stop-euro { font-weight: bold; color: var(--success); font-size: 0.9rem; }
         .stop-dist-tag { font-size: 0.75rem; color: #95a5a6; }
 
@@ -145,6 +144,10 @@
         .btn-icon { border: none; background: none; cursor: pointer; font-size: 1.1rem; padding: 5px; border-radius: 4px; }
         .btn-icon:hover { background-color: #f0f0f0; }
         .handle { cursor: grab; color: #b0bec5; font-size: 1.2rem; margin-right: 5px; }
+
+        /* STYLE POUR LE RETOUR (V61) */
+        .return-item { background: #f8f9fa; border-left: 4px solid var(--primary); }
+        .return-item .stop-name { color: var(--primary); }
 
         #map { 
             height: 450px; width: 100%; 
@@ -461,7 +464,7 @@
             stops=ns; updateView();
         }
 
-        // --- UPDATE VIEW MODIFIE POUR AFFICHER VALEUR ET KM DANS LA LISTE ---
+        // --- UPDATE VIEW MODIFIE POUR INCLURE LA LIGNE RETOUR ---
         function updateView() {
             markers.clearLayers(); routeLayer.clearLayers();
             const ul=document.getElementById('stops-list'); ul.innerHTML="";
@@ -491,6 +494,25 @@
                 L.circleMarker([s.lat, s.lon], {radius:4, color:'var(--info)', fillOpacity:1}).addTo(markers);
             });
 
+            // AJOUT DE LA LIGNE RETOUR (V61)
+            if(pData.lat && stops.length > 0) {
+                ul.innerHTML += `
+                <li class="stop-item return-item">
+                    <div class="stop-content">
+                        <span style="font-size:1.2rem; margin-right:10px;">🏁</span>
+                        <div class="stop-info">
+                            <span class="stop-name">Retour au point de départ</span>
+                            <span class="stop-addr">${pData.addr.split(',')[0]}...</span>
+                        </div>
+                    </div>
+                    <div class="stop-meta">
+                        <span class="stop-euro" style="color:#7f8c8d;">0 €</span>
+                        <span class="stop-dist-tag" id="dist-return">... km</span>
+                    </div>
+                    <div class="stop-actions" style="width:60px;"></div>
+                </li>`;
+            }
+
             if(sTemp.lat) {
                 L.circleMarker([sTemp.lat, sTemp.lon], { radius: 5, color: '#e74c3c', fillColor: '#c0392b', fillOpacity: 0.8, weight: 3 }).addTo(markers);
             }
@@ -501,7 +523,7 @@
             document.getElementById('btnSend').disabled=(stops.length===0);
         }
 
-        // --- CALC ROUTE MODIFIE POUR METTRE A JOUR LES DISTANCES DANS LA LISTE ---
+        // --- CALC ROUTE MODIFIE POUR LE RETOUR ---
         function calcRoute() {
             let pts = [[pData.lon, pData.lat], ...stops.map(s=>[s.lon, s.lat]), [pData.lon, pData.lat]];
             fetch(`https://router.project-osrm.org/route/v1/driving/${pts.map(p=>p.join(',')).join(';')}?overview=full&geometries=geojson`).then(r=>r.json()).then(res=>{
@@ -511,14 +533,20 @@
                     map.fitBounds(L.featureGroup(markers.getLayers()).getBounds().pad(0.2));
                     updateStats(rd.distance/1000, rd.duration/60);
                     
-                    // MISE A JOUR DES DISTANCES INDIVIDUELLES DANS LA LISTE
+                    // Mise à jour des distances individuelles
                     if(rd.legs && rd.legs.length > 0) {
                         stops.forEach((s, i) => {
-                            // Leg 0 = Depot -> Stop 1. Donc stop[0] correspond à leg[0]
                             let legDist = rd.legs[i].distance / 1000;
                             let el = document.getElementById(`dist-stop-${i}`);
                             if(el) el.innerText = legDist.toFixed(1) + " km";
                         });
+                        // Mise à jour distance retour (dernière leg)
+                        let returnLegIndex = stops.length;
+                        if(rd.legs[returnLegIndex]) {
+                            let retDist = rd.legs[returnLegIndex].distance / 1000;
+                            let elRet = document.getElementById('dist-return');
+                            if(elRet) elRet.innerText = retDist.toFixed(1) + " km";
+                        }
                     }
                 }
             });
