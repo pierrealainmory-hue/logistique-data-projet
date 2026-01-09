@@ -98,6 +98,8 @@
         .summary-value { font-size: 1.8rem; font-weight: 800; display: block; }
 
         #stops-list { list-style: none; padding: 0; }
+        
+        /* STYLE LISTE AMÉLIORÉ */
         .stop-item { 
             background: white; padding: 12px; margin-bottom: 8px; 
             border-radius: 4px; 
@@ -182,9 +184,17 @@
         </div>
 
         <div class="header-row" style="margin-top: 10px;">
-            <div class="form-group"><label>💶 Coût Chauffeur (€/h)</label><input type="number" id="cH" value="18" onchange="updateView()"></div>
+            <div class="form-group" style="flex: 1.2;">
+                <label>👤 Qui livre ?</label>
+                <select id="driverType" style="font-weight:bold; color:var(--primary);">
+                    <option>Producteur.rice (Soi-même)</option>
+                    <option>Salarié</option>
+                    <option>Prestataire Extérieur</option>
+                </select>
+            </div>
+            <div class="form-group"><label>💶 Coût Chargé (€/h)</label><input type="number" id="cH" value="18" onchange="updateView()"></div>
             <div class="form-group"><label>📦 Prép. Commande (min)</label><input type="number" id="tPrep" value="30" onchange="updateView()"></div>
-            <div class="form-group"><label>⏱️ Chargement Départ (min)</label><input type="number" id="tLoad" value="20" onchange="updateView()"></div>
+            <div class="form-group"><label>⏱️ Chargement (min)</label><input type="number" id="tLoad" value="20" onchange="updateView()"></div>
         </div>
     </div>
 
@@ -376,39 +386,29 @@
             });
         }
 
-        // --- NOUVEAU CALCUL COÛT CARBURANT ---
         function updateStats(dist, driveTime) {
             const cH = parseFloat(document.getElementById('cH').value) || 0;
-            const conso = parseFloat(document.getElementById('vCons').value) || 0; // L/100km
-            const prixCarb = parseFloat(document.getElementById('fPrice').value) || 0; // €/L
+            const conso = parseFloat(document.getElementById('vCons').value) || 0;
+            const prixCarb = parseFloat(document.getElementById('fPrice').value) || 0;
             const prep = parseFloat(document.getElementById('tPrep').value) || 0;
             const load = parseFloat(document.getElementById('tLoad').value) || 0;
 
-            // Temps total de service
             const sTime = stops.reduce((a,b)=>a+b.time, 0) + prep + load + driveTime; 
-            
-            // 1. Frais Carburant = (Distance / 100) * Conso * Prix
             const fuelCost = (dist / 100) * conso * prixCarb;
-
-            // 2. Frais Personnel = Temps total (h) * Taux Horaire
             const laborCost = (sTime / 60) * cH;
-
             const totalCost = fuelCost + laborCost;
             const ca = stops.reduce((a,b)=>a+b.euro, 0);
 
             document.getElementById('rDist').innerText=dist.toFixed(1)+" km";
             document.getElementById('rTime').innerText=Math.floor(driveTime/60)+"h"+Math.round(driveTime%60).toString().padStart(2,'0');
             document.getElementById('rOps').innerText=Math.floor(sTime/60)+"h"+Math.round(sTime%60).toString().padStart(2,'0');
-            
-            document.getElementById('rCostTrans').innerText=fuelCost.toFixed(2)+" €"; // Affiche coût carburant uniquement
-            document.getElementById('rCostOps').innerText=laborCost.toFixed(2)+" €"; // Affiche coût main d'oeuvre (route + service)
-            
+            document.getElementById('rCostTrans').innerText=fuelCost.toFixed(2)+" €"; 
+            document.getElementById('rCostOps').innerText=laborCost.toFixed(2)+" €"; 
             document.getElementById('rTotal').innerText=totalCost.toFixed(2)+" €";
             document.getElementById('rVal').innerText=ca.toFixed(2)+" €";
             document.getElementById('rRatio').innerText=ca>0?(totalCost/ca*100).toFixed(1)+" %":"0 %";
         }
 
-        // --- ENVOI AVEC NOUVELLES DONNEES ---
         function sendData() {
             const btn=document.getElementById('btnSend'); btn.disabled=true; btn.innerText="⏳ Envoi...";
             const dateStr = new Date().toISOString().split('T')[0];
@@ -421,9 +421,13 @@
                 "Jour": document.getElementById('pDay').value, 
                 "Tournée ID": tourId, 
                 "Véhicule": document.getElementById('vType').value, 
-                "Type Carburant": document.getElementById('fType').value, // Nouveau
-                "Conso (L/100km)": parseFloat(document.getElementById('vCons').value), // Nouveau
-                "Prix Carburant (€/L)": parseFloat(document.getElementById('fPrice').value), // Nouveau
+                "Type Carburant": document.getElementById('fType').value, 
+                "Conso (L/100km)": parseFloat(document.getElementById('vCons').value), 
+                "Prix Carburant (€/L)": parseFloat(document.getElementById('fPrice').value), 
+                
+                // --- AJOUT NOUVEAU CHAMP ---
+                "Type Livreur": document.getElementById('driverType').value,
+                
                 "Cout Horaire (€/h)": parseFloat(document.getElementById('cH').value), 
                 "Temps Préparation (min)": parseFloat(document.getElementById('tPrep').value), 
                 "Temps Chargement Départ (min)": parseFloat(document.getElementById('tLoad').value) 
