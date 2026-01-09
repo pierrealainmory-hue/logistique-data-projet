@@ -136,8 +136,12 @@
         .stop-name { font-weight: bold; font-size: 0.95rem; }
         .stop-addr { font-size: 0.75rem; color: #7f8c8d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
-        /* TAGS & DATA */
-        .stop-meta { text-align: right; margin-right: 15px; min-width: 90px; display: flex; flex-direction: column; align-items: flex-end; }
+        /* TAGS & DATA - Ajustement largeur V65 */
+        .stop-meta { 
+            text-align: right; margin-right: 15px; 
+            min-width: 120px; /* Plus large pour le texte Ratio Logistique */
+            display: flex; flex-direction: column; align-items: flex-end; 
+        }
         .stop-euro { font-weight: bold; color: var(--success); font-size: 0.9rem; }
         .stop-dist-tag { font-size: 0.75rem; color: #95a5a6; }
         
@@ -562,11 +566,11 @@
 
                             if(s.euro > 0) {
                                 ratio = (totalLegCost / s.euro) * 100;
-                                ratioText = "Ratio " + ratio.toFixed(0) + " %";
+                                ratioText = "Ratio Logistique " + ratio.toFixed(0) + " %"; // TEXTE COMPLET
                                 if(ratio < 10) ratioClass = "ratio-good";
                                 else if(ratio < 30) ratioClass = "ratio-mid";
                             } else {
-                                ratioText = "Ratio ∞";
+                                ratioText = "Ratio Logistique ∞";
                             }
 
                             let elDist = document.getElementById(`dist-stop-${i}`);
