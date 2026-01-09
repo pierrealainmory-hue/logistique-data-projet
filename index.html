@@ -61,6 +61,15 @@
         }
         .show-badge { opacity: 1; transform: translateY(0); }
 
+        /* SECTION RESUME (COLLAPSED) */
+        #header-summary {
+            display: none; /* Caché par défaut */
+            align-items: center;
+            justify-content: space-between;
+        }
+        .summary-text { font-size: 1rem; color: var(--primary); }
+        .summary-text strong { color: var(--success); }
+
         .main-container { display: flex; gap: 25px; flex: 1; }
         .left-panel { flex: 1; min-width: 420px; }
         .right-panel { flex: 2; }
@@ -130,6 +139,12 @@
         .btn-mini { 
             padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; 
         }
+        /* Bouton Valider le dépôt */
+        #btn-validate-depot {
+            background: var(--success); color: white; margin-top: 10px; width: 100%;
+            opacity: 0.5; cursor: not-allowed; transition: opacity 0.3s;
+        }
+        #btn-validate-depot.active { opacity: 1; cursor: pointer; }
 
         /* FOOTER */
         .dix-footer {
@@ -170,32 +185,43 @@
     </div>
 
     <div class="header-band" id="prod-band">
-        <div class="header-row">
-            <div class="form-group" style="flex: 1.5;"><label>Nom Producteur / Dépôt</label><input type="text" id="pName" placeholder="Ex: Ferme du Soleil" oninput="checkProducerValidation()"></div>
-            <div class="form-group"><label>Journée de Livraison</label><select id="pDay" onchange="saveProd()"><option>Lundi</option><option>Mardi</option><option>Mercredi</option><option>Jeudi</option><option>Vendredi</option><option>Samedi</option></select></div>
-            <div class="form-group" style="flex: 2;"><label>📍 Adresse du Dépôt</label><div style="display:flex; gap:5px;"><input type="text" id="pAddr" placeholder="Chercher une adresse..." style="flex:1;"><button class="btn-mini" style="background:var(--info);" onclick="searchAddress('prod')">🔍</button><button class="btn-mini" id="btn-t-prod" style="background:#95a5a6;" onclick="setMode('prod')">🎯</button></div></div>
-        </div>
-
-        <div class="header-row" style="background: #f8f9fa; padding: 10px; border-radius: 4px; border: 1px solid #eee;">
-            <div class="form-group" style="flex: 1.5;"><label>🚚 Type de Véhicule</label><select id="vType" onchange="saveProd()"><option>Petit utilitaire (< 3m³)</option><option selected>Fourgon compact (3-6m³)</option><option>Grand fourgon (6-12m³)</option><option>Petit camion (12-20m³)</option><option>Camion lourd (> 20m³)</option></select></div>
-            <div class="form-group"><label>⛽ Énergie</label><select id="fType" onchange="updateView()"><option>Diesel</option><option>Essence</option><option>Électrique</option><option>GNV / Gaz</option><option>Hybride</option></select></div>
-            <div class="form-group"><label>💧 Conso. (L/100km)</label><input type="number" id="vCons" value="8.5" step="0.1" onchange="updateView()"></div>
-            <div class="form-group"><label>💳 Prix (€/L)</label><input type="number" id="fPrice" value="1.75" step="0.01" onchange="updateView()"></div>
-        </div>
-
-        <div class="header-row" style="margin-top: 10px;">
-            <div class="form-group" style="flex: 1.2;">
-                <label>👤 Qui livre ?</label>
-                <select id="driverType" style="font-weight:bold; color:var(--primary);">
-                    <option>Producteur.rice (Soi-même)</option>
-                    <option>Salarié</option>
-                    <option>Prestataire Extérieur</option>
-                </select>
+        
+        <div id="header-form">
+            <div class="header-row">
+                <div class="form-group" style="flex: 1.5;"><label>Nom Producteur / Dépôt</label><input type="text" id="pName" placeholder="Ex: Ferme du Soleil" oninput="checkProducerValidation()"></div>
+                <div class="form-group"><label>Journée de Livraison</label><select id="pDay" onchange="saveProd()"><option>Lundi</option><option>Mardi</option><option>Mercredi</option><option>Jeudi</option><option>Vendredi</option><option>Samedi</option></select></div>
+                <div class="form-group" style="flex: 2;"><label>📍 Adresse du Dépôt</label><div style="display:flex; gap:5px;"><input type="text" id="pAddr" placeholder="Chercher une adresse..." style="flex:1;"><button class="btn-mini" style="background:var(--info);" onclick="searchAddress('prod')">🔍</button><button class="btn-mini" id="btn-t-prod" style="background:#95a5a6;" onclick="setMode('prod')">🎯</button></div></div>
             </div>
-            <div class="form-group"><label>💶 Coût Chargé (€/h)</label><input type="number" id="cH" value="18" onchange="updateView()"></div>
-            <div class="form-group"><label>📦 Prép. Commande (min)</label><input type="number" id="tPrep" value="30" onchange="updateView()"></div>
-            <div class="form-group"><label>⏱️ Chargement (min)</label><input type="number" id="tLoad" value="20" onchange="updateView()"></div>
+
+            <div class="header-row" style="background: #f8f9fa; padding: 10px; border-radius: 4px; border: 1px solid #eee;">
+                <div class="form-group" style="flex: 1.5;"><label>🚚 Type de Véhicule</label><select id="vType" onchange="saveProd()"><option>Petit utilitaire (< 3m³)</option><option selected>Fourgon compact (3-6m³)</option><option>Grand fourgon (6-12m³)</option><option>Petit camion (12-20m³)</option><option>Camion lourd (> 20m³)</option></select></div>
+                <div class="form-group"><label>⛽ Énergie</label><select id="fType" onchange="updateView()"><option>Diesel</option><option>Essence</option><option>Électrique</option><option>GNV / Gaz</option><option>Hybride</option></select></div>
+                <div class="form-group"><label>💧 Conso. (L/100km)</label><input type="number" id="vCons" value="8.5" step="0.1" onchange="updateView()"></div>
+                <div class="form-group"><label>💳 Prix (€/L)</label><input type="number" id="fPrice" value="1.75" step="0.01" onchange="updateView()"></div>
+            </div>
+
+            <div class="header-row" style="margin-top: 10px;">
+                <div class="form-group" style="flex: 1.2;">
+                    <label>👤 Qui livre ?</label>
+                    <select id="driverType" style="font-weight:bold; color:var(--primary);">
+                        <option>Producteur.rice (Soi-même)</option>
+                        <option>Salarié</option>
+                        <option>Prestataire Extérieur</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>💶 Coût Chargé (€/h)</label><input type="number" id="cH" value="18" onchange="updateView()"></div>
+                <div class="form-group"><label>📦 Prép. Commande (min)</label><input type="number" id="tPrep" value="30" onchange="updateView()"></div>
+                <div class="form-group"><label>⏱️ Chargement (min)</label><input type="number" id="tLoad" value="20" onchange="updateView()"></div>
+            </div>
+
+            <button id="btn-validate-depot" class="btn-main" onclick="lockDepot()">✅ VALIDER LE DÉPÔT & PASSER AUX ARRÊTS</button>
         </div>
+
+        <div id="header-summary">
+            <div class="summary-text" id="summary-content">...</div>
+            <button class="btn-mini" style="background:var(--info);" onclick="unlockDepot()">Modifier ✏️</button>
+        </div>
+
     </div>
 
     <div class="main-container">
@@ -258,7 +284,7 @@
             routeLayer = L.layerGroup().addTo(map);
             map.on('click', onMapClick);
             Sortable.create(document.getElementById('stops-list'), { animation: 150, handle: '.handle', onEnd: reorderStops });
-            loadSaved(); setMode('stop');
+            loadSaved(); setMode('stop'); // Démarrage sans forcer le mode prod pour laisser le choix
             setTimeout(checkProducerValidation, 500);
         };
 
@@ -267,27 +293,76 @@
             const pAddrInput = document.getElementById('pAddr');
             const band = document.getElementById('prod-band');
             const badge = document.getElementById('depot-badge');
+            const btnValide = document.getElementById('btn-validate-depot');
+
             let nameOk = pNameInput.value.trim().length > 0;
             let addrOk = pData.lat !== null && pAddrInput.value.trim().length > 0;
+
             if(nameOk) pNameInput.classList.add('input-valid'); else pNameInput.classList.remove('input-valid');
             if(addrOk) pAddrInput.classList.add('input-valid'); else pAddrInput.classList.remove('input-valid');
-            if(nameOk && addrOk) { band.classList.add('validated'); badge.classList.add('show-badge'); } 
-            else { band.classList.remove('validated'); badge.classList.remove('show-badge'); }
+
+            if(nameOk && addrOk) {
+                band.classList.add('validated');
+                badge.classList.add('show-badge');
+                btnValide.classList.add('active'); // Active le bouton Valider
+                btnValide.disabled = false;
+            } else {
+                band.classList.remove('validated');
+                badge.classList.remove('show-badge');
+                btnValide.classList.remove('active');
+                btnValide.disabled = true;
+            }
             saveProd();
+        }
+
+        // --- NOUVELLES FONCTIONS DE REPLI ---
+        function lockDepot() {
+            // Replie le formulaire, affiche le résumé
+            document.getElementById('header-form').style.display = 'none';
+            document.getElementById('header-summary').style.display = 'flex';
+            
+            // Construit le texte de résumé
+            const name = document.getElementById('pName').value;
+            const day = document.getElementById('pDay').value;
+            const veh = document.getElementById('vType').value;
+            const addr = document.getElementById('pAddr').value.split(',')[0]; // Juste la rue/ville
+            
+            document.getElementById('summary-content').innerHTML = `
+                ✅ <strong>${name}</strong> (${day}) <span style="color:#ccc">|</span> 📍 ${addr} <span style="color:#ccc">|</span> 🚚 ${veh}
+            `;
+            
+            // Passe en mode Arrêt
+            setMode('stop');
+        }
+
+        function unlockDepot() {
+            // Rouvre le formulaire
+            document.getElementById('header-form').style.display = 'block';
+            document.getElementById('header-summary').style.display = 'none';
+            // Passe en mode Prod pour permettre de changer l'adresse
+            setMode('prod');
         }
 
         function updateTitle() { checkProducerValidation(); }
         function resetAll() { if(confirm("Voulez-vous tout réinitialiser ?")) { localStorage.clear(); location.reload(); } }
-        function setMode(m) { mode = m; document.getElementById('btn-t-prod').style.background = m==='prod' ? 'var(--accent)' : '#95a5a6'; document.getElementById('btn-t-stop').style.background = m==='stop' ? 'var(--accent)' : '#95a5a6'; }
+        
+        function setMode(m) { 
+            mode = m; 
+            // Mise à jour visuelle des boutons cible
+            document.getElementById('btn-t-prod').style.background = m==='prod' ? 'var(--accent)' : '#95a5a6'; 
+            document.getElementById('btn-t-stop').style.background = m==='stop' ? 'var(--accent)' : '#95a5a6'; 
+        }
 
         function onMapClick(e) {
             let lat = e.latlng.lat, lon = e.latlng.lng;
             fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`).then(r=>r.json()).then(d=>{
                 if(mode==='prod'){ 
                     pData={lat, lon, addr:d.display_name}; document.getElementById('pAddr').value=d.display_name; 
-                    checkProducerValidation(); setMode('stop'); 
+                    checkProducerValidation(); 
                 }
-                else { sTemp={lat, lon}; document.getElementById('sAddr').value=d.display_name; }
+                else { 
+                    sTemp={lat, lon}; document.getElementById('sAddr').value=d.display_name; 
+                }
                 updateView();
             });
         }
@@ -300,7 +375,7 @@
                     map.setView([lat, lon], 14);
                     if(target==='prod'){ 
                         pData={lat, lon, addr:res[0].display_name}; document.getElementById('pAddr').value=res[0].display_name; 
-                        checkProducerValidation(); setMode('stop'); 
+                        checkProducerValidation(); 
                     }
                     else { sTemp={lat, lon}; document.getElementById('sAddr').value=res[0].display_name; }
                     updateView();
@@ -424,10 +499,7 @@
                 "Type Carburant": document.getElementById('fType').value, 
                 "Conso (L/100km)": parseFloat(document.getElementById('vCons').value), 
                 "Prix Carburant (€/L)": parseFloat(document.getElementById('fPrice').value), 
-                
-                // --- AJOUT NOUVEAU CHAMP ---
                 "Type Livreur": document.getElementById('driverType').value,
-                
                 "Cout Horaire (€/h)": parseFloat(document.getElementById('cH').value), 
                 "Temps Préparation (min)": parseFloat(document.getElementById('tPrep').value), 
                 "Temps Chargement Départ (min)": parseFloat(document.getElementById('tLoad').value) 
