@@ -227,9 +227,6 @@
                 <div id="tours-list-container">
                     <div style="padding:10px; color:#999; font-style:italic; text-align:center;">Aucune tournée enregistrée</div>
                 </div>
-                <div style="display:flex; gap:10px; margin-top:10px;">
-                    <button class="btn-mini" onclick="newTour()" style="background:#95a5a6; flex:1;">➕ Nouvelle Tournée</button>
-                </div>
                 <button id="btn-export-project" onclick="sendProjectData()">🚀 ENVOYER LE PROJET AU PNR (CSV)</button>
             </div>
 
@@ -390,13 +387,12 @@
                 const div = document.createElement('div');
                 div.className = 'tour-row ' + (t.id === currentTourId ? 'active' : '');
                 
-                // Formattage chiffres
                 let ca = t.stats ? t.stats.ca : 0;
                 let cost = t.stats ? t.stats.cost : 0;
                 let ratio = t.stats ? t.stats.ratio : 0;
 
                 div.innerHTML = `
-                    <div style="flex:1;">
+                    <div style="flex:1;" onclick="loadTour('${t.id}')">
                         <div class="tour-info"><strong>${t.name}</strong> (${t.day})</div>
                         <div class="tour-metrics">CA: ${Math.round(ca)}€ | Coût: ${Math.round(cost)}€ | Ratio: ${ratio}%</div>
                     </div>
@@ -418,19 +414,31 @@
                 name: tName,
                 day: document.getElementById('tDay').value,
                 stops: stops,
-                stats: { ...currentStats } // Copie propre des stats courantes
+                stats: { ...currentStats } 
             };
 
             const idx = savedTours.findIndex(t => t.id === tourData.id);
             if(idx >= 0) savedTours[idx] = tourData;
             else savedTours.push(tourData);
 
-            currentTourId = tourData.id; 
             localStorage.setItem('logistique_tours_v71', JSON.stringify(savedTours));
             saveDepot();
-            renderToursList(); // Mise à jour immédiate
             
-            // Animation flash
+            // FEEDBACK & RESET AUTO (V73)
+            alert("✅ Tournée sauvegardée et ajoutée à la liste !\n\nLe formulaire va être réinitialisé pour une nouvelle saisie.");
+            
+            renderToursList();
+            
+            // RESET FORM
+            currentTourId = null;
+            document.getElementById('tName').value = "";
+            document.getElementById('tDay').value = "Lundi";
+            stops = [];
+            currentStats = { cost:0, ca:0, ratio:0 };
+            updateView();
+            updateStatsTitle();
+            
+            // Animation flash sur la liste
             setTimeout(() => {
                 let rows = document.querySelectorAll('.tour-row');
                 if(rows.length > 0) rows[rows.length-1].classList.add('newly-saved');
@@ -501,7 +509,7 @@
             const tLoad = parseFloat(document.getElementById('tLoad').value) || 0;
             const totalTime = tPrep + tLoad;
             
-            // AJOUT V72 : VEHICULE ET CONSO DANS LE RESUME
+            // AJOUT V72 : VEHICULE ET CONSO
             const veh = document.getElementById('vType').value;
             const cons = document.getElementById('vCons').value;
 
