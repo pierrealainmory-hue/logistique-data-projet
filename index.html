@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulateur Logistique - PNR Préalpes</title>
-    
     <link rel="icon" href="https://github.com/pierrealainmory-hue/logistique-data-projet/blob/main/LogoEpurvertpetit.png?raw=true">
-
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
@@ -14,93 +12,60 @@
         body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; padding: 20px; background: var(--bg); color: #333; display: flex; flex-direction: column; min-height: 100vh; }
         
         /* HEADER */
-        .client-header {
-            background: white; padding: 15px 25px; border-radius: 6px; margin-bottom: 20px;
-            display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-top: 6px solid var(--success);
-        }
+        .client-header { background: white; padding: 15px 25px; border-radius: 6px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-top: 6px solid var(--success); }
         .client-identity { display: flex; align-items: center; gap: 25px; }
         .client-logo { height: 85px; width: auto; display: block; }
-        
         .assistance-box { font-size: 0.85rem; color: var(--text); text-align: right; border-left: 1px solid #ddd; padding-left: 20px; }
         .assistance-title { font-weight: bold; color: var(--accent); text-transform: uppercase; font-size: 0.75rem; margin-bottom: 5px; display: block;}
         .assistance-box a { color: var(--primary); text-decoration: none; }
 
-        /* BANDEAU DEPOT */
-        .header-band { 
-            background: white; padding: 20px; border-radius: 6px; margin-bottom: 20px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-top: 6px solid var(--primary); 
-            transition: all 0.4s ease; position: relative; z-index: 100; 
-        }
+        /* BANDEAUX & CARDS */
+        .header-band { background: white; padding: 20px; border-radius: 6px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-top: 6px solid var(--primary); transition: all 0.4s ease; position: relative; z-index: 100; }
         .header-band.validated { border-top-color: var(--success); background-color: #f6fffa; box-shadow: 0 4px 20px rgba(39, 174, 96, 0.15); }
         .header-row { display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-end; flex-wrap: wrap; }
+        .card { background: white; padding: 20px; border-radius: 6px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #eef2f7; }
         
-        .validation-badge {
-            display: inline-block; background: var(--success); color: white;
-            font-size: 0.8rem; padding: 5px 10px; border-radius: 20px; margin-left: 15px; 
-            opacity: 0; transform: translateY(10px); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .show-badge { opacity: 1; transform: translateY(0); }
-
+        /* FORM */
+        .form-group { flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 100px; }
+        .form-group label { font-weight: 600; color: var(--text); font-size: 0.75rem; }
+        input, select { padding: 10px; border: 1px solid #dcdfe6; border-radius: 4px; font-size: 0.9rem; width: 100%; box-sizing: border-box; transition: border 0.3s; }
+        .input-valid { border-color: var(--success) !important; background-color: #fff !important; }
+        .btn-mini { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; }
+        #btn-validate-depot { background: var(--success); color: white; margin-top: 10px; width: auto; min-width: 200px; display: block; margin: 15px auto 0 auto; border: none; border-radius: 20px; padding: 10px 30px; font-weight: bold; font-size: 0.9rem; opacity: 0.5; cursor: not-allowed; transition: all 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        #btn-validate-depot.active { opacity: 1; cursor: pointer; transform: translateY(-1px); }
         #header-summary { display: none; align-items: center; justify-content: space-between; }
         .summary-text { font-size: 0.9rem; color: var(--primary); display: flex; align-items: center; flex-wrap: wrap; gap: 15px; }
-        .summary-text span { display: flex; align-items: center; gap: 5px; }
-        .sep { color: #bdc3c7; font-weight: normal; }
-
+        
         /* LAYOUT */
         .main-container { display: flex; gap: 25px; flex: 1; margin-bottom: 30px;}
         .left-panel { flex: 1; min-width: 420px; transition: opacity 0.3s; }
         .right-panel { flex: 2; min-width: 300px; display: flex; flex-direction: column; gap: 20px; }
         .blocked-area { opacity: 0.4; pointer-events: none; filter: grayscale(100%); user-select: none; }
 
-        .card { background: white; padding: 20px; border-radius: 6px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #eef2f7; }
-        .form-group { flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 100px; }
-        .form-group label { font-weight: 600; color: var(--text); font-size: 0.75rem; }
-        
-        input, select { padding: 10px; border: 1px solid #dcdfe6; border-radius: 4px; font-size: 0.9rem; width: 100%; box-sizing: border-box; transition: border 0.3s; }
-        .input-valid { border-color: var(--success) !important; background-color: #fff !important; }
-        
-        /* KPI & RESULTATS */
-        .kpi-header {
-            font-size: 1rem; font-weight: bold; color: var(--primary); 
-            margin-bottom: 10px; border-bottom: 2px solid #eee; padding-bottom: 5px;
-        }
+        /* KPI */
         .kpi-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
         .kpi-card { background: white; padding: 15px; border-radius: 6px; border: 1px solid #e4e7ed; text-align: center; }
         .kpi-title { font-size: 0.7rem; font-weight: 700; color: var(--text); text-transform: uppercase; margin-bottom: 5px; }
         .kpi-value { font-size: 1.2rem; font-weight: 800; color: var(--primary); }
-        
-        .summary-banner { 
-            grid-column: span 3; background: var(--primary); color: white; 
-            border-radius: 6px; padding: 15px; display: flex; flex-direction: column; align-items: center; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
+        .summary-banner { grid-column: span 3; background: var(--primary); color: white; border-radius: 6px; padding: 15px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .banner-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; }
         .banner-metrics { display: flex; justify-content: space-around; width: 100%; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 15px; }
         .summary-value { font-size: 1.8rem; font-weight: 800; display: block; }
 
-        /* LISTE ARRETS */
+        /* LISTS */
         #stops-list { list-style: none; padding: 0; }
-        .stop-item { 
-            background: white; padding: 10px; margin-bottom: 8px; border-radius: 4px; 
-            display: flex; justify-content: space-between; align-items: center; 
-            border: 1px solid #ebedf0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); 
-        }
+        .stop-item { background: white; padding: 10px; margin-bottom: 8px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #ebedf0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .stop-content { display: flex; align-items: center; gap: 10px; flex: 1; overflow: hidden; }
         .stop-info { display: flex; flex-direction: column; justify-content: center; overflow: hidden; flex:1; }
         .stop-name { font-weight: bold; font-size: 0.95rem; }
         .stop-addr { font-size: 0.75rem; color: #7f8c8d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        
         .stop-meta { text-align: right; margin-right: 15px; min-width: 130px; display: flex; flex-direction: column; align-items: flex-end; }
         .stop-euro { font-weight: bold; color: var(--success); font-size: 0.9rem; }
         .stop-dist-tag { font-size: 0.75rem; color: #95a5a6; }
-        
         .ratio-tag { font-size: 0.7rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; margin-top: 2px; white-space: nowrap; }
         .ratio-good { background: #d5f5e3; color: #27ae60; }
         .ratio-mid { background: #fdebd0; color: #e67e22; }
         .ratio-bad { background: #fadbd8; color: #e74c3c; }
-
         .stop-actions { display: flex; gap: 2px; }
         .btn-icon { border: none; background: none; cursor: pointer; font-size: 1.1rem; padding: 5px; border-radius: 4px; }
         .btn-icon:hover { background-color: #f0f0f0; }
@@ -108,75 +73,32 @@
         .return-item { background: #f8f9fa; border-left: 4px solid var(--primary); }
         .return-item .stop-name { color: var(--primary); }
 
-        /* LISTE DES TOURNEES */
         #tours-list-container { max-height: 400px; overflow-y: auto; margin-bottom: 5px; border: 1px solid #eee; border-radius: 4px; }
-        .tour-row {
-            padding: 15px; border-bottom: 1px solid #eee; background: #fff;
-            display: grid; grid-template-columns: 2fr 4fr 3fr 100px; 
-            align-items: center; cursor: pointer; transition: background 0.2s;
-        }
+        .tour-row { padding: 15px; border-bottom: 1px solid #eee; background: #fff; display: grid; grid-template-columns: 2fr 4fr 3fr 100px; align-items: center; cursor: pointer; transition: background 0.2s; }
         .tour-row:hover { background: #f9f9f9; }
         .tour-row.active { background: #f4ecf7; border-left: 4px solid var(--lib); }
-        
         .t-id { font-size: 1rem; font-weight: bold; color: var(--primary); }
         .t-day { font-size: 0.8rem; color: #7f8c8d; }
         .t-metrics { display: flex; gap: 15px; font-size: 0.9rem; color: #333; font-weight: 500; }
         .t-preview { font-size: 0.8rem; color: #95a5a6; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 20px;}
         .t-actions { display: flex; gap: 10px; justify-content: flex-end; }
 
-        /* GLOBAL TOTALS BOX (V80 - AVEC ICONES) */
-        .global-stats-box {
-            background: #f8f9fa; color: var(--primary); 
-            border: 1px solid #dcdfe6; border-radius: 6px; 
-            padding: 15px 20px; margin-top: 15px; margin-bottom: 20px;
-            display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap; gap: 10px;
-        }
+        .global-stats-box { background: #f8f9fa; color: var(--primary); border: 1px solid #dcdfe6; border-radius: 6px; padding: 15px 20px; margin-top: 15px; margin-bottom: 20px; display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap; gap: 10px; }
         .gs-item { text-align: center; min-width: 100px; }
         .gs-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text); font-weight:700; margin-bottom: 5px; }
         .gs-value { font-size: 1.4rem; font-weight: 800; color: var(--primary); }
 
-        .newly-saved { animation: highlight 1.5s ease-out; }
-        @keyframes highlight { 0% { background: #d2b4de; } 100% { background: #fff; } }
-
-        /* LEGENDE RATIO - STYLE TAG */
-        .legend-bar {
-            background: white; border-radius: 6px; border: 1px solid #eee;
-            padding: 8px; margin-top: 10px; margin-bottom: 10px;
-            display: flex; justify-content: center; align-items: center; gap: 15px; flex-wrap: wrap;
-            font-size: 0.75rem; color: var(--text);
-        }
-        .legend-tag-title { 
-            background: #f8f9fa; border: 1px solid #ddd; padding: 2px 8px; border-radius: 4px;
-            font-weight: bold; margin-right: 5px; color: var(--primary); 
-        }
+        .legend-bar { background: white; border-radius: 6px; border: 1px solid #eee; padding: 8px; margin-top: 10px; margin-bottom: 10px; display: flex; justify-content: center; align-items: center; gap: 15px; flex-wrap: wrap; font-size: 0.75rem; color: var(--text); }
+        .legend-tag-title { background: #f8f9fa; border: 1px solid #ddd; padding: 2px 8px; border-radius: 4px; font-weight: bold; margin-right: 5px; color: var(--primary); }
         .legend-item { display: flex; align-items: center; gap: 5px; }
         .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 
+        .newly-saved { animation: highlight 1.5s ease-out; }
+        @keyframes highlight { 0% { background: #d2b4de; } 100% { background: #fff; } }
+
         #map { height: 450px; width: 100%; border-radius: 6px; border: 1px solid #dcdfe6; background-color: #e5e9ec; display: block; }
-        .btn-main { background: var(--success); color: white; width: 100%; padding: 16px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 1rem; }
-        .btn-mini { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; }
-        
-        #btn-save-local {
-            background: var(--success); color: white; margin-top: 10px; width: 100%;
-            border: none; border-radius: 6px; padding: 15px; 
-            font-weight: bold; font-size: 1rem; cursor: pointer; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        #btn-export-project {
-            background: var(--lib); color: white; width: 300px; margin: 0 auto;
-            border: none; border-radius: 4px; padding: 15px; 
-            font-weight: bold; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        #btn-validate-depot {
-            background: var(--success); color: white; margin-top: 10px; width: auto; min-width: 200px;
-            display: block; margin: 15px auto 0 auto; border: none; border-radius: 20px; padding: 10px 30px; 
-            font-weight: bold; font-size: 0.9rem; opacity: 0.5; cursor: not-allowed; transition: all 0.3s; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        #btn-validate-depot.active { opacity: 1; cursor: pointer; transform: translateY(-1px); }
-
+        #btn-save-local { background: var(--success); color: white; margin-top: 10px; width: 100%; border: none; border-radius: 6px; padding: 15px; font-weight: bold; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        #btn-export-project { background: var(--lib); color: white; width: 300px; margin: 0 auto; border: none; border-radius: 4px; padding: 15px; font-weight: bold; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .dix-footer { margin-top: 40px; padding: 20px; background: white; border-radius: 6px; display: flex; justify-content: center; align-items: center; gap: 15px; color: #7f8c8d; font-size: 0.9rem; }
         .dix-logo-small { height: 45px; width: auto; vertical-align: middle; }
         .dix-link { color: var(--accent); text-decoration: none; font-weight: bold; cursor: pointer;}
@@ -246,7 +168,6 @@
                     <h3 style="margin:0; font-size:1.1rem; color:var(--accent);">📅 Édition de la Tournée</h3>
                     <button class="btn-mini" onclick="newTour()" style="background:#95a5a6; font-size:0.8rem;">➕ Nouvelle Tournée</button>
                 </div>
-                
                 <div style="display:flex; gap:10px;">
                     <div class="form-group" style="flex: 1.5;">
                         <label>Nom de la Tournée</label>
@@ -276,6 +197,7 @@
                 </div>
                 <button class="btn-main" style="background:var(--info); margin-top:20px;" onclick="addStop()">Ajouter à la tournée</button>
             </div>
+            
             <h4 style="color:var(--text);">📋 Ordre de passage (Drag & Drop)</h4>
             <ul id="stops-list"></ul>
             
@@ -316,16 +238,16 @@
     <div class="card" style="border-left: 6px solid var(--lib); margin-top:30px;">
         <h3 style="margin-top:0; font-size:1.2rem; color:var(--lib); margin-bottom:15px;">📂 Mes Tournées Enregistrées (Dossier Complet)</h3>
         
+        <div id="tours-list-container">
+            <div style="padding:20px; color:#999; font-style:italic; text-align:center;">Aucune tournée enregistrée pour l'instant. Utilisez le formulaire ci-dessus.</div>
+        </div>
+
         <div id="global-totals-container" class="global-stats-box" style="display:none;">
             <div class="gs-item"><div class="gs-label">💰 CA TOTAL</div><div class="gs-value" id="gt-ca">0 €</div></div>
             <div class="gs-item"><div class="gs-label">📉 COÛT TOTAL</div><div class="gs-value" id="gt-cost">0 €</div></div>
             <div class="gs-item"><div class="gs-label">⚖️ RATIO GLOBAL</div><div class="gs-value" id="gt-ratio" style="color:var(--accent);">0 %</div></div>
             <div class="gs-item"><div class="gs-label">🛣️ DISTANCE</div><div class="gs-value" id="gt-dist">0 km</div></div>
             <div class="gs-item"><div class="gs-label">⏱️ TEMPS</div><div class="gs-value" id="gt-time">0h00</div></div>
-        </div>
-
-        <div id="tours-list-container">
-            <div style="padding:20px; color:#999; font-style:italic; text-align:center;">Aucune tournée enregistrée pour l'instant. Utilisez le formulaire ci-dessus.</div>
         </div>
         
         <div style="display:flex; justify-content:center; margin-top:20px;">
@@ -468,7 +390,6 @@
             
             container.innerHTML = '';
             
-            // VARS POUR TOTAL GENERAL
             let gCA = 0, gCost = 0, gDist = 0, gTime = 0;
 
             savedTours.forEach(t => {
@@ -483,7 +404,6 @@
                 let stopCount = t.stops ? t.stops.length : 0;
                 let preview = t.stops ? t.stops.map(s => s.client).slice(0, 6).join(', ') + (t.stops.length > 6 ? "..." : "") : "";
 
-                // AGGREGATION
                 gCA += ca;
                 gCost += cost;
                 gDist += parseFloat(dist);
@@ -513,7 +433,6 @@
                 container.appendChild(div);
             });
 
-            // UPDATE GLOBAL STATS BOX
             totalBox.style.display = "flex";
             document.getElementById('gt-ca').innerText = Math.round(gCA) + " €";
             document.getElementById('gt-cost').innerText = Math.round(gCost) + " €";
@@ -565,9 +484,9 @@
                 document.getElementById('tName').value = tour.name;
                 document.getElementById('tDay').value = tour.day;
                 stops = tour.stops || [];
-                updateView(); // Recalcule tout
+                updateView();
                 updateStatsTitle();
-                renderToursList(); // Met à jour l'affichage actif
+                renderToursList();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         }
