@@ -239,7 +239,7 @@
                     </div>
                     <div class="form-group" style="flex: 1;">
                         <label>Jour</label>
-                        <select id="tDay">
+                        <select id="tDay" onchange="autoNameTour()">
                             <option>Lundi</option><option>Mardi</option><option>Mercredi</option><option>Jeudi</option><option>Vendredi</option><option>Samedi</option>
                         </select>
                     </div>
@@ -328,8 +328,44 @@
             loadToursLibrary(); 
             setMode('prod'); 
             checkProducerValidation();
+            
+            // GENERATION NOM AUTO AU CHARGEMENT (V74)
+            autoNameTour();
         };
 
+        // --- GESTION NOM AUTOMATIQUE V74 ---
+        function generateDefaultName(day) {
+            const prefix = `TOURNEE - ${day} - `;
+            let max = 0;
+            // On regarde toutes les tournées sauvegardées pour ce jour
+            savedTours.forEach(t => {
+                if(t.name && t.name.startsWith(prefix)) {
+                    // On extrait le chiffre à la fin
+                    let rest = t.name.substring(prefix.length);
+                    let num = parseInt(rest);
+                    if(!isNaN(num) && num > max) max = num;
+                }
+            });
+            // Si on est en train de modifier une tournée existante (currentTourId n'est pas null),
+            // on ne veut pas changer son nom si c'est déjà un nom par défaut correct.
+            // Mais pour une nouvelle, on veut max + 1.
+            
+            // Simplification : On propose toujours Max + 1 pour une NOUVELLE saisie.
+            return prefix + (max + 1);
+        }
+
+        function autoNameTour() {
+            // Uniquement si on n'est pas en train d'éditer une tournée existante AVEC un nom déjà défini
+            // Ou si le champ est vide
+            if(!currentTourId || document.getElementById('tName').value === "") {
+                const day = document.getElementById('tDay').value;
+                const newName = generateDefaultName(day);
+                document.getElementById('tName').value = newName;
+                updateStatsTitle();
+            }
+        }
+
+        // --- GESTIONNAIRE DE PROJET ---
         function saveDepot() {
             pData.name = document.getElementById('pName').value;
             pData.addr = document.getElementById('pAddr').value;
@@ -424,21 +460,21 @@
             localStorage.setItem('logistique_tours_v71', JSON.stringify(savedTours));
             saveDepot();
             
-            // FEEDBACK & RESET AUTO (V73)
+            // FEEDBACK & RESET AUTO
             alert("✅ Tournée sauvegardée et ajoutée à la liste !\n\nLe formulaire va être réinitialisé pour une nouvelle saisie.");
-            
             renderToursList();
             
             // RESET FORM
             currentTourId = null;
-            document.getElementById('tName').value = "";
-            document.getElementById('tDay').value = "Lundi";
+            document.getElementById('tDay').value = "Lundi"; // Reset day default
             stops = [];
             currentStats = { cost:0, ca:0, ratio:0 };
-            updateView();
-            updateStatsTitle();
             
-            // Animation flash sur la liste
+            // GENERATE NEW NAME
+            autoNameTour();
+            
+            updateView();
+            
             setTimeout(() => {
                 let rows = document.querySelectorAll('.tour-row');
                 if(rows.length > 0) rows[rows.length-1].classList.add('newly-saved');
@@ -461,12 +497,11 @@
         function newTour() {
             if(stops.length > 0 && !confirm("Créer une nouvelle tournée (la carte sera vidée) ?")) return;
             currentTourId = null;
-            document.getElementById('tName').value = "";
             document.getElementById('tDay').value = "Lundi";
             stops = [];
             currentStats = { cost:0, ca:0, ratio:0 };
+            autoNameTour();
             updateView();
-            updateStatsTitle();
             renderToursList();
         }
 
@@ -509,7 +544,6 @@
             const tLoad = parseFloat(document.getElementById('tLoad').value) || 0;
             const totalTime = tPrep + tLoad;
             
-            // AJOUT V72 : VEHICULE ET CONSO
             const veh = document.getElementById('vType').value;
             const cons = document.getElementById('vCons').value;
 
