@@ -35,6 +35,14 @@
         .header-band.validated { border-top-color: var(--success); background-color: #f6fffa; box-shadow: 0 4px 20px rgba(39, 174, 96, 0.15); }
         .header-row { display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-end; flex-wrap: wrap; }
         
+        .validation-badge {
+            display: inline-block; background: var(--success); color: white;
+            font-size: 0.8rem; padding: 5px 10px; border-radius: 20px; margin-left: 15px; 
+            opacity: 0; transform: translateY(10px); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .show-badge { opacity: 1; transform: translateY(0); }
+
         #header-summary { display: none; align-items: center; justify-content: space-between; }
         .summary-text { font-size: 0.9rem; color: var(--primary); display: flex; align-items: center; flex-wrap: wrap; gap: 15px; }
         .summary-text span { display: flex; align-items: center; gap: 5px; }
@@ -116,7 +124,7 @@
         .t-preview { font-size: 0.8rem; color: #95a5a6; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 20px;}
         .t-actions { display: flex; gap: 10px; justify-content: flex-end; }
 
-        /* GLOBAL TOTALS BOX */
+        /* GLOBAL TOTALS BOX (V80 - AVEC ICONES) */
         .global-stats-box {
             background: #f8f9fa; color: var(--primary); 
             border: 1px solid #dcdfe6; border-radius: 6px; 
@@ -309,11 +317,11 @@
         <h3 style="margin-top:0; font-size:1.2rem; color:var(--lib); margin-bottom:15px;">📂 Mes Tournées Enregistrées (Dossier Complet)</h3>
         
         <div id="global-totals-container" class="global-stats-box" style="display:none;">
-            <div class="gs-item"><div class="gs-label">CA TOTAL PROJET</div><div class="gs-value" id="gt-ca">0 €</div></div>
-            <div class="gs-item"><div class="gs-label">COÛT TOTAL PROJET</div><div class="gs-value" id="gt-cost">0 €</div></div>
-            <div class="gs-item"><div class="gs-label">RATIO GLOBAL</div><div class="gs-value" id="gt-ratio" style="color:var(--accent);">0 %</div></div>
-            <div class="gs-item"><div class="gs-label">TOTAL KM</div><div class="gs-value" id="gt-dist">0 km</div></div>
-            <div class="gs-item"><div class="gs-label">TEMPS TOTAL</div><div class="gs-value" id="gt-time">0h00</div></div>
+            <div class="gs-item"><div class="gs-label">💰 CA TOTAL</div><div class="gs-value" id="gt-ca">0 €</div></div>
+            <div class="gs-item"><div class="gs-label">📉 COÛT TOTAL</div><div class="gs-value" id="gt-cost">0 €</div></div>
+            <div class="gs-item"><div class="gs-label">⚖️ RATIO GLOBAL</div><div class="gs-value" id="gt-ratio" style="color:var(--accent);">0 %</div></div>
+            <div class="gs-item"><div class="gs-label">🛣️ DISTANCE</div><div class="gs-value" id="gt-dist">0 km</div></div>
+            <div class="gs-item"><div class="gs-label">⏱️ TEMPS</div><div class="gs-value" id="gt-time">0h00</div></div>
         </div>
 
         <div id="tours-list-container">
@@ -588,6 +596,7 @@
             const pNameInput = document.getElementById('pName');
             const pAddrInput = document.getElementById('pAddr');
             const band = document.getElementById('prod-band');
+            const badge = document.getElementById('depot-badge');
             const btnValide = document.getElementById('btn-validate-depot');
             let nameOk = pNameInput.value.trim().length > 0;
             let addrOk = pData.lat !== null && pAddrInput.value.trim().length > 0;
