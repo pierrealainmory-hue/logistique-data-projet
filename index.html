@@ -112,7 +112,7 @@
         #tours-list-container { max-height: 400px; overflow-y: auto; margin-bottom: 15px; border: 1px solid #eee; border-radius: 4px; }
         .tour-row {
             padding: 15px; border-bottom: 1px solid #eee; background: #fff;
-            display: grid; grid-template-columns: 2fr 3fr 3fr 100px; 
+            display: grid; grid-template-columns: 2fr 4fr 3fr 100px; 
             align-items: center; cursor: pointer; transition: background 0.2s;
         }
         .tour-row:hover { background: #f9f9f9; }
@@ -124,10 +124,20 @@
         .t-preview { font-size: 0.8rem; color: #95a5a6; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 20px;}
         .t-actions { display: flex; gap: 10px; justify-content: flex-end; }
 
+        /* GLOBAL TOTALS BOX (V78) */
+        .global-stats-box {
+            background: var(--lib); color: white; border-radius: 6px; padding: 20px;
+            margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            display: flex; justify-content: space-around; align-items: center;
+        }
+        .gs-item { text-align: center; }
+        .gs-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; margin-bottom: 5px; }
+        .gs-value { font-size: 1.5rem; font-weight: 800; }
+
         .newly-saved { animation: highlight 1.5s ease-out; }
         @keyframes highlight { 0% { background: #d2b4de; } 100% { background: #fff; } }
 
-        /* LEGENDE RATIO - MODIFIEE V77 */
+        /* LEGENDE RATIO */
         .legend-bar {
             background: white; border-radius: 6px; border: 1px solid #eee;
             padding: 8px; margin-top: 10px; margin-bottom: 10px;
@@ -303,8 +313,16 @@
     </div>
 
     <div class="card" style="border-left: 6px solid var(--lib); margin-top:30px;">
-        <h3 style="margin-top:0; font-size:1.2rem; color:var(--lib);">📂 Mes Tournées Enregistrées (Dossier Complet)</h3>
+        <h3 style="margin-top:0; font-size:1.2rem; color:var(--lib); margin-bottom:15px;">📂 Mes Tournées Enregistrées (Dossier Complet)</h3>
         
+        <div id="global-totals-container" class="global-stats-box" style="display:none;">
+            <div class="gs-item"><div class="gs-label">CA TOTAL PROJET</div><div class="gs-value" id="gt-ca">0 €</div></div>
+            <div class="gs-item"><div class="gs-label">COÛT TOTAL PROJET</div><div class="gs-value" id="gt-cost">0 €</div></div>
+            <div class="gs-item"><div class="gs-label">RATIO GLOBAL</div><div class="gs-value" id="gt-ratio" style="color:#fff;">0 %</div></div>
+            <div class="gs-item"><div class="gs-label">TOTAL KM</div><div class="gs-value" id="gt-dist">0 km</div></div>
+            <div class="gs-item"><div class="gs-label">TEMPS TOTAL</div><div class="gs-value" id="gt-time">0h00</div></div>
+        </div>
+
         <div id="tours-list-container">
             <div style="padding:20px; color:#999; font-style:italic; text-align:center;">Aucune tournée enregistrée pour l'instant. Utilisez le formulaire ci-dessus.</div>
         </div>
@@ -331,7 +349,7 @@
         
         let savedTours = [];
         let currentTourId = null; 
-        let currentStats = { cost:0, ca:0, ratio:0, dist:0 };
+        let currentStats = { cost:0, ca:0, ratio:0, dist:0, time:0 };
 
         window.onload = function() {
             map = L.map('map').setView([43.76, 6.90], 10);
@@ -347,24 +365,24 @@
             setMode('prod'); 
             checkProducerValidation();
             autoNameTour();
-            updateTourNameSuggestions(); // Initialiser la datalist
+            updateTourNameSuggestions();
         };
 
-        // --- GESTION NOM SUGGESTIF V76 ---
+        // --- UTILS ---
+        function formatMinutes(mins) {
+            let h = Math.floor(mins / 60);
+            let m = Math.round(mins % 60);
+            return `${h}h${m.toString().padStart(2,'0')}`;
+        }
+
+        // --- GESTION NOM SUGGESTIF ---
         function updateTourNameSuggestions() {
             const dataList = document.getElementById('tourNameSuggestions');
             dataList.innerHTML = ''; 
-
             const defaults = ["Tournée Restaurants", "Tournée Cantines", "Tournée Magasins", "Tournée Particuliers", "Tournée Écoles", "Tournée AMAP"];
-            // Ajouter les noms existants
             const existing = savedTours.map(t => t.name);
-            const all = [...new Set([...defaults, ...existing])]; // Unique
-
-            all.forEach(name => {
-                let opt = document.createElement('option');
-                opt.value = name;
-                dataList.appendChild(opt);
-            });
+            const all = [...new Set([...defaults, ...existing])]; 
+            all.forEach(name => { let opt = document.createElement('option'); opt.value = name; dataList.appendChild(opt); });
         }
 
         function generateDefaultName(day) {
@@ -433,17 +451,25 @@
         function loadToursLibrary() {
             let s = localStorage.getItem('logistique_tours_v71');
             savedTours = s ? JSON.parse(s) : [];
-            updateTourNameSuggestions(); // Mettre à jour les suggestions
+            updateTourNameSuggestions();
             renderToursList();
         }
 
         function renderToursList() {
             const container = document.getElementById('tours-list-container');
+            const totalBox = document.getElementById('global-totals-container');
+            
             if(savedTours.length === 0) {
                 container.innerHTML = '<div style="padding:20px; color:#999; font-style:italic; text-align:center;">Aucune tournée enregistrée pour l\'instant. Utilisez le formulaire ci-dessus.</div>';
+                totalBox.style.display = "none";
                 return;
             }
+            
             container.innerHTML = '';
+            
+            // VARS POUR TOTAL GENERAL
+            let gCA = 0, gCost = 0, gDist = 0, gTime = 0;
+
             savedTours.forEach(t => {
                 const div = document.createElement('div');
                 div.className = 'tour-row ' + (t.id === currentTourId ? 'active' : '');
@@ -452,8 +478,15 @@
                 let cost = t.stats ? t.stats.cost : 0;
                 let ratio = t.stats ? t.stats.ratio : 0;
                 let dist = t.stats && t.stats.dist ? t.stats.dist.toFixed(1) : "0";
+                let time = t.stats && t.stats.time ? t.stats.time : 0;
                 let stopCount = t.stops ? t.stops.length : 0;
                 let preview = t.stops ? t.stops.map(s => s.client).slice(0, 6).join(', ') + (t.stops.length > 6 ? "..." : "") : "";
+
+                // AGGREGATION
+                gCA += ca;
+                gCost += cost;
+                gDist += parseFloat(dist);
+                gTime += time;
 
                 div.innerHTML = `
                     <div onclick="loadTour('${t.id}')">
@@ -463,9 +496,10 @@
                     <div class="t-metrics" onclick="loadTour('${t.id}')">
                         <span style="color:var(--success);">💰 ${Math.round(ca)}€</span>
                         <span style="color:var(--danger);">📉 ${Math.round(cost)}€</span>
-                        <span style="color:var(--lib);">📊 ${ratio}%</span>
+                        <span style="color:var(--lib);">⚖️ ${ratio}%</span>
                         <span>🛣️ ${dist} km</span>
-                        <span>🛑 ${stopCount} arrêts</span>
+                        <span>⏱️ ${formatMinutes(time)}</span>
+                        <span>🛑 ${stopCount}</span>
                     </div>
                     <div class="t-preview" onclick="loadTour('${t.id}')">
                         ${preview}
@@ -477,6 +511,16 @@
                 `;
                 container.appendChild(div);
             });
+
+            // UPDATE GLOBAL STATS BOX
+            totalBox.style.display = "flex";
+            document.getElementById('gt-ca').innerText = Math.round(gCA) + " €";
+            document.getElementById('gt-cost').innerText = Math.round(gCost) + " €";
+            document.getElementById('gt-dist').innerText = Math.round(gDist) + " km";
+            document.getElementById('gt-time').innerText = formatMinutes(gTime);
+            
+            let gRatio = gCA > 0 ? (gCost / gCA * 100).toFixed(1) : 0;
+            document.getElementById('gt-ratio').innerText = gRatio + " %";
         }
 
         function saveCurrentTour() {
@@ -499,7 +543,7 @@
             localStorage.setItem('logistique_tours_v71', JSON.stringify(savedTours));
             saveDepot();
             
-            updateTourNameSuggestions(); // Apprendre le nouveau nom
+            updateTourNameSuggestions();
             renderToursList();
             alert("✅ Tournée sauvegardée ! Vous pouvez continuer à travailler dessus.");
             
@@ -520,10 +564,9 @@
                 document.getElementById('tName').value = tour.name;
                 document.getElementById('tDay').value = tour.day;
                 stops = tour.stops || [];
-                updateView(); // Recalcule tout
+                updateView();
                 updateStatsTitle();
-                renderToursList(); // Met à jour l'affichage actif
-                // Scroll up
+                renderToursList();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         }
@@ -533,7 +576,7 @@
             currentTourId = null;
             document.getElementById('tDay').value = "Lundi";
             stops = [];
-            currentStats = { cost:0, ca:0, ratio:0, dist:0 };
+            currentStats = { cost:0, ca:0, ratio:0, dist:0, time:0 };
             autoNameTour();
             updateView();
             updateStatsTitle();
@@ -811,7 +854,8 @@
             currentStats.cost = totalCost;
             currentStats.ca = ca;
             currentStats.ratio = ca > 0 ? (totalCost/ca*100).toFixed(1) : 0;
-            currentStats.dist = dist; // SAVE DIST FOR LIST (V75)
+            currentStats.dist = dist; 
+            currentStats.time = sTime; // SAVE TIME (V78)
 
             document.getElementById('rDist').innerText=dist.toFixed(1)+" km";
             document.getElementById('rTime').innerText=Math.floor(driveTime/60)+"h"+Math.round(driveTime%60).toString().padStart(2,'0');
