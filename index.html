@@ -49,7 +49,7 @@
         .sep { color: #bdc3c7; font-weight: normal; }
 
         /* LAYOUT */
-        .main-container { display: flex; gap: 25px; flex: 1; }
+        .main-container { display: flex; gap: 25px; flex: 1; margin-bottom: 30px;}
         .left-panel { flex: 1; min-width: 420px; transition: opacity 0.3s; }
         .right-panel { flex: 2; min-width: 300px; display: flex; flex-direction: column; gap: 20px; }
         .blocked-area { opacity: 0.4; pointer-events: none; filter: grayscale(100%); user-select: none; }
@@ -108,20 +108,25 @@
         .return-item { background: #f8f9fa; border-left: 4px solid var(--primary); }
         .return-item .stop-name { color: var(--primary); }
 
-        /* LISTE DES TOURNEES */
-        #tours-list-container { max-height: 250px; overflow-y: auto; margin-bottom: 15px; border: 1px solid #eee; border-radius: 4px; }
+        /* LISTE DES TOURNEES (Full Width) */
+        #tours-list-container { max-height: 400px; overflow-y: auto; margin-bottom: 15px; border: 1px solid #eee; border-radius: 4px; }
         .tour-row {
-            padding: 10px; border-bottom: 1px solid #eee; background: #fff;
-            display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background 0.2s;
+            padding: 15px; border-bottom: 1px solid #eee; background: #fff;
+            display: grid; grid-template-columns: 2fr 3fr 3fr 100px; /* Grille pour aligner */
+            align-items: center; cursor: pointer; transition: background 0.2s;
         }
         .tour-row:hover { background: #f9f9f9; }
         .tour-row.active { background: #f4ecf7; border-left: 4px solid var(--lib); }
-        .tour-info { font-size: 0.85rem; }
-        .tour-metrics { font-size: 0.75rem; color: #7f8c8d; }
         
-        /* Highlight animation */
-        @keyframes highlight { 0% { background: #d2b4de; } 100% { background: #fff; } }
+        /* Elements de la ligne tournée */
+        .t-id { font-size: 1rem; font-weight: bold; color: var(--primary); }
+        .t-day { font-size: 0.8rem; color: #7f8c8d; }
+        .t-metrics { display: flex; gap: 15px; font-size: 0.9rem; color: #333; font-weight: 500; }
+        .t-preview { font-size: 0.8rem; color: #95a5a6; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 20px;}
+        .t-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
         .newly-saved { animation: highlight 1.5s ease-out; }
+        @keyframes highlight { 0% { background: #d2b4de; } 100% { background: #fff; } }
 
         .legend-bar {
             grid-column: span 3; background: white; border-radius: 6px; border: 1px solid #eee;
@@ -142,7 +147,7 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         #btn-export-project {
-            background: var(--lib); color: white; width: 100%;
+            background: var(--lib); color: white; width: 300px; margin: 0 auto;
             border: none; border-radius: 4px; padding: 15px; 
             font-weight: bold; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
@@ -224,7 +229,11 @@
         <div class="left-panel blocked-area" id="locked-section">
             
             <div class="card" style="border-left: 6px solid var(--accent); margin-bottom: 20px;">
-                <h3 style="margin-top:0; font-size:1.1rem; color:var(--accent);">📅 Édition de la Tournée</h3>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <h3 style="margin:0; font-size:1.1rem; color:var(--accent);">📅 Édition de la Tournée</h3>
+                    <button class="btn-mini" onclick="newTour()" style="background:#95a5a6; font-size:0.8rem;">➕ Nouvelle Tournée</button>
+                </div>
+                
                 <div style="display:flex; gap:10px;">
                     <div class="form-group" style="flex: 1.5;">
                         <label>Nom de la Tournée</label>
@@ -286,17 +295,18 @@
                     <div class="legend-item"><span class="legend-dot" style="background:#e74c3c;"></span> Critique (> 30%)</div>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <div class="card" style="border-left: 6px solid var(--lib);">
-                <h3 style="margin-top:0; font-size:1.1rem; color:var(--lib);">📂 Mes Tournées Enregistrées</h3>
-                <div id="tours-list-container">
-                    <div style="padding:10px; color:#999; font-style:italic; text-align:center;">Aucune tournée enregistrée</div>
-                </div>
-                <div style="margin-top:10px; text-align:right;">
-                    <button class="btn-mini" onclick="newTour()" style="background:#95a5a6;">➕ Nouvelle Tournée</button>
-                </div>
-                <button id="btn-export-project" onclick="sendProjectData()">🚀 ENVOYER LE PROJET AU PNR (CSV)</button>
-            </div>
+    <div class="card" style="border-left: 6px solid var(--lib); margin-top:30px;">
+        <h3 style="margin-top:0; font-size:1.2rem; color:var(--lib);">📂 Mes Tournées Enregistrées (Dossier Complet)</h3>
+        
+        <div id="tours-list-container">
+            <div style="padding:20px; color:#999; font-style:italic; text-align:center;">Aucune tournée enregistrée pour l'instant. Utilisez le formulaire ci-dessus.</div>
+        </div>
+        
+        <div style="display:flex; justify-content:center; margin-top:20px;">
+            <button id="btn-export-project" onclick="sendProjectData()">🚀 ENVOYER LE PROJET AU PNR (CSV)</button>
         </div>
     </div>
 
@@ -317,7 +327,7 @@
         
         let savedTours = [];
         let currentTourId = null; 
-        let currentStats = { cost:0, ca:0, ratio:0 };
+        let currentStats = { cost:0, ca:0, ratio:0, dist:0 };
 
         window.onload = function() {
             map = L.map('map').setView([43.76, 6.90], 10);
@@ -358,7 +368,7 @@
             }
         }
 
-        // --- GESTIONNAIRE DE PROJET ---
+        // --- GESTIONNAIRE DE PROJET (V75 - FULL WIDTH) ---
         function saveDepot() {
             pData.name = document.getElementById('pName').value;
             pData.addr = document.getElementById('pAddr').value;
@@ -408,7 +418,7 @@
         function renderToursList() {
             const container = document.getElementById('tours-list-container');
             if(savedTours.length === 0) {
-                container.innerHTML = '<div style="padding:10px; color:#999; font-style:italic; text-align:center;">Aucune tournée enregistrée</div>';
+                container.innerHTML = '<div style="padding:20px; color:#999; font-style:italic; text-align:center;">Aucune tournée enregistrée pour l\'instant. Utilisez le formulaire ci-dessus.</div>';
                 return;
             }
             container.innerHTML = '';
@@ -419,13 +429,26 @@
                 let ca = t.stats ? t.stats.ca : 0;
                 let cost = t.stats ? t.stats.cost : 0;
                 let ratio = t.stats ? t.stats.ratio : 0;
+                let dist = t.stats && t.stats.dist ? t.stats.dist.toFixed(1) : "0";
+                let stopCount = t.stops ? t.stops.length : 0;
+                let preview = t.stops ? t.stops.map(s => s.client).slice(0, 6).join(', ') + (t.stops.length > 6 ? "..." : "") : "";
 
                 div.innerHTML = `
-                    <div style="flex:1;" onclick="loadTour('${t.id}')">
-                        <div class="tour-info"><strong>${t.name}</strong> (${t.day})</div>
-                        <div class="tour-metrics">CA: ${Math.round(ca)}€ | Coût: ${Math.round(cost)}€ | Ratio: ${ratio}%</div>
+                    <div onclick="loadTour('${t.id}')">
+                        <div class="t-id"><strong>${t.name}</strong></div>
+                        <div class="t-day">${t.day}</div>
                     </div>
-                    <div style="display:flex; gap:5px;">
+                    <div class="t-metrics" onclick="loadTour('${t.id}')">
+                        <span style="color:var(--success);">💰 ${Math.round(ca)}€</span>
+                        <span style="color:var(--danger);">📉 ${Math.round(cost)}€</span>
+                        <span style="color:var(--lib);">📊 ${ratio}%</span>
+                        <span>🛣️ ${dist} km</span>
+                        <span>🛑 ${stopCount} arrêts</span>
+                    </div>
+                    <div class="t-preview" onclick="loadTour('${t.id}')">
+                        ${preview}
+                    </div>
+                    <div class="t-actions">
                         <button class="btn-mini" style="background:var(--lib); padding:4px 8px;" onclick="loadTour('${t.id}')">✏️</button>
                         <button class="btn-mini" style="background:var(--danger); padding:4px 8px;" onclick="deleteTour('${t.id}')">✕</button>
                     </div>
@@ -454,14 +477,13 @@
             localStorage.setItem('logistique_tours_v71', JSON.stringify(savedTours));
             saveDepot();
             
-            // FEEDBACK VISUEL SANS EFFACER
+            // FEEDBACK SANS EFFACER LA CARTE
             renderToursList();
-            alert("✅ Tournée sauvegardée ! Vous pouvez continuer à la modifier.");
+            alert("✅ Tournée sauvegardée ! Vous pouvez continuer à travailler dessus.");
             
             setTimeout(() => {
                 let rows = document.querySelectorAll('.tour-row');
                 if(rows.length > 0) {
-                    // Trouver la ligne active
                     rows.forEach(r => {
                         if(r.classList.contains('active')) r.classList.add('newly-saved');
                     });
@@ -479,6 +501,8 @@
                 updateView(); // Recalcule tout
                 updateStatsTitle();
                 renderToursList(); // Met à jour l'affichage actif
+                // Scroll up
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         }
 
@@ -487,7 +511,7 @@
             currentTourId = null;
             document.getElementById('tDay').value = "Lundi";
             stops = [];
-            currentStats = { cost:0, ca:0, ratio:0 };
+            currentStats = { cost:0, ca:0, ratio:0, dist:0 };
             autoNameTour();
             updateView();
             updateStatsTitle();
@@ -765,6 +789,7 @@
             currentStats.cost = totalCost;
             currentStats.ca = ca;
             currentStats.ratio = ca > 0 ? (totalCost/ca*100).toFixed(1) : 0;
+            currentStats.dist = dist; // SAVE DIST FOR LIST (V75)
 
             document.getElementById('rDist').innerText=dist.toFixed(1)+" km";
             document.getElementById('rTime').innerText=Math.floor(driveTime/60)+"h"+Math.round(driveTime%60).toString().padStart(2,'0');
