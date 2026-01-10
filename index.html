@@ -109,7 +109,7 @@
         .return-item .stop-name { color: var(--primary); }
 
         /* LISTE DES TOURNEES */
-        #tours-list-container { max-height: 400px; overflow-y: auto; margin-bottom: 15px; border: 1px solid #eee; border-radius: 4px; }
+        #tours-list-container { max-height: 400px; overflow-y: auto; margin-bottom: 5px; border: 1px solid #eee; border-radius: 4px; }
         .tour-row {
             padding: 15px; border-bottom: 1px solid #eee; background: #fff;
             display: grid; grid-template-columns: 2fr 4fr 3fr 100px; 
@@ -124,27 +124,31 @@
         .t-preview { font-size: 0.8rem; color: #95a5a6; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 20px;}
         .t-actions { display: flex; gap: 10px; justify-content: flex-end; }
 
-        /* GLOBAL TOTALS BOX (V78) */
+        /* GLOBAL TOTALS BOX (V79 - STYLE GRIS) */
         .global-stats-box {
-            background: var(--lib); color: white; border-radius: 6px; padding: 20px;
-            margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            background: #f8f9fa; color: var(--primary); 
+            border: 1px solid #dcdfe6; border-radius: 6px; 
+            padding: 15px 20px; margin-top: 15px; margin-bottom: 20px;
             display: flex; justify-content: space-around; align-items: center;
         }
         .gs-item { text-align: center; }
-        .gs-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; margin-bottom: 5px; }
-        .gs-value { font-size: 1.5rem; font-weight: 800; }
+        .gs-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text); font-weight:700; margin-bottom: 5px; }
+        .gs-value { font-size: 1.4rem; font-weight: 800; color: var(--primary); }
 
         .newly-saved { animation: highlight 1.5s ease-out; }
         @keyframes highlight { 0% { background: #d2b4de; } 100% { background: #fff; } }
 
-        /* LEGENDE RATIO */
+        /* LEGENDE RATIO - STYLE TAG (V79) */
         .legend-bar {
             background: white; border-radius: 6px; border: 1px solid #eee;
             padding: 8px; margin-top: 10px; margin-bottom: 10px;
             display: flex; justify-content: center; align-items: center; gap: 15px; flex-wrap: wrap;
             font-size: 0.75rem; color: var(--text);
         }
-        .legend-title { font-weight: bold; margin-right: 5px; color: var(--primary); }
+        .legend-tag-title { 
+            background: #f8f9fa; border: 1px solid #ddd; padding: 2px 8px; border-radius: 4px;
+            font-weight: bold; margin-right: 5px; color: var(--primary); 
+        }
         .legend-item { display: flex; align-items: center; gap: 5px; }
         .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 
@@ -279,7 +283,7 @@
             <ul id="stops-list"></ul>
             
             <div class="legend-bar">
-                <span class="legend-title">Ratio Logistique :</span>
+                <span class="legend-tag-title">Ratio Logistique</span>
                 <div class="legend-item"><span class="legend-dot" style="background:#27ae60;"></span> < 10%</div>
                 <div class="legend-item"><span class="legend-dot" style="background:#e67e22;"></span> 10-30%</div>
                 <div class="legend-item"><span class="legend-dot" style="background:#e74c3c;"></span> > 30%</div>
@@ -315,16 +319,16 @@
     <div class="card" style="border-left: 6px solid var(--lib); margin-top:30px;">
         <h3 style="margin-top:0; font-size:1.2rem; color:var(--lib); margin-bottom:15px;">📂 Mes Tournées Enregistrées (Dossier Complet)</h3>
         
+        <div id="tours-list-container">
+            <div style="padding:20px; color:#999; font-style:italic; text-align:center;">Aucune tournée enregistrée pour l'instant. Utilisez le formulaire ci-dessus.</div>
+        </div>
+
         <div id="global-totals-container" class="global-stats-box" style="display:none;">
             <div class="gs-item"><div class="gs-label">CA TOTAL PROJET</div><div class="gs-value" id="gt-ca">0 €</div></div>
             <div class="gs-item"><div class="gs-label">COÛT TOTAL PROJET</div><div class="gs-value" id="gt-cost">0 €</div></div>
-            <div class="gs-item"><div class="gs-label">RATIO GLOBAL</div><div class="gs-value" id="gt-ratio" style="color:#fff;">0 %</div></div>
+            <div class="gs-item"><div class="gs-label">RATIO GLOBAL</div><div class="gs-value" id="gt-ratio" style="color:var(--accent);">0 %</div></div>
             <div class="gs-item"><div class="gs-label">TOTAL KM</div><div class="gs-value" id="gt-dist">0 km</div></div>
             <div class="gs-item"><div class="gs-label">TEMPS TOTAL</div><div class="gs-value" id="gt-time">0h00</div></div>
-        </div>
-
-        <div id="tours-list-container">
-            <div style="padding:20px; color:#999; font-style:italic; text-align:center;">Aucune tournée enregistrée pour l'instant. Utilisez le formulaire ci-dessus.</div>
         </div>
         
         <div style="display:flex; justify-content:center; margin-top:20px;">
@@ -499,7 +503,7 @@
                         <span style="color:var(--lib);">⚖️ ${ratio}%</span>
                         <span>🛣️ ${dist} km</span>
                         <span>⏱️ ${formatMinutes(time)}</span>
-                        <span>🛑 ${stopCount}</span>
+                        <span>🛑 ${stopCount} arrêts</span>
                     </div>
                     <div class="t-preview" onclick="loadTour('${t.id}')">
                         ${preview}
@@ -564,9 +568,9 @@
                 document.getElementById('tName').value = tour.name;
                 document.getElementById('tDay').value = tour.day;
                 stops = tour.stops || [];
-                updateView();
+                updateView(); // Recalcule tout
                 updateStatsTitle();
-                renderToursList();
+                renderToursList(); // Met à jour l'affichage actif
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         }
