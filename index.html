@@ -105,6 +105,7 @@
         #map { height: 450px; width: 100%; border-radius: 6px; border: 1px solid #dcdfe6; background-color: #e5e9ec; display: block; }
         #btn-save-local { background: var(--success); color: white; margin-top: 10px; width: 100%; border: none; border-radius: 6px; padding: 15px; font-weight: bold; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         #btn-export-project { background: var(--lib); color: white; width: 300px; margin: 0 auto; border: none; border-radius: 4px; padding: 15px; font-weight: bold; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        
         .dix-footer { margin-top: 40px; padding: 20px; background: white; border-radius: 6px; display: flex; justify-content: center; align-items: center; gap: 15px; color: #7f8c8d; font-size: 0.9rem; }
         .dix-logo-small { height: 45px; width: auto; vertical-align: middle; }
         .dix-link { color: var(--accent); text-decoration: none; font-weight: bold; cursor: pointer;}
@@ -218,7 +219,6 @@
 
         <div class="right-panel">
             <div id="map"></div>
-            
             <div class="kpi-container">
                 <div class="summary-banner">
                     <div class="banner-header"><span style="font-size:1.4rem;">📝</span><span id="kpi-tour-title" style="font-weight:700;">RÉCAPITULATIF GLOBAL</span></div>
@@ -227,7 +227,6 @@
                         <div><small style="opacity:0.8">CA TOTAL TOURNÉE</small><br><span class="summary-value" id="rVal">0 €</span></div>
                     </div>
                 </div>
-
                 <div class="kpi-card"><div class="kpi-title">Distance & Route</div><div class="kpi-value" id="rDist">0 km</div><div style="font-size:0.7rem;" id="rTime">0h00 conduite</div></div>
                 <div class="kpi-card"><div class="kpi-title">Frais Carburant</div><div class="kpi-value" id="rCostTrans">0 €</div><div style="font-size:0.6rem; color:var(--text);">Basé sur Conso x Prix</div></div>
                 <div class="kpi-card"><div class="kpi-title">Frais Personnel</div><div class="kpi-value" id="rCostOps">0 €</div><div style="font-size:0.7rem;" id="rOps">0h00 service</div></div>
@@ -242,7 +241,6 @@
 
     <div class="card" style="border-left: 6px solid var(--lib); margin-top:30px;">
         <h3 style="margin-top:0; font-size:1.2rem; color:var(--lib); margin-bottom:15px;">📂 Mes Tournées Enregistrées (Dossier Complet)</h3>
-        
         <div id="global-totals-container" class="global-stats-box" style="display:none;">
             <div class="gs-item"><div class="gs-label">💰 CA TOTAL</div><div class="gs-value" id="gt-ca">0 €</div></div>
             <div class="gs-item"><div class="gs-label">📉 COÛT TOTAL</div><div class="gs-value" id="gt-cost">0 €</div></div>
@@ -250,11 +248,9 @@
             <div class="gs-item"><div class="gs-label">🛣️ DISTANCE</div><div class="gs-value" id="gt-dist">0 km</div></div>
             <div class="gs-item"><div class="gs-label">⏱️ TEMPS</div><div class="gs-value" id="gt-time">0h00</div></div>
         </div>
-
         <div id="tours-list-container">
             <div style="padding:20px; color:#999; font-style:italic; text-align:center;">Aucune tournée enregistrée pour l'instant. Utilisez le formulaire ci-dessus.</div>
         </div>
-        
         <div style="display:flex; justify-content:center; margin-top:20px;">
             <button id="btn-export-project" onclick="sendProjectData()">🚀 ENVOYER LE PROJET AU PNR (CSV)</button>
         </div>
@@ -274,7 +270,6 @@
         const API = "https://update-github-csv-149052175314.europe-west1.run.app/";
         let map, markers, routeLayer, stops = [], mode = 'prod', pData = { lat:null, lon:null, addr:"" }, sTemp = { lat:null, lon:null };
         let lastRouteData = null; 
-        
         let savedTours = [];
         let currentTourId = null; 
         let currentStats = { cost:0, ca:0, ratio:0, dist:0, time:0 };
@@ -288,6 +283,7 @@
             setTimeout(function(){ map.invalidateSize(); }, 500);
             Sortable.create(document.getElementById('stops-list'), { animation: 150, handle: '.handle', onEnd: reorderStops });
             
+            // REPRISE DES DONNEES STABLES (V71 = V83)
             loadGlobalDepot(); 
             loadToursLibrary(); 
             setMode('prod'); 
@@ -302,8 +298,7 @@
         function autoNameTour() { if(!currentTourId || document.getElementById('tName').value === "") { const day = document.getElementById('tDay').value; const newName = generateDefaultName(day); document.getElementById('tName').value = newName; updateStatsTitle(); } }
 
         function saveDepot() {
-            pData.name = document.getElementById('pName').value;
-            pData.addr = document.getElementById('pAddr').value;
+            pData.name = document.getElementById('pName').value; pData.addr = document.getElementById('pAddr').value;
             const depotSettings = {
                 pData: pData,
                 veh: { type: document.getElementById('vType').value, fuel: document.getElementById('fType').value, cons: document.getElementById('vCons').value, price: document.getElementById('fPrice').value, driver: document.getElementById('driverType').value, cH: document.getElementById('cH').value, tPrep: document.getElementById('tPrep').value, tLoad: document.getElementById('tLoad').value }
@@ -314,16 +309,15 @@
 
         function loadGlobalDepot() {
             let s = localStorage.getItem('logistique_depot_v71');
-            if(s) {
-                const d = JSON.parse(s);
-                pData = d.pData || { lat:null, lon:null, addr:"" };
-                document.getElementById('pName').value = pData.name || "";
-                document.getElementById('pAddr').value = pData.addr || "";
-                if(d.veh) { document.getElementById('vType').value = d.veh.type; document.getElementById('fType').value = d.veh.fuel; document.getElementById('vCons').value = d.veh.cons; document.getElementById('fPrice').value = d.veh.price; document.getElementById('driverType').value = d.veh.driver; document.getElementById('cH').value = d.veh.cH; document.getElementById('tPrep').value = d.veh.tPrep; document.getElementById('tLoad').value = d.veh.tLoad; }
-            }
+            if(s) { const d = JSON.parse(s); pData = d.pData || { lat:null, lon:null, addr:"" }; document.getElementById('pName').value = pData.name || ""; document.getElementById('pAddr').value = pData.addr || ""; if(d.veh) { document.getElementById('vType').value = d.veh.type; document.getElementById('fType').value = d.veh.fuel; document.getElementById('vCons').value = d.veh.cons; document.getElementById('fPrice').value = d.veh.price; document.getElementById('driverType').value = d.veh.driver; document.getElementById('cH').value = d.veh.cH; document.getElementById('tPrep').value = d.veh.tPrep; document.getElementById('tLoad').value = d.veh.tLoad; } }
         }
 
-        function loadToursLibrary() { let s = localStorage.getItem('logistique_tours_v71'); savedTours = s ? JSON.parse(s) : []; updateTourNameSuggestions(); renderToursList(); }
+        function loadToursLibrary() {
+            let s = localStorage.getItem('logistique_tours_v71');
+            savedTours = s ? JSON.parse(s) : [];
+            updateTourNameSuggestions();
+            renderToursList();
+        }
 
         function renderToursList() {
             const container = document.getElementById('tours-list-container');
@@ -367,21 +361,27 @@
         function updateTitle() { checkProducerValidation(); }
         function resetAll() { if(confirm("Voulez-vous tout réinitialiser ?")) { localStorage.clear(); location.reload(); } }
         function setMode(m) { mode = m; document.getElementById('btn-t-prod').style.background = m==='prod' ? 'var(--accent)' : '#95a5a6'; document.getElementById('btn-t-stop').style.background = m==='stop' ? 'var(--accent)' : '#95a5a6'; }
-        function onMapClick(e) { if (mode === 'stop' && document.getElementById('locked-section').classList.contains('blocked-area')) return; let lat = e.latlng.lat, lon = e.latlng.lng; fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`).then(r=>r.json()).then(d=>{ if(mode==='prod'){ pData={lat, lon, addr:d.display_name}; document.getElementById('pAddr').value=d.display_name; checkProducerValidation(); } else { sTemp={lat, lon}; document.getElementById('sAddr').value=d.display_name; } updateView(); }); }
-        function searchAddress(target) { let q = document.getElementById(target==='prod'?'pAddr':'sAddr').value; fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`).then(r=>r.json()).then(res=>{ if(res.length>0){ let lat=parseFloat(res[0].lat), lon=parseFloat(res[0].lon); map.setView([lat, lon], 14); if(target==='prod'){ pData={lat, lon, addr:res[0].display_name}; document.getElementById('pAddr').value=res[0].display_name; checkProducerValidation(); } else { sTemp={lat, lon}; document.getElementById('sAddr').value=res[0].display_name; } updateView(); } }); }
+        function onMapClick(e) { if (mode === 'stop' && document.getElementById('locked-section').classList.contains('blocked-area')) return; let lat = e.latlng.lat, lon = e.latlng.lng; fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`).then(r=>r.json()).then(d=>{ if(mode==='prod'){ pData={lat, lon, addr:d.display_name}; document.getElementById('pAddr').value=d.display_name; checkProducerValidation(); updateView(); } else { sTemp={lat, lon}; document.getElementById('sAddr').value=d.display_name; L.circleMarker(e.latlng, {color:'red'}).addTo(markers); } }); }
+        function searchAddress(target) { let q = document.getElementById(target==='prod'?'pAddr':'sAddr').value; fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`).then(r=>r.json()).then(res=>{ if(res.length>0){ let lat=parseFloat(res[0].lat), lon=parseFloat(res[0].lon); map.setView([lat, lon], 14); if(target==='prod'){ pData={lat, lon, addr:res[0].display_name}; document.getElementById('pAddr').value=res[0].display_name; checkProducerValidation(); updateView(); } else { sTemp={lat, lon}; document.getElementById('sAddr').value=res[0].display_name; L.circleMarker([lat, lon], {color:'red'}).addTo(markers); } } }); }
         function showTempMarker(lat, lon) { }
         function updateStatsTitle() { const tourName = document.getElementById('tName').value.trim(); const titleElem = document.getElementById('kpi-tour-title'); if(tourName) titleElem.innerText = "RÉCAPITULATIF GLOBAL : " + tourName.toUpperCase(); else titleElem.innerText = "RÉCAPITULATIF GLOBAL"; }
-        function addStop() { if(!pData.lat || !sTemp.lat) return alert("Position manquante."); let cName = document.getElementById('sClient').value.trim(); if(!cName) cName = "Arrêt " + (stops.length + 1); stops.push({ client:cName, icon:document.getElementById('sOpType').value, euro:parseFloat(document.getElementById('sEuro').value)||0, vol:parseFloat(document.getElementById('sVol').value)||0, time:parseFloat(document.getElementById('sTime').value)||15, lat:sTemp.lat, lon:sTemp.lon, addr:document.getElementById('sAddr').value, id:Date.now() }); sTemp={lat:null, lon:null}; document.getElementById('sAddr').value=""; document.getElementById('sClient').value=""; updateView(); }
+        function addStop() { if(!sTemp.lat) return alert("Position manquante."); let cName = document.getElementById('sClient').value.trim(); if(!cName) cName = "Arrêt " + (stops.length + 1); stops.push({ client:cName, icon:document.getElementById('sOpType').value, euro:parseFloat(document.getElementById('sEuro').value)||0, vol:parseFloat(document.getElementById('sVol').value)||0, time:parseFloat(document.getElementById('sTime').value)||15, lat:sTemp.lat, lon:sTemp.lon, addr:document.getElementById('sAddr').value, id:Date.now() }); sTemp={lat:null, lon:null}; document.getElementById('sAddr').value=""; document.getElementById('sClient').value=""; updateView(); }
         function editStop(index) { let s = stops[index]; document.getElementById('sClient').value = s.client; document.getElementById('sOpType').value = s.icon; document.getElementById('sAddr').value = s.addr; document.getElementById('sEuro').value = s.euro; document.getElementById('sVol').value = s.vol; document.getElementById('sTime').value = s.time; sTemp = { lat: s.lat, lon: s.lon }; stops.splice(index, 1); updateView(); document.getElementById('sClient').focus(); }
         function reorderStops() { let ns=[]; document.querySelectorAll('.stop-item').forEach(it=>{ const id = it.getAttribute('data-id'); if(id) { const found = stops.find(s=>s.id===parseInt(id)); if(found) ns.push(found); } }); stops=ns; updateView(); }
 
         function updateView() {
-            markers.clearLayers(); routeLayer.clearLayers(); const ul=document.getElementById('stops-list'); ul.innerHTML="";
+            markers.clearLayers(); routeLayer.clearLayers(); document.getElementById('stops-list').innerHTML="";
             if(pData.lat) L.marker([pData.lat, pData.lon], {icon: L.divIcon({html:'🏠', className:''})}).addTo(markers);
-            stops.forEach((s, i) => { let rawAddr = s.addr.split(',').map(p => p.trim()); let shortAddr = rawAddr.slice(0, 3).join(', '); let zipMatch = s.addr.match(/\b\d{5}\b/); if(zipMatch) shortAddr += " (" + zipMatch[0] + ")"; ul.innerHTML += `<li class="stop-item" data-id="${s.id}"><div class="stop-content"><span class="handle">☰</span>${s.icon} <div class="stop-info"><span class="stop-name">${i+1}. ${s.client}</span><span class="stop-addr">${shortAddr}</span></div></div><div class="stop-meta"><span class="stop-euro">${s.euro} €</span><span class="stop-dist-tag" id="dist-stop-${i}">... km</span><div class="ratio-tag" id="ratio-stop-${i}">...</div></div><div class="stop-actions"><button class="btn-icon" onclick="editStop(${i})" title="Modifier">✏️</button><button class="btn-icon" onclick="stops.splice(${i},1);updateView()" title="Supprimer" style="color:#e74c3c;">✕</button></div></li>`; L.circleMarker([s.lat, s.lon], {radius:4, color:'var(--info)', fillOpacity:1}).addTo(markers); });
-            if(pData.lat && stops.length > 0) { let rRaw = pData.addr.split(',').map(p => p.trim()); let rShort = rRaw.slice(0, 3).join(', '); let rZip = pData.addr.match(/\b\d{5}\b/); if(rZip) rShort += " (" + rZip[0] + ")"; ul.innerHTML += `<li class="stop-item return-item"><div class="stop-content"><span style="font-size:1.2rem; margin-right:10px;">🏁</span><div class="stop-info"><span class="stop-name">Retour au point de départ</span><span class="stop-addr">${rShort}</span></div></div><div class="stop-meta"><span class="stop-euro" style="color:#7f8c8d;" id="return-cost">0 €</span><span class="stop-dist-tag" id="dist-return">... km</span></div><div class="stop-actions" style="width:60px;"></div></li>`; }
-            if(sTemp.lat) { L.circleMarker([sTemp.lat, sTemp.lon], { radius: 5, color: '#e74c3c', fillColor: '#c0392b', fillOpacity: 0.8, weight: 3 }).addTo(markers); }
-            if(pData.lat && stops.length > 0) calcRoute(); else updateStats(0,0); updateStatsTitle();
+            stops.forEach((s, i) => { 
+                let rawAddr = s.addr.split(',').map(p => p.trim()); let shortAddr = rawAddr.slice(0, 3).join(', '); let zipMatch = s.addr.match(/\b\d{5}\b/); if(zipMatch) shortAddr += " (" + zipMatch[0] + ")";
+                document.getElementById('stops-list').innerHTML += `<li class="stop-item" data-id="${s.id}"><div class="stop-content"><span class="handle">☰</span>${s.icon} <div class="stop-info"><span class="stop-name">${i+1}. ${s.client}</span><span class="stop-addr">${shortAddr}</span></div></div><div class="stop-meta"><span class="stop-euro">${s.euro} €</span><span class="stop-dist-tag" id="dist-stop-${i}">... km</span><div class="ratio-tag" id="ratio-stop-${i}">...</div></div><div class="stop-actions"><button class="btn-icon" onclick="editStop(${i})" title="Modifier">✏️</button><button class="btn-icon" onclick="stops.splice(${i},1);updateView()" title="Supprimer" style="color:#e74c3c;">✕</button></div></li>`;
+                L.circleMarker([s.lat, s.lon], {radius:4, color:'var(--info)', fillOpacity:1}).addTo(markers);
+            });
+            if(pData.lat && stops.length > 0) {
+                let rRaw = pData.addr.split(',').map(p => p.trim()); let rShort = rRaw.slice(0, 3).join(', '); let rZip = pData.addr.match(/\b\d{5}\b/); if(rZip) rShort += " (" + rZip[0] + ")";
+                document.getElementById('stops-list').innerHTML += `<li class="stop-item return-item"><div class="stop-content"><span style="font-size:1.2rem; margin-right:10px;">🏁</span><div class="stop-info"><span class="stop-name">Retour au point de départ</span><span class="stop-addr">${rShort}</span></div></div><div class="stop-meta"><span class="stop-euro" style="color:#7f8c8d;" id="return-cost">0 €</span><span class="stop-dist-tag" id="dist-return">... km</span></div><div class="stop-actions" style="width:60px;"></div></li>`;
+                calcRoute();
+            } else updateStats(0,0); updateStatsTitle();
         }
 
         function calcRoute() {
@@ -398,7 +398,7 @@
         function updateStats(dist, driveTime) {
             const cH = parseFloat(document.getElementById('cH').value) || 0; const conso = parseFloat(document.getElementById('vCons').value) || 0; const prixCarb = parseFloat(document.getElementById('fPrice').value) || 0; const prep = parseFloat(document.getElementById('tPrep').value) || 0; const load = parseFloat(document.getElementById('tLoad').value) || 0;
             const sTime = stops.reduce((a,b)=>a+b.time, 0) + prep + load + driveTime; const fuelCost = (dist / 100) * conso * prixCarb; const laborCost = (sTime / 60) * cH; const totalCost = fuelCost + laborCost; const ca = stops.reduce((a,b)=>a+b.euro, 0);
-            currentStats.cost = totalCost; currentStats.ca = ca; currentStats.ratio = ca > 0 ? (totalCost/ca*100).toFixed(1) : 0; currentStats.dist = dist; currentStats.time = sTime;
+            currentStats = { cost: totalCost, ca: ca, ratio: ca > 0 ? (totalCost/ca*100).toFixed(1) : 0, dist: dist, time: sTime };
             document.getElementById('rDist').innerText=dist.toFixed(1)+" km"; document.getElementById('rTime').innerText=Math.floor(driveTime/60)+"h"+Math.round(driveTime%60).toString().padStart(2,'0'); document.getElementById('rOps').innerText=Math.floor(sTime/60)+"h"+Math.round(sTime%60).toString().padStart(2,'0'); document.getElementById('rCostTrans').innerText=fuelCost.toFixed(2)+" €"; document.getElementById('rCostOps').innerText=laborCost.toFixed(2)+" €"; document.getElementById('rTotal').innerText=totalCost.toFixed(2)+" €"; document.getElementById('rVal').innerText=ca.toFixed(2)+" €"; document.getElementById('rRatio').innerText=currentStats.ratio+" %";
         }
 
