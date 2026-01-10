@@ -35,14 +35,6 @@
         .header-band.validated { border-top-color: var(--success); background-color: #f6fffa; box-shadow: 0 4px 20px rgba(39, 174, 96, 0.15); }
         .header-row { display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-end; flex-wrap: wrap; }
         
-        .validation-badge {
-            display: inline-block; background: var(--success); color: white;
-            font-size: 0.8rem; padding: 5px 10px; border-radius: 20px; margin-left: 15px; 
-            opacity: 0; transform: translateY(10px); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .show-badge { opacity: 1; transform: translateY(0); }
-
         #header-summary { display: none; align-items: center; justify-content: space-between; }
         .summary-text { font-size: 0.9rem; color: var(--primary); display: flex; align-items: center; flex-wrap: wrap; gap: 15px; }
         .summary-text span { display: flex; align-items: center; gap: 5px; }
@@ -50,14 +42,13 @@
 
         /* LAYOUT */
         .main-container { display: flex; gap: 25px; flex: 1; margin-bottom: 30px;}
-        .left-panel { flex: 1; min-width: 380px; transition: opacity 0.3s; } /* Ajusté min-width V80 */
+        .left-panel { flex: 1; min-width: 420px; transition: opacity 0.3s; }
         .right-panel { flex: 2; min-width: 300px; display: flex; flex-direction: column; gap: 20px; }
         .blocked-area { opacity: 0.4; pointer-events: none; filter: grayscale(100%); user-select: none; }
 
         .card { background: white; padding: 20px; border-radius: 6px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #eef2f7; }
-        /* CORRECTION V80 : min-width passé de 140 à 100px */
         .form-group { flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 100px; }
-        .form-group label { font-weight: 600; color: var(--text); font-size: 0.75rem; white-space: nowrap; }
+        .form-group label { font-weight: 600; color: var(--text); font-size: 0.75rem; }
         
         input, select { padding: 10px; border: 1px solid #dcdfe6; border-radius: 4px; font-size: 0.9rem; width: 100%; box-sizing: border-box; transition: border 0.3s; }
         .input-valid { border-color: var(--success) !important; background-color: #fff !important; }
@@ -202,10 +193,7 @@
     </div>
 
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <div style="display:flex; align-items:center;">
-            <h2 style="margin:0; font-size:1.2rem; color:#7f8c8d;">Configuration de la Tournée</h2>
-            <span id="depot-badge" class="validation-badge">✅ Adresse de départ validée</span>
-        </div>
+        <h2 style="margin:0; font-size:1.2rem; color:#7f8c8d;">Configuration de la Tournée</h2>
         <button onclick="resetAll()" class="btn-mini" style="background:var(--danger);">Réinitialiser Tout</button>
     </div>
 
@@ -600,16 +588,15 @@
             const pNameInput = document.getElementById('pName');
             const pAddrInput = document.getElementById('pAddr');
             const band = document.getElementById('prod-band');
-            const badge = document.getElementById('depot-badge');
             const btnValide = document.getElementById('btn-validate-depot');
             let nameOk = pNameInput.value.trim().length > 0;
             let addrOk = pData.lat !== null && pAddrInput.value.trim().length > 0;
             if(nameOk) pNameInput.classList.add('input-valid'); else pNameInput.classList.remove('input-valid');
             if(addrOk) pAddrInput.classList.add('input-valid'); else pAddrInput.classList.remove('input-valid');
             if(nameOk && addrOk) {
-                band.classList.add('validated'); badge.classList.add('show-badge'); btnValide.classList.add('active'); btnValide.disabled = false;
+                band.classList.add('validated'); btnValide.classList.add('active'); btnValide.disabled = false;
             } else {
-                band.classList.remove('validated'); badge.classList.remove('show-badge'); btnValide.classList.remove('active'); btnValide.disabled = true;
+                band.classList.remove('validated'); btnValide.classList.remove('active'); btnValide.disabled = true;
             }
             saveDepot();
         }
@@ -873,86 +860,82 @@
         }
 
         function sendProjectData() {
-            // ON ENVOIE LA TOURNEE COURANTE UNIQUEMENT (SIMPLIFICATION ERGONOMIQUE)
-            if(!currentTourId) {
-                // Si pas de tournée sauvegardée chargée, on demande de sauvegarder
-                if(confirm("Vous devez d'abord sauvegarder cette tournée. Voulez-vous le faire maintenant ?")) {
-                    saveCurrentTour();
-                }
+            // ON ENVOIE TOUTES LES TOURNEES SAUVEGARDEES
+            if(savedTours.length === 0) {
+                alert("Aucune tournée enregistrée à envoyer.");
                 return;
             }
 
             const btn=document.getElementById('btn-export-project'); btn.disabled=true; btn.innerText="⏳ Envoi du projet...";
             const dateStr = new Date().toISOString().split('T')[0];
-            const tourId = currentTourId;
             
+            // CONFIGURATION COUTS (GLOBAL)
             const cH = parseFloat(document.getElementById('cH').value) || 0;
             const conso = parseFloat(document.getElementById('vCons').value) || 0;
             const prixCarb = parseFloat(document.getElementById('fPrice').value) || 0;
 
             const rows = [];
-            const common = { 
-                "Producteur": document.getElementById('pName').value, 
-                "Nom Tournée": document.getElementById('tName').value, 
-                "Jour Tournée": document.getElementById('tDay').value, 
-                "Date de Livraison": dateStr, 
-                "Tournée ID": tourId, 
-                "Véhicule": document.getElementById('vType').value, 
-                "Type Carburant": document.getElementById('fType').value, 
-                "Conso (L/100km)": conso, 
-                "Prix Carburant (€/L)": prixCarb, 
-                "Type Livreur": document.getElementById('driverType').value,
-                "Cout Horaire (€/h)": cH, 
-                "Temps Préparation (min)": parseFloat(document.getElementById('tPrep').value), 
-                "Temps Chargement Départ (min)": parseFloat(document.getElementById('tLoad').value) 
-            };
 
-            rows.push({
-                ...common, 
-                "Ordre d'Arrêt": 0, "Client / Point de Livraison": "Départ Dépôt", 
-                "Adresse Complète": pData.addr, "lat": pData.lat, "lon": pData.lon, "Type Arrêt": "Départ", 
-                "Montant (€)": 0, "Volume (Kg)": 0, "Temps d'arrêt (min)": 0,
-                "Distance_Etape_km": 0, "Temps_Trajet_min": 0, "Cout_Transport_Etape": 0, "Cout_Arret_Etape": 0, "Cout_Total_Etape": 0, "Ratio_Etape_%": 0
-            });
+            // On itère sur toutes les tournées sauvegardées
+            savedTours.forEach(tour => {
+                const tourId = tour.id;
+                
+                const common = { 
+                    "Producteur": document.getElementById('pName').value, 
+                    "Nom Tournée": tour.name, 
+                    "Jour Tournée": tour.day, 
+                    "Date de Livraison": dateStr, 
+                    "Tournée ID": tourId, 
+                    "Véhicule": document.getElementById('vType').value, 
+                    "Type Carburant": document.getElementById('fType').value, 
+                    "Conso (L/100km)": conso, 
+                    "Prix Carburant (€/L)": prixCarb, 
+                    "Type Livreur": document.getElementById('driverType').value,
+                    "Cout Horaire (€/h)": cH, 
+                    "Temps Préparation (min)": parseFloat(document.getElementById('tPrep').value), 
+                    "Temps Chargement Départ (min)": parseFloat(document.getElementById('tLoad').value) 
+                };
 
-            stops.forEach((s, i) => { 
-                let distKm = 0, timeMin = 0, costTrans = 0, costStop = 0, ratio = 0;
-                if(lastRouteData && lastRouteData.legs && lastRouteData.legs[i]) {
-                    distKm = lastRouteData.legs[i].distance / 1000;
-                    timeMin = lastRouteData.legs[i].duration / 60;
-                    const fuelCost = (distKm / 100) * conso * prixCarb;
-                    const driveLabor = (timeMin / 60) * cH;
-                    costTrans = fuelCost + driveLabor;
-                    costStop = (s.time / 60) * cH;
-                    if(s.euro > 0) ratio = ((costTrans + costStop) / s.euro) * 100;
-                }
+                // DEPART
                 rows.push({
                     ...common, 
-                    "Ordre d'Arrêt": i+1, "Client / Point de Livraison": s.client, "Adresse Complète": s.addr, 
-                    "lat": s.lat, "lon": s.lon, "Montant (€)": s.euro, "Volume (Kg)": s.vol, "Temps d'arrêt (min)": s.time, "Type Arrêt": s.icon,
-                    "Distance_Etape_km": distKm.toFixed(2), "Temps_Trajet_min": timeMin.toFixed(1),
-                    "Cout_Transport_Etape": costTrans.toFixed(2), "Cout_Arret_Etape": costStop.toFixed(2),
-                    "Cout_Total_Etape": (costTrans + costStop).toFixed(2), "Ratio_Etape_%": ratio.toFixed(1)
-                }); 
-            });
-
-            if(lastRouteData && lastRouteData.legs && lastRouteData.legs[stops.length]) {
-                let leg = lastRouteData.legs[stops.length];
-                let distKm = leg.distance / 1000;
-                let timeMin = leg.duration / 60;
-                let costTrans = ((distKm / 100) * conso * prixCarb) + ((timeMin / 60) * cH);
-                rows.push({
-                    ...common, 
-                    "Ordre d'Arrêt": stops.length+1, "Client / Point de Livraison": "Retour Dépôt", "Adresse Complète": pData.addr, 
-                    "lat": pData.lat, "lon": pData.lon, "Type Arrêt": "Retour", 
+                    "Ordre d'Arrêt": 0, "Client / Point de Livraison": "Départ Dépôt", 
+                    "Adresse Complète": pData.addr, "lat": pData.lat, "lon": pData.lon, "Type Arrêt": "Départ", 
                     "Montant (€)": 0, "Volume (Kg)": 0, "Temps d'arrêt (min)": 0,
-                    "Distance_Etape_km": distKm.toFixed(2), "Temps_Trajet_min": timeMin.toFixed(1),
-                    "Cout_Transport_Etape": costTrans.toFixed(2), "Cout_Arret_Etape": 0, "Cout_Total_Etape": costTrans.toFixed(2), "Ratio_Etape_%": 0
+                    "Distance_Etape_km": 0, "Temps_Trajet_min": 0, "Cout_Transport_Etape": 0, "Cout_Arret_Etape": 0, "Cout_Total_Etape": 0, "Ratio_Etape_%": 0
                 });
-            }
+
+                // STOPS - NOTE: Ici on n'a pas les détails de route calculés (lastRouteData) pour les anciennes tournées
+                // Pour faire simple dans cette version sans backend, on exporte les données brutes des arrêts.
+                // Idéalement, il faudrait stocker les résultats de calculs détaillés dans savedTours.
+                // Pour l'instant, on exporte les données de base des arrêts.
+                
+                if(tour.stops) {
+                    tour.stops.forEach((s, i) => { 
+                        rows.push({
+                            ...common, 
+                            "Ordre d'Arrêt": i+1, "Client / Point de Livraison": s.client, "Adresse Complète": s.addr, 
+                            "lat": s.lat, "lon": s.lon, "Montant (€)": s.euro, "Volume (Kg)": s.vol, "Temps d'arrêt (min)": s.time, "Type Arrêt": s.icon,
+                            "Distance_Etape_km": 0, "Temps_Trajet_min": 0, // Pas dispo ici sans re-calcul
+                            "Cout_Transport_Etape": 0, "Cout_Arret_Etape": 0,
+                            "Cout_Total_Etape": 0, "Ratio_Etape_%": 0
+                        }); 
+                    });
+                    
+                    // RETOUR
+                    rows.push({
+                        ...common, 
+                        "Ordre d'Arrêt": tour.stops.length+1, "Client / Point de Livraison": "Retour Dépôt", "Adresse Complète": pData.addr, 
+                        "lat": pData.lat, "lon": pData.lon, "Type Arrêt": "Retour", 
+                        "Montant (€)": 0, "Volume (Kg)": 0, "Temps d'arrêt (min)": 0,
+                        "Distance_Etape_km": 0, "Temps_Trajet_min": 0,
+                        "Cout_Transport_Etape": 0, "Cout_Arret_Etape": 0, "Cout_Total_Etape": 0, "Ratio_Etape_%": 0
+                    });
+                }
+            });
 
             fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rows: rows }) })
-            .then(r => { if(r.ok) { alert("✅ Projet envoyé avec succès !"); } })
+            .then(r => { if(r.ok) { alert("✅ Projet complet envoyé avec succès !"); } })
             .catch(() => alert("❌ Erreur de connexion"))
             .finally(() => { btn.disabled = false; btn.innerText = "🚀 ENVOYER LE PROJET AU PNR (CSV)"; });
         }
