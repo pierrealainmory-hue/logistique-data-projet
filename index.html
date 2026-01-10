@@ -38,7 +38,8 @@
         #header-summary { display: none; align-items: center; justify-content: space-between; }
         .summary-text { font-size: 0.9rem; color: var(--primary); display: flex; align-items: center; flex-wrap: wrap; gap: 15px; }
         .summary-text span { display: flex; align-items: center; gap: 5px; }
-        
+        .sep { color: #bdc3c7; font-weight: normal; }
+
         /* LAYOUT */
         .main-container { display: flex; gap: 25px; flex: 1; margin-bottom: 30px;}
         .left-panel { flex: 1; min-width: 420px; transition: opacity 0.3s; }
@@ -273,6 +274,7 @@
         const API = "https://update-github-csv-149052175314.europe-west1.run.app/";
         let map, markers, routeLayer, stops = [], mode = 'prod', pData = { lat:null, lon:null, addr:"" }, sTemp = { lat:null, lon:null };
         let lastRouteData = null; 
+        
         let savedTours = [];
         let currentTourId = null; 
         let currentStats = { cost:0, ca:0, ratio:0, dist:0, time:0 };
@@ -409,14 +411,14 @@
 
             savedTours.forEach(tour => {
                 const tourId = tour.id;
-                // V82 : MAPPING CLES CSV (ANCIENNES + NOUVELLES)
+                // V83 : MAPPING STRICT AVEC HEADER
                 const common = { 
                     "Producteur": document.getElementById('pName').value, 
                     "Date de Livraison": dateStr, 
-                    "Jour": tour.day, // ANCIENNE CLE
+                    "Jour": tour.day,
                     "Tournée ID": tourId, 
                     "Véhicule": document.getElementById('vType').value, 
-                    "Carburant": document.getElementById('fType').value, // ANCIENNE CLE
+                    "Carburant": document.getElementById('fType').value,
                     "Conso (L/100km)": conso, 
                     "Prix Carburant (€/L)": prixCarb, 
                     "Type Livreur": document.getElementById('driverType').value,
@@ -430,7 +432,7 @@
                     ...common, 
                     "Ordre d'Arrêt": 0, "Client / Point de Livraison": "Départ Dépôt", 
                     "Adresse Complète": pData.addr, "lat": pData.lat, "lon": pData.lon, "Type Arrêt": "Départ", 
-                    "Montant (€)": 0, "Volume (Kg Normalisé)": 0, "Temps d'arrêt (min)": 0, // CLE CORRIGEE
+                    "Montant (€)": 0, "Volume (Kg Normalisé)": 0, "Temps d'arrêt (min)": 0,
                     "Distance_Etape_km": 0, "Temps_Trajet_min": 0, "Cout_Transport_Etape": 0, "Cout_Arret_Etape": 0, "Cout_Total_Etape": 0, "Ratio_Etape_%": 0
                 });
 
