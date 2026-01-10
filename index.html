@@ -127,12 +127,15 @@
         .newly-saved { animation: highlight 1.5s ease-out; }
         @keyframes highlight { 0% { background: #d2b4de; } 100% { background: #fff; } }
 
+        /* LEGENDE RATIO - MODIFIEE V77 */
         .legend-bar {
-            grid-column: span 3; background: white; border-radius: 6px; border: 1px solid #eee;
-            padding: 10px; margin-top: 5px; display: flex; justify-content: center; gap: 20px;
-            font-size: 0.8rem; color: var(--text);
+            background: white; border-radius: 6px; border: 1px solid #eee;
+            padding: 8px; margin-top: 10px; margin-bottom: 10px;
+            display: flex; justify-content: center; align-items: center; gap: 15px; flex-wrap: wrap;
+            font-size: 0.75rem; color: var(--text);
         }
-        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-title { font-weight: bold; margin-right: 5px; color: var(--primary); }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
         .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 
         #map { height: 450px; width: 100%; border-radius: 6px; border: 1px solid #dcdfe6; background-color: #e5e9ec; display: block; }
@@ -265,6 +268,13 @@
             <h4 style="color:var(--text);">📋 Ordre de passage (Drag & Drop)</h4>
             <ul id="stops-list"></ul>
             
+            <div class="legend-bar">
+                <span class="legend-title">Ratio Logistique :</span>
+                <div class="legend-item"><span class="legend-dot" style="background:#27ae60;"></span> < 10%</div>
+                <div class="legend-item"><span class="legend-dot" style="background:#e67e22;"></span> 10-30%</div>
+                <div class="legend-item"><span class="legend-dot" style="background:#e74c3c;"></span> > 30%</div>
+            </div>
+
             <button id="btn-save-local" onclick="saveCurrentTour()">💾 SAUVEGARDER CETTE TOURNÉE</button>
         </div>
 
@@ -287,12 +297,6 @@
                     <div class="kpi-title">RATIO LOGISTIQUE</div>
                     <div class="kpi-value" style="color:var(--accent); font-size:1.8rem;" id="rRatio">0 %</div>
                     <div style="font-size:0.7rem; color:var(--text);">(Coût Logistique / Chiffre d'Affaires)</div>
-                </div>
-                
-                <div class="legend-bar">
-                    <div class="legend-item"><span class="legend-dot" style="background:#27ae60;"></span> Excellent (< 10%)</div>
-                    <div class="legend-item"><span class="legend-dot" style="background:#e67e22;"></span> Standard (10-30%)</div>
-                    <div class="legend-item"><span class="legend-dot" style="background:#e74c3c;"></span> Critique (> 30%)</div>
                 </div>
             </div>
         </div>
