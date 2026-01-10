@@ -108,17 +108,16 @@
         .return-item { background: #f8f9fa; border-left: 4px solid var(--primary); }
         .return-item .stop-name { color: var(--primary); }
 
-        /* LISTE DES TOURNEES (Full Width) */
+        /* LISTE DES TOURNEES */
         #tours-list-container { max-height: 400px; overflow-y: auto; margin-bottom: 15px; border: 1px solid #eee; border-radius: 4px; }
         .tour-row {
             padding: 15px; border-bottom: 1px solid #eee; background: #fff;
-            display: grid; grid-template-columns: 2fr 3fr 3fr 100px; /* Grille pour aligner */
+            display: grid; grid-template-columns: 2fr 3fr 3fr 100px; 
             align-items: center; cursor: pointer; transition: background 0.2s;
         }
         .tour-row:hover { background: #f9f9f9; }
         .tour-row.active { background: #f4ecf7; border-left: 4px solid var(--lib); }
         
-        /* Elements de la ligne tournée */
         .t-id { font-size: 1rem; font-weight: bold; color: var(--primary); }
         .t-day { font-size: 0.8rem; color: #7f8c8d; }
         .t-metrics { display: flex; gap: 15px; font-size: 0.9rem; color: #333; font-weight: 500; }
@@ -237,7 +236,8 @@
                 <div style="display:flex; gap:10px;">
                     <div class="form-group" style="flex: 1.5;">
                         <label>Nom de la Tournée</label>
-                        <input type="text" id="tName" placeholder="Ex: Tournée des Écoles" oninput="updateStatsTitle()">
+                        <input type="text" id="tName" list="tourNameSuggestions" placeholder="Ex: Tournée des Écoles" oninput="updateStatsTitle()">
+                        <datalist id="tourNameSuggestions"></datalist>
                     </div>
                     <div class="form-group" style="flex: 1;">
                         <label>Jour</label>
@@ -343,9 +343,26 @@
             setMode('prod'); 
             checkProducerValidation();
             autoNameTour();
+            updateTourNameSuggestions(); // Initialiser la datalist
         };
 
-        // --- GESTION NOM AUTOMATIQUE ---
+        // --- GESTION NOM SUGGESTIF V76 ---
+        function updateTourNameSuggestions() {
+            const dataList = document.getElementById('tourNameSuggestions');
+            dataList.innerHTML = ''; 
+
+            const defaults = ["Tournée Restaurants", "Tournée Cantines", "Tournée Magasins", "Tournée Particuliers", "Tournée Écoles", "Tournée AMAP"];
+            // Ajouter les noms existants
+            const existing = savedTours.map(t => t.name);
+            const all = [...new Set([...defaults, ...existing])]; // Unique
+
+            all.forEach(name => {
+                let opt = document.createElement('option');
+                opt.value = name;
+                dataList.appendChild(opt);
+            });
+        }
+
         function generateDefaultName(day) {
             const prefix = `TOURNEE - ${day} - `;
             let max = 0;
@@ -368,7 +385,7 @@
             }
         }
 
-        // --- GESTIONNAIRE DE PROJET (V75 - FULL WIDTH) ---
+        // --- GESTIONNAIRE DE PROJET ---
         function saveDepot() {
             pData.name = document.getElementById('pName').value;
             pData.addr = document.getElementById('pAddr').value;
@@ -412,6 +429,7 @@
         function loadToursLibrary() {
             let s = localStorage.getItem('logistique_tours_v71');
             savedTours = s ? JSON.parse(s) : [];
+            updateTourNameSuggestions(); // Mettre à jour les suggestions
             renderToursList();
         }
 
@@ -477,7 +495,7 @@
             localStorage.setItem('logistique_tours_v71', JSON.stringify(savedTours));
             saveDepot();
             
-            // FEEDBACK SANS EFFACER LA CARTE
+            updateTourNameSuggestions(); // Apprendre le nouveau nom
             renderToursList();
             alert("✅ Tournée sauvegardée ! Vous pouvez continuer à travailler dessus.");
             
