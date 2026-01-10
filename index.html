@@ -6,57 +6,42 @@
     <title>Simulateur Logistique - PNR Préalpes</title>
     
     <link rel="icon" href="https://github.com/pierrealainmory-hue/logistique-data-projet/blob/main/LogoEpurvertpetit.png?raw=true">
-
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #e67e22; --success: #27ae60; --bg: #f4f7f9; --danger: #e74c3c; --info: #3498db; --lib: #8e44ad; --text: #546e7a; --locked: #bdc3c7; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; padding: 20px; background: var(--bg); color: #333; display: flex; flex-direction: column; min-height: 100vh; }
         
-        /* HEADER */
         .client-header { background: white; padding: 15px 25px; border-radius: 6px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-top: 6px solid var(--success); }
         .client-identity { display: flex; align-items: center; gap: 25px; }
         .client-logo { height: 85px; width: auto; display: block; }
         .assistance-box { font-size: 0.85rem; color: var(--text); text-align: right; border-left: 1px solid #ddd; padding-left: 20px; }
-        .assistance-title { font-weight: bold; color: var(--accent); text-transform: uppercase; font-size: 0.75rem; margin-bottom: 5px; display: block;}
-        .assistance-box a { color: var(--primary); text-decoration: none; }
-
-        /* BANDEAUX & CARDS */
+        
         .header-band { background: white; padding: 20px; border-radius: 6px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-top: 6px solid var(--primary); transition: all 0.4s ease; position: relative; z-index: 100; }
         .header-band.validated { border-top-color: var(--success); background-color: #f6fffa; box-shadow: 0 4px 20px rgba(39, 174, 96, 0.15); }
         .header-row { display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-end; flex-wrap: wrap; }
-        .card { background: white; padding: 20px; border-radius: 6px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #eef2f7; }
         
-        /* FORM */
-        .form-group { flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 100px; }
-        .form-group label { font-weight: 600; color: var(--text); font-size: 0.75rem; }
-        input, select { padding: 10px; border: 1px solid #dcdfe6; border-radius: 4px; font-size: 0.9rem; width: 100%; box-sizing: border-box; transition: border 0.3s; }
-        .input-valid { border-color: var(--success) !important; background-color: #fff !important; }
-        .btn-mini { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; }
-        #btn-validate-depot { background: var(--success); color: white; margin-top: 10px; width: auto; min-width: 200px; display: block; margin: 15px auto 0 auto; border: none; border-radius: 20px; padding: 10px 30px; font-weight: bold; font-size: 0.9rem; opacity: 0.5; cursor: not-allowed; transition: all 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        #btn-validate-depot.active { opacity: 1; cursor: pointer; transform: translateY(-1px); }
         #header-summary { display: none; align-items: center; justify-content: space-between; }
         .summary-text { font-size: 0.9rem; color: var(--primary); display: flex; align-items: center; flex-wrap: wrap; gap: 15px; }
-        .summary-text span { display: flex; align-items: center; gap: 5px; }
-        .sep { color: #bdc3c7; font-weight: normal; }
-
-        /* LAYOUT */
+        
         .main-container { display: flex; gap: 25px; flex: 1; margin-bottom: 30px;}
         .left-panel { flex: 1; min-width: 420px; transition: opacity 0.3s; }
         .right-panel { flex: 2; min-width: 300px; display: flex; flex-direction: column; gap: 20px; }
         .blocked-area { opacity: 0.4; pointer-events: none; filter: grayscale(100%); user-select: none; }
 
-        /* KPI */
+        .card { background: white; padding: 20px; border-radius: 6px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #eef2f7; }
+        .form-group { flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 100px; }
+        .form-group label { font-weight: 600; color: var(--text); font-size: 0.75rem; }
+        input, select { padding: 10px; border: 1px solid #dcdfe6; border-radius: 4px; font-size: 0.9rem; width: 100%; box-sizing: border-box; transition: border 0.3s; }
+        .input-valid { border-color: var(--success) !important; background-color: #fff !important; }
+        
         .kpi-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
         .kpi-card { background: white; padding: 15px; border-radius: 6px; border: 1px solid #e4e7ed; text-align: center; }
         .kpi-title { font-size: 0.7rem; font-weight: 700; color: var(--text); text-transform: uppercase; margin-bottom: 5px; }
         .kpi-value { font-size: 1.2rem; font-weight: 800; color: var(--primary); }
         .summary-banner { grid-column: span 3; background: var(--primary); color: white; border-radius: 6px; padding: 15px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .banner-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; }
         .banner-metrics { display: flex; justify-content: space-around; width: 100%; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 15px; }
-        .summary-value { font-size: 1.8rem; font-weight: 800; display: block; }
-
-        /* LISTS */
+        
         #stops-list { list-style: none; padding: 0; }
         .stop-item { background: white; padding: 10px; margin-bottom: 8px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #ebedf0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .stop-content { display: flex; align-items: center; gap: 10px; flex: 1; overflow: hidden; }
@@ -87,13 +72,11 @@
         .t-preview { font-size: 0.8rem; color: #95a5a6; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 20px;}
         .t-actions { display: flex; gap: 10px; justify-content: flex-end; }
 
-        /* GLOBAL TOTALS BOX */
         .global-stats-box { background: #f8f9fa; color: var(--primary); border: 1px solid #dcdfe6; border-radius: 6px; padding: 15px 20px; margin-top: 15px; margin-bottom: 20px; display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap; gap: 10px; }
         .gs-item { text-align: center; min-width: 100px; }
         .gs-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text); font-weight:700; margin-bottom: 5px; }
         .gs-value { font-size: 1.4rem; font-weight: 800; color: var(--primary); }
 
-        /* LEGENDE RATIO */
         .legend-bar { background: white; border-radius: 6px; border: 1px solid #eee; padding: 8px; margin-top: 10px; margin-bottom: 10px; display: flex; justify-content: center; align-items: center; gap: 15px; flex-wrap: wrap; font-size: 0.75rem; color: var(--text); }
         .legend-tag-title { background: #f8f9fa; border: 1px solid #ddd; padding: 2px 8px; border-radius: 4px; font-weight: bold; margin-right: 5px; color: var(--primary); }
         .legend-item { display: flex; align-items: center; gap: 5px; }
@@ -103,12 +86,18 @@
         @keyframes highlight { 0% { background: #d2b4de; } 100% { background: #fff; } }
 
         #map { height: 450px; width: 100%; border-radius: 6px; border: 1px solid #dcdfe6; background-color: #e5e9ec; display: block; }
+        
+        /* STYLE BOUTON CORRIGE */
+        .btn-main { background: var(--success); color: white; width: 100%; padding: 16px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 1rem; }
+        .btn-mini { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; }
+        
         #btn-save-local { background: var(--success); color: white; margin-top: 10px; width: 100%; border: none; border-radius: 6px; padding: 15px; font-weight: bold; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         #btn-export-project { background: var(--lib); color: white; width: 300px; margin: 0 auto; border: none; border-radius: 4px; padding: 15px; font-weight: bold; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         
+        #btn-validate-depot { background: var(--success); color: white; margin-top: 10px; width: auto; min-width: 200px; display: block; margin: 15px auto 0 auto; border: none; border-radius: 20px; padding: 10px 30px; font-weight: bold; font-size: 0.9rem; opacity: 0.5; cursor: not-allowed; transition: all 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        #btn-validate-depot.active { opacity: 1; cursor: pointer; transform: translateY(-1px); }
         .dix-footer { margin-top: 40px; padding: 20px; background: white; border-radius: 6px; display: flex; justify-content: center; align-items: center; gap: 15px; color: #7f8c8d; font-size: 0.9rem; }
         .dix-logo-small { height: 45px; width: auto; vertical-align: middle; }
-        .dix-link { color: var(--accent); text-decoration: none; font-weight: bold; cursor: pointer;}
     </style>
 </head>
 <body>
@@ -122,9 +111,7 @@
             </div>
         </div>
         <div class="assistance-box">
-            <span class="assistance-title">🆘 Assistance Technique</span>
             <b>Pierre-Alain Mory</b><br>
-            <a href="tel:0783000956">07 83 00 09 56</a><br>
             <a href="mailto:pierre.alain.mory@dix-autrement.fr">pierre.alain.mory@dix-autrement.fr</a>
         </div>
     </div>
@@ -149,11 +136,7 @@
             <div class="header-row" style="margin-top: 10px;">
                 <div class="form-group" style="flex: 1.2;">
                     <label>👤 Qui livre ?</label>
-                    <select id="driverType" style="font-weight:bold; color:var(--primary);">
-                        <option>Producteur.rice (Soi-même)</option>
-                        <option>Salarié</option>
-                        <option>Prestataire Extérieur</option>
-                    </select>
+                    <select id="driverType" style="font-weight:bold; color:var(--primary);"><option>Producteur.rice (Soi-même)</option><option>Salarié</option><option>Prestataire Extérieur</option></select>
                 </div>
                 <div class="form-group"><label>💶 Coût Chargé (€/h)</label><input type="number" id="cH" value="18" onchange="updateView()"></div>
                 <div class="form-group"><label>📦 Prép. Commande (min)</label><input type="number" id="tPrep" value="30" onchange="updateView()"></div>
@@ -201,7 +184,8 @@
                     <div class="form-group"><label>Volume (kg)</label><input type="number" id="sVol" value="0"></div>
                     <div class="form-group"><label>Temps Arrêt (min)</label><input type="number" id="sTime" value="15"></div>
                 </div>
-                <button class="btn-main" style="background:var(--info); margin-top:20px;" onclick="addStop()">Ajouter à la tournée</button>
+                
+                <button class="btn-main" style="background:var(--info); margin-top:20px;" onclick="addStop()">➕ Ajouter à la tournée</button>
             </div>
             
             <h4 style="color:var(--text);">📋 Ordre de passage (Drag & Drop)</h4>
