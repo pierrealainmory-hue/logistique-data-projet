@@ -4,216 +4,133 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulateur Logistique - PNR Préalpes</title>
-    
     <link rel="icon" href="https://github.com/pierrealainmory-hue/logistique-data-projet/blob/main/LogoEpurvertpetit.png?raw=true">
-
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
-        :root { --primary: #2c3e50; --accent: #e67e22; --success: #27ae60; --bg: #f4f7f9; --danger: #e74c3c; --info: #3498db; --lib: #8e44ad; --text: #546e7a; --locked: #bdc3c7; }
+        :root { --primary: #2c3e50; --accent: #e67e22; --success: #27ae60; --bg: #f4f7f9; --danger: #e74c3c; --info: #3498db; --lib: #8e44ad; --text: #546e7a; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; padding: 20px; background: var(--bg); color: #333; display: flex; flex-direction: column; min-height: 100vh; }
         
-        /* HEADER */
-        .client-header { background: white; padding: 15px 25px; border-radius: 6px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-top: 6px solid var(--success); }
-        .client-identity { display: flex; align-items: center; gap: 25px; }
-        .client-logo { height: 85px; width: auto; display: block; }
-        .assistance-box { font-size: 0.85rem; color: var(--text); text-align: right; border-left: 1px solid #ddd; padding-left: 20px; }
-        .assistance-title { font-weight: bold; color: var(--accent); text-transform: uppercase; font-size: 0.75rem; margin-bottom: 5px; display: block;}
-        .assistance-box a { color: var(--primary); text-decoration: none; }
-
-        /* BANDEAUX & CARDS */
-        .header-band { background: white; padding: 20px; border-radius: 6px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-top: 6px solid var(--primary); transition: all 0.4s ease; position: relative; z-index: 100; }
-        .header-band.validated { border-top-color: var(--success); background-color: #f6fffa; box-shadow: 0 4px 20px rgba(39, 174, 96, 0.15); }
-        .header-row { display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-end; flex-wrap: wrap; }
+        .client-header { background: white; padding: 15px 25px; border-radius: 6px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; border-top: 6px solid var(--success); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .client-logo { height: 85px; width: auto; }
+        .header-band { background: white; padding: 20px; border-radius: 6px; margin-bottom: 20px; border-top: 6px solid var(--primary); transition: all 0.3s; }
+        .header-band.validated { border-top-color: var(--success); background-color: #f6fffa; }
+        
+        .main-container { display: flex; gap: 25px; flex: 1; margin-bottom: 30px;}
+        .left-panel { flex: 1; min-width: 380px; }
+        .right-panel { flex: 2; min-width: 300px; display: flex; flex-direction: column; gap: 20px; }
         .card { background: white; padding: 20px; border-radius: 6px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #eef2f7; }
         
-        /* FORM */
         .form-group { flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 100px; }
-        .form-group label { font-weight: 600; color: var(--text); font-size: 0.75rem; }
-        input, select { padding: 10px; border: 1px solid #dcdfe6; border-radius: 4px; font-size: 0.9rem; width: 100%; box-sizing: border-box; transition: border 0.3s; }
-        .input-valid { border-color: var(--success) !important; background-color: #fff !important; }
-        .btn-mini { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; }
-        #btn-validate-depot { background: var(--success); color: white; margin-top: 10px; width: auto; min-width: 200px; display: block; margin: 15px auto 0 auto; border: none; border-radius: 20px; padding: 10px 30px; font-weight: bold; font-size: 0.9rem; opacity: 0.5; cursor: not-allowed; transition: all 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        #btn-validate-depot.active { opacity: 1; cursor: pointer; transform: translateY(-1px); }
-        #header-summary { display: none; align-items: center; justify-content: space-between; }
-        .summary-text { font-size: 0.9rem; color: var(--primary); display: flex; align-items: center; flex-wrap: wrap; gap: 15px; }
-        .summary-text span { display: flex; align-items: center; gap: 5px; }
-        .sep { color: #bdc3c7; font-weight: normal; }
-
-        /* LAYOUT */
-        .main-container { display: flex; gap: 25px; flex: 1; margin-bottom: 30px;}
-        .left-panel { flex: 1; min-width: 420px; transition: opacity 0.3s; }
-        .right-panel { flex: 2; min-width: 300px; display: flex; flex-direction: column; gap: 20px; }
-        .blocked-area { opacity: 0.4; pointer-events: none; filter: grayscale(100%); user-select: none; }
-
-        /* KPI */
-        .kpi-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
-        .kpi-card { background: white; padding: 15px; border-radius: 6px; border: 1px solid #e4e7ed; text-align: center; }
-        .kpi-title { font-size: 0.7rem; font-weight: 700; color: var(--text); text-transform: uppercase; margin-bottom: 5px; }
-        .kpi-value { font-size: 1.2rem; font-weight: 800; color: var(--primary); }
-        .summary-banner { grid-column: span 3; background: var(--primary); color: white; border-radius: 6px; padding: 15px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .banner-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; }
-        .banner-metrics { display: flex; justify-content: space-around; width: 100%; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 15px; }
-        .summary-value { font-size: 1.8rem; font-weight: 800; display: block; }
-
-        /* LISTS */
-        #stops-list { list-style: none; padding: 0; }
-        .stop-item { background: white; padding: 10px; margin-bottom: 8px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #ebedf0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        .stop-content { display: flex; align-items: center; gap: 10px; flex: 1; overflow: hidden; }
-        .stop-info { display: flex; flex-direction: column; justify-content: center; overflow: hidden; flex:1; }
-        .stop-name { font-weight: bold; font-size: 0.95rem; }
-        .stop-addr { font-size: 0.75rem; color: #7f8c8d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .stop-meta { text-align: right; margin-right: 15px; min-width: 130px; display: flex; flex-direction: column; align-items: flex-end; }
-        .stop-euro { font-weight: bold; color: var(--success); font-size: 0.9rem; }
-        .stop-dist-tag { font-size: 0.75rem; color: #95a5a6; }
-        .ratio-tag { font-size: 0.7rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; margin-top: 2px; white-space: nowrap; }
-        .ratio-good { background: #d5f5e3; color: #27ae60; }
-        .ratio-mid { background: #fdebd0; color: #e67e22; }
-        .ratio-bad { background: #fadbd8; color: #e74c3c; }
-        .stop-actions { display: flex; gap: 2px; }
-        .btn-icon { border: none; background: none; cursor: pointer; font-size: 1.1rem; padding: 5px; border-radius: 4px; }
-        .btn-icon:hover { background-color: #f0f0f0; }
-        .handle { cursor: grab; color: #b0bec5; font-size: 1.2rem; margin-right: 5px; }
-        .return-item { background: #f8f9fa; border-left: 4px solid var(--primary); }
-        .return-item .stop-name { color: var(--primary); }
-
-        #tours-list-container { max-height: 400px; overflow-y: auto; margin-bottom: 5px; border: 1px solid #eee; border-radius: 4px; }
-        .tour-row { padding: 15px; border-bottom: 1px solid #eee; background: #fff; display: grid; grid-template-columns: 2fr 4fr 3fr 100px; align-items: center; cursor: pointer; transition: background 0.2s; }
+        input, select { padding: 10px; border: 1px solid #dcdfe6; border-radius: 4px; width: 100%; box-sizing: border-box; }
+        
+        .tour-row { padding: 15px; border-bottom: 1px solid #eee; background: #fff; display: grid; grid-template-columns: 2fr 4fr 3fr 100px; align-items: center; cursor: pointer; }
         .tour-row:hover { background: #f9f9f9; }
         .tour-row.active { background: #f4ecf7; border-left: 4px solid var(--lib); }
-        .t-id { font-size: 1rem; font-weight: bold; color: var(--primary); }
-        .t-day { font-size: 0.8rem; color: #7f8c8d; }
-        .t-metrics { display: flex; gap: 15px; font-size: 0.9rem; color: #333; font-weight: 500; }
-        .t-preview { font-size: 0.8rem; color: #95a5a6; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 20px;}
-        .t-actions { display: flex; gap: 10px; justify-content: flex-end; }
-
-        /* GLOBAL TOTALS BOX */
-        .global-stats-box { background: #f8f9fa; color: var(--primary); border: 1px solid #dcdfe6; border-radius: 6px; padding: 15px 20px; margin-top: 15px; margin-bottom: 20px; display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap; gap: 10px; }
-        .gs-item { text-align: center; min-width: 100px; }
-        .gs-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text); font-weight:700; margin-bottom: 5px; }
-        .gs-value { font-size: 1.4rem; font-weight: 800; color: var(--primary); }
-
-        /* LEGENDE RATIO */
-        .legend-bar { background: white; border-radius: 6px; border: 1px solid #eee; padding: 8px; margin-top: 10px; margin-bottom: 10px; display: flex; justify-content: center; align-items: center; gap: 15px; flex-wrap: wrap; font-size: 0.75rem; color: var(--text); }
-        .legend-tag-title { background: #f8f9fa; border: 1px solid #ddd; padding: 2px 8px; border-radius: 4px; font-weight: bold; margin-right: 5px; color: var(--primary); }
-        .legend-item { display: flex; align-items: center; gap: 5px; }
-        .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-
-        .newly-saved { animation: highlight 1.5s ease-out; }
-        @keyframes highlight { 0% { background: #d2b4de; } 100% { background: #fff; } }
-
-        #map { height: 450px; width: 100%; border-radius: 6px; border: 1px solid #dcdfe6; background-color: #e5e9ec; display: block; }
-        #btn-save-local { background: var(--success); color: white; margin-top: 10px; width: 100%; border: none; border-radius: 6px; padding: 15px; font-weight: bold; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        #btn-export-project { background: var(--lib); color: white; width: 300px; margin: 0 auto; border: none; border-radius: 4px; padding: 15px; font-weight: bold; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .dix-footer { margin-top: 40px; padding: 20px; background: white; border-radius: 6px; display: flex; justify-content: center; align-items: center; gap: 15px; color: #7f8c8d; font-size: 0.9rem; }
-        .dix-logo-small { height: 45px; width: auto; vertical-align: middle; }
-        .dix-link { color: var(--accent); text-decoration: none; font-weight: bold; cursor: pointer;}
+        
+        #map { height: 450px; width: 100%; border-radius: 6px; }
+        .btn-main { background: var(--success); color: white; width: 100%; padding: 15px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .btn-mini { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; }
+        
+        /* KPI & GLOBAL */
+        .summary-banner { background: var(--primary); color: white; border-radius: 6px; padding: 15px; text-align: center; }
+        .banner-metrics { display: flex; justify-content: space-around; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2); }
+        .kpi-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .kpi-card { background: white; padding: 15px; border-radius: 6px; text-align: center; border: 1px solid #eee; }
+        
+        .global-stats-box { background: #f8f9fa; color: var(--primary); border: 1px solid #dcdfe6; border-radius: 6px; padding: 15px; margin: 15px 0; display: flex; justify-content: space-around; font-weight: bold; }
+        .legend-bar { background: white; padding: 8px; border-radius: 6px; display: flex; justify-content: center; gap: 15px; font-size: 0.8rem; }
+        .legend-tag-title { background: #eee; padding: 2px 8px; border-radius: 4px; font-weight: bold; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        
+        .stop-item { background: white; padding: 10px; margin-bottom: 5px; border-radius: 4px; border: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .ratio-good { background: #d5f5e3; color: #27ae60; padding: 2px 5px; border-radius: 4px; font-size: 0.7rem; }
+        .ratio-mid { background: #fdebd0; color: #e67e22; padding: 2px 5px; border-radius: 4px; font-size: 0.7rem; }
+        .ratio-bad { background: #fadbd8; color: #e74c3c; padding: 2px 5px; border-radius: 4px; font-size: 0.7rem; }
     </style>
 </head>
 <body>
 
     <div class="client-header">
-        <div class="client-identity">
-            <img src="https://www.parcs-naturels-regionaux.fr/sites/federationpnr/files/styles/contenu/public/image/parc/sans_titre.png?itok=z_7I7Msh" alt="Logo PNR" class="client-logo">
+        <div style="display:flex; align-items:center; gap:20px;">
+            <img src="https://www.parcs-naturels-regionaux.fr/sites/federationpnr/files/styles/contenu/public/image/parc/sans_titre.png?itok=z_7I7Msh" alt="Logo" class="client-logo">
             <div>
-                <h1 style="margin:0; font-size:1.6rem; color:var(--success);">PNR des Préalpes d'Azur</h1>
-                <span style="color:var(--text); font-size:1rem;">Simulateur de Logistique en Circuit Court</span>
+                <h1 style="margin:0; color:var(--success);">PNR Préalpes d'Azur</h1>
+                <span>Logistique Circuit Court</span>
             </div>
         </div>
         <div class="assistance-box">
-            <span class="assistance-title">🆘 Assistance Technique</span>
-            <b>Pierre-Alain Mory</b><br>
-            <a href="tel:0783000956">07 83 00 09 56</a><br>
-            <a href="mailto:pierre.alain.mory@dix-autrement.fr">pierre.alain.mory@dix-autrement.fr</a>
+            <b>Assistance</b><br>Pierre-Alain Mory<br>07 83 00 09 56
         </div>
     </div>
 
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h2 style="margin:0; font-size:1.2rem; color:#7f8c8d;">Configuration de la Tournée</h2>
-        <button onclick="resetAll()" class="btn-mini" style="background:var(--danger);">Réinitialiser Tout</button>
+        <h2 style="margin:0; color:#7f8c8d;">Configuration</h2>
+        <button onclick="localStorage.clear(); location.reload();" class="btn-mini" style="background:var(--danger);">Réinitialiser</button>
     </div>
 
     <div class="header-band" id="prod-band">
         <div id="header-form">
             <div class="header-row">
-                <div class="form-group" style="flex: 1.5;"><label>Nom de la ferme ou du point de départ</label><input type="text" id="pName" placeholder="Ex: Ferme du Soleil" oninput="checkProducerValidation()"></div>
-                <div class="form-group" style="flex: 2;"><label>📍 Adresse du Dépôt</label><div style="display:flex; gap:5px;"><input type="text" id="pAddr" placeholder="Chercher une adresse..." style="flex:1;"><button class="btn-mini" style="background:var(--info);" onclick="searchAddress('prod')">🔍</button><button class="btn-mini" id="btn-t-prod" style="background:#95a5a6;" onclick="setMode('prod')">🎯</button></div></div>
+                <div class="form-group" style="flex:1.5;"><label>Nom Ferme/Producteur</label><input type="text" id="pName" placeholder="Ex: Ferme du Soleil"></div>
+                <div class="form-group" style="flex:2;"><label>📍 Adresse Dépôt</label><div style="display:flex; gap:5px;"><input type="text" id="pAddr"><button class="btn-mini" style="background:var(--info);" onclick="searchAddress('prod')">🔍</button></div></div>
             </div>
-            <div class="header-row" style="background: #f8f9fa; padding: 10px; border-radius: 4px; border: 1px solid #eee;">
-                <div class="form-group" style="flex: 1.5;"><label>🚚 Type de Véhicule</label><select id="vType" onchange="saveDepot()"><option>Petit utilitaire (< 3m³)</option><option selected>Fourgon compact (3-6m³)</option><option>Grand fourgon (6-12m³)</option><option>Petit camion (12-20m³)</option><option>Camion lourd (> 20m³)</option></select></div>
-                <div class="form-group"><label>⛽ Énergie</label><select id="fType" onchange="updateView()"><option>Diesel</option><option>Essence</option><option>Électrique</option><option>GNV / Gaz</option><option>Hybride</option></select></div>
-                <div class="form-group"><label>💧 Conso. (L/100km)</label><input type="number" id="vCons" value="8.5" step="0.1" onchange="updateView()"></div>
-                <div class="form-group"><label>💳 Prix (€/L)</label><input type="number" id="fPrice" value="1.75" step="0.01" onchange="updateView()"></div>
+            <div class="header-row" style="background:#f8f9fa; padding:10px; border-radius:4px;">
+                <div class="form-group"><label>🚚 Véhicule</label><select id="vType"><option>Petit utilitaire</option><option selected>Fourgon compact</option><option>Grand fourgon</option><option>Camion</option></select></div>
+                <div class="form-group"><label>Conso (L/100km)</label><input type="number" id="vCons" value="8.5"></div>
+                <div class="form-group"><label>Prix Carb (€/L)</label><input type="number" id="fPrice" value="1.75"></div>
+                <div class="form-group"><label>Coût H (€/h)</label><input type="number" id="cH" value="18"></div>
+                <div class="form-group"><label>Temps Prép (min)</label><input type="number" id="tPrep" value="30"></div>
+                <div class="form-group"><label>Temps Charg (min)</label><input type="number" id="tLoad" value="20"></div>
             </div>
-            <div class="header-row" style="margin-top: 10px;">
-                <div class="form-group" style="flex: 1.2;">
-                    <label>👤 Qui livre ?</label>
-                    <select id="driverType" style="font-weight:bold; color:var(--primary);">
-                        <option>Producteur.rice (Soi-même)</option>
-                        <option>Salarié</option>
-                        <option>Prestataire Extérieur</option>
-                    </select>
-                </div>
-                <div class="form-group"><label>💶 Coût Chargé (€/h)</label><input type="number" id="cH" value="18" onchange="updateView()"></div>
-                <div class="form-group"><label>📦 Prép. Commande (min)</label><input type="number" id="tPrep" value="30" onchange="updateView()"></div>
-                <div class="form-group"><label>⏱️ Chargement (min)</label><input type="number" id="tLoad" value="20" onchange="updateView()"></div>
-            </div>
-            <button id="btn-validate-depot" onclick="lockDepot()">✅ Valider le Dépôt & Passer aux Arrêts</button>
+            <button class="btn-main" onclick="lockDepot()">✅ Valider Dépôt</button>
         </div>
-        <div id="header-summary">
-            <div class="summary-text" id="summary-content">...</div>
-            <button class="btn-mini" style="background:var(--info);" onclick="unlockDepot()">Modifier ✏️</button>
+        <div id="header-summary" style="display:none; justify-content:space-between; align-items:center;">
+            <div id="summary-content" style="font-weight:bold; color:var(--primary);"></div>
+            <button class="btn-mini" style="background:var(--info);" onclick="unlockDepot()">Modifier</button>
         </div>
     </div>
 
     <div class="main-container">
-        <div class="left-panel blocked-area" id="locked-section">
-            <div class="card" style="border-left: 6px solid var(--accent); margin-bottom: 20px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <h3 style="margin:0; font-size:1.1rem; color:var(--accent);">📅 Édition de la Tournée</h3>
-                    <button class="btn-mini" onclick="newTour()" style="background:#95a5a6; font-size:0.8rem;">➕ Nouvelle Tournée</button>
+        <div class="left-panel" id="locked-section" style="opacity:0.5; pointer-events:none;">
+            <div class="card" style="border-left:6px solid var(--accent);">
+                <div style="display:flex; justify-content:space-between;">
+                    <h3 style="margin:0; color:var(--accent);">📅 Tournée</h3>
+                    <button class="btn-mini" style="background:#95a5a6;" onclick="newTour()">➕ Nouvelle</button>
                 </div>
-                <div style="display:flex; gap:10px;">
-                    <div class="form-group" style="flex: 1.5;">
-                        <label>Nom de la Tournée</label>
-                        <input type="text" id="tName" list="tourNameSuggestions" placeholder="Ex: Tournée des Écoles" oninput="updateStatsTitle()">
-                        <datalist id="tourNameSuggestions"></datalist>
-                    </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label>Jour</label>
-                        <select id="tDay" onchange="autoNameTour()">
-                            <option>Lundi</option><option>Mardi</option><option>Mercredi</option><option>Jeudi</option><option>Vendredi</option><option>Samedi</option>
-                        </select>
-                    </div>
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                    <div class="form-group" style="flex:2;"><label>Nom</label><input type="text" id="tName" list="tourSuggestions" oninput="updateStatsTitle()"></div>
+                    <datalist id="tourSuggestions"></datalist>
+                    <div class="form-group"><label>Jour</label><select id="tDay" onchange="autoNameTour()"><option>Lundi</option><option>Mardi</option><option>Mercredi</option><option>Jeudi</option><option>Vendredi</option><option>Samedi</option></select></div>
                 </div>
             </div>
 
-            <div class="card" style="border-left: 6px solid var(--success);">
-                <h3 style="margin-top:0; font-size:1.1rem;">📍 Ajouter un Arrêt</h3>
-                <div style="display:flex; gap:10px; margin-bottom:10px;">
-                    <div class="form-group" style="flex:1.5;"><label>Nom / Lieu</label><input type="text" id="sClient" placeholder="Ex: Restaurant Chez Paul"></div>
-                    <div class="form-group" style="flex:1;"><label>Opération</label><select id="sOpType"><option value="📦">📦 Livraison Client</option><option value="🚜">🚜 Collecte</option><option value="🏬">🏬 Point Relais</option></select></div>
+            <div class="card" style="border-left:6px solid var(--success);">
+                <h3 style="margin:0;">📍 Ajouter Arrêt</h3>
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                    <div class="form-group" style="flex:1.5;"><label>Client</label><input type="text" id="sClient"></div>
+                    <div class="form-group"><label>Opération</label><select id="sOpType"><option value="Livraison">Livraison</option><option value="Collecte">Collecte</option></select></div>
                 </div>
-                <div class="form-group"><label>Localisation</label><div style="display:flex; gap:5px;"><input type="text" id="sAddr" placeholder="Adresse du client..." style="flex:1;"><button class="btn-mini" style="background:var(--info);" onclick="searchAddress('stop')">🔍</button><button class="btn-mini" id="btn-t-stop" style="background:#95a5a6;" onclick="setMode('stop')">🎯</button></div></div>
+                <div class="form-group" style="margin-top:5px;"><label>Adresse</label><div style="display:flex; gap:5px;"><input type="text" id="sAddr"><button class="btn-mini" style="background:var(--info);" onclick="searchAddress('stop')">🔍</button></div></div>
                 <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
-                    <div class="form-group"><label>Valeur March. (€)</label><input type="number" id="sEuro" value="0"></div>
-                    <div class="form-group"><label>Volume (kg)</label><input type="number" id="sVol" value="0"></div>
-                    <div class="form-group"><label>Temps Arrêt (min)</label><input type="number" id="sTime" value="15"></div>
+                    <div class="form-group"><label>CA (€)</label><input type="number" id="sEuro" value="0"></div>
+                    <div class="form-group"><label>Vol (kg)</label><input type="number" id="sVol" value="0"></div>
+                    <div class="form-group"><label>Temps (min)</label><input type="number" id="sTime" value="15"></div>
                 </div>
-                <button class="btn-main" style="background:var(--info); margin-top:20px;" onclick="addStop()">Ajouter à la tournée</button>
+                <button class="btn-main" style="background:var(--info); margin-top:15px;" onclick="addStop()">Ajouter</button>
             </div>
-            
-            <h4 style="color:var(--text);">📋 Ordre de passage (Drag & Drop)</h4>
+
+            <h4>📋 Liste des Arrêts</h4>
             <ul id="stops-list"></ul>
             
             <div class="legend-bar">
-                <span class="legend-tag-title">Ratio Logistique</span>
-                <div class="legend-item"><span class="legend-dot" style="background:#27ae60;"></span> < 10%</div>
-                <div class="legend-item"><span class="legend-dot" style="background:#e67e22;"></span> 10-30%</div>
-                <div class="legend-item"><span class="legend-dot" style="background:#e74c3c;"></span> > 30%</div>
+                <span class="legend-tag-title">Ratio</span>
+                <span><span class="legend-dot" style="background:#27ae60;"></span> <10%</span>
+                <span><span class="legend-dot" style="background:#e67e22;"></span> 10-30%</span>
+                <span><span class="legend-dot" style="background:#e74c3c;"></span> >30%</span>
             </div>
 
-            <button id="btn-save-local" onclick="saveCurrentTour()">💾 SAUVEGARDER CETTE TOURNÉE</button>
+            <button class="btn-main" onclick="saveCurrentTour()">💾 SAUVEGARDER TOURNEE</button>
         </div>
 
         <div class="right-panel">
@@ -221,246 +138,176 @@
             
             <div class="kpi-container">
                 <div class="summary-banner">
-                    <div class="banner-header"><span style="font-size:1.4rem;">📝</span><span id="kpi-tour-title" style="font-weight:700;">RÉCAPITULATIF GLOBAL</span></div>
+                    <div style="font-weight:bold; font-size:1.1rem;">RÉCAPITULATIF COURANT</div>
                     <div class="banner-metrics">
-                        <div><small style="opacity:0.8">COÛT TOTAL TOURNÉE</small><br><span class="summary-value" id="rTotal">0 €</span></div>
-                        <div><small style="opacity:0.8">CA TOTAL TOURNÉE</small><br><span class="summary-value" id="rVal">0 €</span></div>
+                        <div><small>COÛT</small><br><span style="font-size:1.5rem;" id="rTotal">0 €</span></div>
+                        <div><small>CA</small><br><span style="font-size:1.5rem;" id="rVal">0 €</span></div>
                     </div>
                 </div>
-
-                <div class="kpi-card"><div class="kpi-title">Distance & Route</div><div class="kpi-value" id="rDist">0 km</div><div style="font-size:0.7rem;" id="rTime">0h00 conduite</div></div>
-                <div class="kpi-card"><div class="kpi-title">Frais Carburant</div><div class="kpi-value" id="rCostTrans">0 €</div><div style="font-size:0.6rem; color:var(--text);">Basé sur Conso x Prix</div></div>
-                <div class="kpi-card"><div class="kpi-title">Frais Personnel</div><div class="kpi-value" id="rCostOps">0 €</div><div style="font-size:0.7rem;" id="rOps">0h00 service</div></div>
-                <div class="kpi-card" style="grid-column: span 3; border-top: 3px solid var(--accent);">
-                    <div class="kpi-title">RATIO LOGISTIQUE</div>
-                    <div class="kpi-value" style="color:var(--accent); font-size:1.8rem;" id="rRatio">0 %</div>
-                    <div style="font-size:0.7rem; color:var(--text);">(Coût Logistique / Chiffre d'Affaires)</div>
+                <div class="kpi-card"><div>DISTANCE</div><div class="kpi-value" id="rDist">0 km</div></div>
+                <div class="kpi-card"><div>CARBURANT</div><div class="kpi-value" id="rCostTrans">0 €</div></div>
+                <div class="kpi-card"><div>MAIN D'OEUVRE</div><div class="kpi-value" id="rCostOps">0 €</div></div>
+                <div class="kpi-card" style="grid-column:span 3; color:var(--accent);">
+                    <div>RATIO LOGISTIQUE</div><div style="font-size:1.8rem; font-weight:bold;" id="rRatio">0 %</div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="card" style="border-left: 6px solid var(--lib); margin-top:30px;">
-        <h3 style="margin-top:0; font-size:1.2rem; color:var(--lib); margin-bottom:15px;">📂 Mes Tournées Enregistrées (Dossier Complet)</h3>
+    <div class="card" style="border-left:6px solid var(--lib); margin-top:20px;">
+        <h3 style="margin:0; color:var(--lib);">📂 Dossier : Mes Tournées Enregistrées</h3>
         
         <div id="global-totals-container" class="global-stats-box" style="display:none;">
-            <div class="gs-item"><div class="gs-label">💰 CA TOTAL</div><div class="gs-value" id="gt-ca">0 €</div></div>
-            <div class="gs-item"><div class="gs-label">📉 COÛT TOTAL</div><div class="gs-value" id="gt-cost">0 €</div></div>
-            <div class="gs-item"><div class="gs-label">⚖️ RATIO GLOBAL</div><div class="gs-value" id="gt-ratio" style="color:var(--accent);">0 %</div></div>
-            <div class="gs-item"><div class="gs-label">🛣️ DISTANCE</div><div class="gs-value" id="gt-dist">0 km</div></div>
-            <div class="gs-item"><div class="gs-label">⏱️ TEMPS</div><div class="gs-value" id="gt-time">0h00</div></div>
+            <div>💰 CA: <span id="gt-ca">0</span></div>
+            <div>📉 COÛT: <span id="gt-cost">0</span></div>
+            <div>⚖️ RATIO: <span id="gt-ratio">0</span></div>
+            <div>🛣️ KM: <span id="gt-dist">0</span></div>
+            <div>⏱️ TEMPS: <span id="gt-time">0</span></div>
         </div>
 
-        <div id="tours-list-container">
-            <div style="padding:20px; color:#999; font-style:italic; text-align:center;">Aucune tournée enregistrée pour l'instant. Utilisez le formulaire ci-dessus.</div>
-        </div>
+        <div id="tours-list-container"></div>
         
-        <div style="display:flex; justify-content:center; margin-top:20px;">
-            <button id="btn-export-project" onclick="sendProjectData()">🚀 ENVOYER LE PROJET AU PNR (CSV)</button>
+        <div style="text-align:center; margin-top:20px;">
+            <button class="btn-main" style="background:var(--lib); width:300px;" onclick="sendProjectData()">🚀 ENVOYER LE PROJET (CSV)</button>
         </div>
-    </div>
-
-    <div class="dix-footer">
-        <span>Outil conçu et réalisé par</span>
-        <a href="http://www.dix-autrement.fr" target="_blank" class="dix-link">
-            <img src="https://github.com/pierrealainmory-hue/logistique-data-projet/blob/main/logo%20dix%20solutions.jpg?raw=true" alt="Logo DIX Solutions" class="dix-logo-small">
-        </a>
-        <span>| </span>
-        <a href="http://www.dix-autrement.fr" target="_blank" class="dix-link">www.dix-autrement.fr</a>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         const API = "https://update-github-csv-149052175314.europe-west1.run.app/";
-        let map, markers, routeLayer, stops = [], mode = 'prod', pData = { lat:null, lon:null, addr:"" }, sTemp = { lat:null, lon:null };
-        let lastRouteData = null; 
-        
-        let savedTours = [];
-        let currentTourId = null; 
-        let currentStats = { cost:0, ca:0, ratio:0, dist:0, time:0 };
+        let map, markers, routeLayer, stops = [], pData = {lat:null, lon:null, addr:""}, sTemp = {lat:null, lon:null};
+        let savedTours = [], currentTourId = null;
+        let currentStats = {cost:0, ca:0, ratio:0, dist:0, time:0};
 
         window.onload = function() {
             map = L.map('map').setView([43.76, 6.90], 10);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-            markers = L.layerGroup().addTo(map);
-            routeLayer = L.layerGroup().addTo(map);
+            markers = L.layerGroup().addTo(map); routeLayer = L.layerGroup().addTo(map);
             map.on('click', onMapClick);
-            setTimeout(function(){ map.invalidateSize(); }, 500);
-            Sortable.create(document.getElementById('stops-list'), { animation: 150, handle: '.handle', onEnd: reorderStops });
-            
-            loadGlobalDepot(); 
-            loadToursLibrary(); 
-            setMode('prod'); 
-            checkProducerValidation();
-            autoNameTour();
-            updateTourNameSuggestions();
+            Sortable.create(document.getElementById('stops-list'), {animation:150, handle:'.handle', onEnd:reorderStops});
+            loadSaved(); autoNameTour(); updateSuggestions();
         };
 
-        function formatMinutes(mins) { let h = Math.floor(mins / 60); let m = Math.round(mins % 60); return `${h}h${m.toString().padStart(2,'0')}`; }
-        function updateTourNameSuggestions() { const dataList = document.getElementById('tourNameSuggestions'); dataList.innerHTML = ''; const defaults = ["Tournée Restaurants", "Tournée Cantines", "Tournée Magasins", "Tournée Particuliers", "Tournée Écoles", "Tournée AMAP"]; const existing = savedTours.map(t => t.name); const all = [...new Set([...defaults, ...existing])]; all.forEach(name => { let opt = document.createElement('option'); opt.value = name; dataList.appendChild(opt); }); }
-        function generateDefaultName(day) { const prefix = `TOURNEE - ${day} - `; let max = 0; savedTours.forEach(t => { if(t.name && t.name.startsWith(prefix)) { let rest = t.name.substring(prefix.length); let num = parseInt(rest); if(!isNaN(num) && num > max) max = num; } }); return prefix + (max + 1); }
-        function autoNameTour() { if(!currentTourId || document.getElementById('tName').value === "") { const day = document.getElementById('tDay').value; const newName = generateDefaultName(day); document.getElementById('tName').value = newName; updateStatsTitle(); } }
+        function formatMin(m) { return Math.floor(m/60)+"h"+Math.round(m%60).toString().padStart(2,'0'); }
+        function updateSuggestions() { 
+            const dl = document.getElementById('tourSuggestions'); dl.innerHTML = ''; 
+            [...new Set(["Tournée Restos", "Tournée Écoles", "Tournée Magasins", ...savedTours.map(t=>t.name)])].forEach(n => { let o=document.createElement('option'); o.value=n; dl.appendChild(o); });
+        }
+        function autoNameTour() { if(!currentTourId && document.getElementById('tName').value==="") { document.getElementById('tName').value = "Tournée - "+document.getElementById('tDay').value+" - "+(savedTours.filter(t=>t.day===document.getElementById('tDay').value).length+1); updateStatsTitle(); } }
 
         function saveDepot() {
-            pData.name = document.getElementById('pName').value;
-            pData.addr = document.getElementById('pAddr').value;
-            const depotSettings = {
-                pData: pData,
-                veh: { type: document.getElementById('vType').value, fuel: document.getElementById('fType').value, cons: document.getElementById('vCons').value, price: document.getElementById('fPrice').value, driver: document.getElementById('driverType').value, cH: document.getElementById('cH').value, tPrep: document.getElementById('tPrep').value, tLoad: document.getElementById('tLoad').value }
-            };
-            localStorage.setItem('logistique_depot_v71', JSON.stringify(depotSettings));
-            updateView();
+            const d = { pData, veh: { type:document.getElementById('vType').value, cons:document.getElementById('vCons').value, price:document.getElementById('fPrice').value, cH:document.getElementById('cH').value, tPrep:document.getElementById('tPrep').value, tLoad:document.getElementById('tLoad').value } };
+            localStorage.setItem('v84_depot', JSON.stringify(d));
+        }
+        function loadSaved() {
+            let s = localStorage.getItem('v84_depot');
+            if(s) { const d=JSON.parse(s); pData=d.pData; document.getElementById('pName').value=d.pData.name||""; document.getElementById('pAddr').value=d.pData.addr||""; if(d.veh) { document.getElementById('vType').value=d.veh.type; document.getElementById('vCons').value=d.veh.cons; document.getElementById('fPrice').value=d.veh.price; document.getElementById('cH').value=d.veh.cH; document.getElementById('tPrep').value=d.veh.tPrep; document.getElementById('tLoad').value=d.veh.tLoad; } }
+            let t = localStorage.getItem('v84_tours'); savedTours = t ? JSON.parse(t) : []; renderTours();
         }
 
-        function loadGlobalDepot() {
-            let s = localStorage.getItem('logistique_depot_v71');
-            if(s) {
-                const d = JSON.parse(s);
-                pData = d.pData || { lat:null, lon:null, addr:"" };
-                document.getElementById('pName').value = pData.name || "";
-                document.getElementById('pAddr').value = pData.addr || "";
-                if(d.veh) { document.getElementById('vType').value = d.veh.type; document.getElementById('fType').value = d.veh.fuel; document.getElementById('vCons').value = d.veh.cons; document.getElementById('fPrice').value = d.veh.price; document.getElementById('driverType').value = d.veh.driver; document.getElementById('cH').value = d.veh.cH; document.getElementById('tPrep').value = d.veh.tPrep; document.getElementById('tLoad').value = d.veh.tLoad; }
-            }
-        }
-
-        function loadToursLibrary() { let s = localStorage.getItem('logistique_tours_v71'); savedTours = s ? JSON.parse(s) : []; updateTourNameSuggestions(); renderToursList(); }
-
-        function renderToursList() {
-            const container = document.getElementById('tours-list-container');
-            const totalBox = document.getElementById('global-totals-container');
-            if(savedTours.length === 0) { container.innerHTML = '<div style="padding:20px; color:#999; font-style:italic; text-align:center;">Aucune tournée enregistrée pour l\'instant. Utilisez le formulaire ci-dessus.</div>'; totalBox.style.display = "none"; return; }
-            container.innerHTML = '';
-            let gCA = 0, gCost = 0, gDist = 0, gTime = 0;
+        function renderTours() {
+            const c = document.getElementById('tours-list-container'); c.innerHTML = savedTours.length ? "" : "<div style='text-align:center;color:#999;padding:10px;'>Aucune tournée.</div>";
+            let gCA=0, gCost=0, gDist=0, gTime=0;
             savedTours.forEach(t => {
-                const div = document.createElement('div');
-                div.className = 'tour-row ' + (t.id === currentTourId ? 'active' : '');
-                let ca = t.stats ? t.stats.ca : 0; let cost = t.stats ? t.stats.cost : 0; let ratio = t.stats ? t.stats.ratio : 0; let dist = t.stats && t.stats.dist ? t.stats.dist.toFixed(1) : "0"; let time = t.stats && t.stats.time ? t.stats.time : 0; let stopCount = t.stops ? t.stops.length : 0; let preview = t.stops ? t.stops.map(s => s.client).slice(0, 6).join(', ') + (t.stops.length > 6 ? "..." : "") : "";
-                gCA += ca; gCost += cost; gDist += parseFloat(dist); gTime += time;
-                div.innerHTML = `<div onclick="loadTour('${t.id}')"><div class="t-id"><strong>${t.name}</strong></div><div class="t-day">${t.day}</div></div><div class="t-metrics" onclick="loadTour('${t.id}')"><span style="color:var(--success);">💰 ${Math.round(ca)}€</span><span style="color:var(--danger);">📉 ${Math.round(cost)}€</span><span style="color:var(--lib);">⚖️ ${ratio}%</span><span>🛣️ ${dist} km</span><span>⏱️ ${formatMinutes(time)}</span><span>🛑 ${stopCount} arrêts</span></div><div class="t-preview" onclick="loadTour('${t.id}')">${preview}</div><div class="t-actions"><button class="btn-mini" style="background:var(--lib); padding:4px 8px;" onclick="loadTour('${t.id}')">✏️</button><button class="btn-mini" style="background:var(--danger); padding:4px 8px;" onclick="deleteTour('${t.id}')">✕</button></div>`; container.appendChild(div);
+                let div = document.createElement('div'); div.className = 'tour-row ' + (t.id===currentTourId?'active':'');
+                let st = t.stats || {ca:0, cost:0, dist:0, time:0};
+                gCA+=st.ca; gCost+=st.cost; gDist+=parseFloat(st.dist); gTime+=st.time;
+                div.innerHTML = `<div onclick="loadTour('${t.id}')"><div class="t-id"><strong>${t.name}</strong></div><div class="t-day">${t.day}</div></div>
+                <div class="t-metrics" onclick="loadTour('${t.id}')"><span>💰 ${Math.round(st.ca)}€</span><span>📉 ${Math.round(st.cost)}€</span><span>🛣️ ${st.dist}km</span><span>🛑 ${t.stops.length}</span></div>
+                <div class="t-actions"><button class="btn-mini" style="background:var(--danger);" onclick="deleteTour('${t.id}')">✕</button></div>`;
+                c.appendChild(div);
             });
-            totalBox.style.display = "flex";
-            document.getElementById('gt-ca').innerText = Math.round(gCA) + " €"; document.getElementById('gt-cost').innerText = Math.round(gCost) + " €"; document.getElementById('gt-dist').innerText = Math.round(gDist) + " km"; document.getElementById('gt-time').innerText = formatMinutes(gTime);
-            let gRatio = gCA > 0 ? (gCost / gCA * 100).toFixed(1) : 0; document.getElementById('gt-ratio').innerText = gRatio + " %";
+            document.getElementById('global-totals-container').style.display = savedTours.length ? "flex" : "none";
+            document.getElementById('gt-ca').innerText = Math.round(gCA)+" €"; document.getElementById('gt-cost').innerText = Math.round(gCost)+" €"; document.getElementById('gt-dist').innerText = Math.round(gDist)+" km"; document.getElementById('gt-time').innerText = formatMin(gTime); document.getElementById('gt-ratio').innerText = gCA>0 ? (gCost/gCA*100).toFixed(1)+" %" : "0 %";
         }
 
         function saveCurrentTour() {
-            const tName = document.getElementById('tName').value; if(!tName) return alert("Veuillez donner un nom à la tournée.");
-            const tourData = { id: currentTourId || Date.now().toString(), name: tName, day: document.getElementById('tDay').value, stops: stops, stats: { ...currentStats } };
-            const idx = savedTours.findIndex(t => t.id === tourData.id); if(idx >= 0) savedTours[idx] = tourData; else savedTours.push(tourData);
-            currentTourId = tourData.id; localStorage.setItem('logistique_tours_v71', JSON.stringify(savedTours)); saveDepot();
-            updateTourNameSuggestions(); renderToursList(); alert("✅ Tournée sauvegardée ! Vous pouvez continuer à travailler dessus.");
-            setTimeout(() => { let rows = document.querySelectorAll('.tour-row'); if(rows.length > 0) { rows.forEach(r => { if(r.classList.contains('active')) r.classList.add('newly-saved'); }); } }, 100);
+            if(!document.getElementById('tName').value) return alert("Nom manquant");
+            const t = { id: currentTourId || Date.now().toString(), name: document.getElementById('tName').value, day: document.getElementById('tDay').value, stops: stops, stats: {...currentStats} };
+            const i = savedTours.findIndex(x => x.id === t.id); if(i>=0) savedTours[i]=t; else savedTours.push(t);
+            localStorage.setItem('v84_tours', JSON.stringify(savedTours)); saveDepot(); renderTours(); alert("Tournée sauvegardée !");
         }
+        function loadTour(id) { const t = savedTours.find(x=>x.id===id); if(t) { currentTourId=t.id; document.getElementById('tName').value=t.name; document.getElementById('tDay').value=t.day; stops=t.stops; updateView(); } }
+        function newTour() { if(confirm("Nouvelle tournée ?")) { currentTourId=null; stops=[]; updateView(); autoNameTour(); } }
+        function deleteTour(id) { if(confirm("Supprimer ?")) { savedTours=savedTours.filter(x=>x.id!==id); localStorage.setItem('v84_tours', JSON.stringify(savedTours)); if(currentTourId===id) newTour(); else renderTours(); } }
 
-        function loadTour(id) { const tour = savedTours.find(t => t.id === id); if(tour) { currentTourId = tour.id; document.getElementById('tName').value = tour.name; document.getElementById('tDay').value = tour.day; stops = tour.stops || []; updateView(); updateStatsTitle(); renderToursList(); window.scrollTo({ top: 0, behavior: 'smooth' }); } }
-        function newTour() { if(stops.length > 0 && !confirm("Voulez-vous vider la carte pour créer une nouvelle tournée ?")) return; currentTourId = null; document.getElementById('tDay').value = "Lundi"; stops = []; currentStats = { cost:0, ca:0, ratio:0, dist:0, time:0 }; autoNameTour(); updateView(); updateStatsTitle(); renderToursList(); }
-        function deleteTour(id) { if(!confirm("Supprimer cette tournée ?")) return; savedTours = savedTours.filter(t => t.id !== id); localStorage.setItem('logistique_tours_v71', JSON.stringify(savedTours)); if(currentTourId === id) newTour(); else renderToursList(); }
-        function checkProducerValidation() { const pNameInput = document.getElementById('pName'); const pAddrInput = document.getElementById('pAddr'); const band = document.getElementById('prod-band'); const btnValide = document.getElementById('btn-validate-depot'); let nameOk = pNameInput.value.trim().length > 0; let addrOk = pData.lat !== null && pAddrInput.value.trim().length > 0; if(nameOk) pNameInput.classList.add('input-valid'); else pNameInput.classList.remove('input-valid'); if(addrOk) pAddrInput.classList.add('input-valid'); else pAddrInput.classList.remove('input-valid'); if(nameOk && addrOk) { band.classList.add('validated'); btnValide.classList.add('active'); btnValide.disabled = false; } else { band.classList.remove('validated'); btnValide.classList.remove('active'); btnValide.disabled = true; } saveDepot(); }
-        
-        function lockDepot() {
-            document.getElementById('header-form').style.display = 'none'; document.getElementById('header-summary').style.display = 'flex';
-            const name = document.getElementById('pName').value; let rawAddr = document.getElementById('pAddr').value; let addrParts = rawAddr.split(',').map(s => s.trim()); let shortAddr = addrParts.slice(0, 3).join(', '); let zipMatch = rawAddr.match(/\b\d{5}\b/); if(zipMatch) shortAddr += " (" + zipMatch[0] + ")"; const tPrep = parseFloat(document.getElementById('tPrep').value) || 0; const tLoad = parseFloat(document.getElementById('tLoad').value) || 0; const totalTime = tPrep + tLoad; const veh = document.getElementById('vType').value; const cons = document.getElementById('vCons').value;
-            document.getElementById('summary-content').innerHTML = `<span>✅ <strong>${name}</strong></span><span class="sep">|</span><span>📍 ${shortAddr}</span><span class="sep">|</span><span>⏱️ ${totalTime} min</span><span class="sep">|</span><span>🚚 ${veh} (${cons}L/100km)</span>`;
-            document.getElementById('locked-section').classList.remove('blocked-area'); setMode('stop'); setTimeout(function(){ map.invalidateSize(); }, 200);
+        function checkProducerValidation() {
+            let ok = document.getElementById('pName').value && pData.lat;
+            let b = document.getElementById('prod-band');
+            if(ok) { b.classList.add('validated'); document.getElementById('btn-validate-depot').disabled=false; document.getElementById('btn-validate-depot').style.opacity=1; }
+            saveDepot();
         }
-        function unlockDepot() { document.getElementById('header-form').style.display = 'block'; document.getElementById('header-summary').style.display = 'none'; document.getElementById('locked-section').classList.add('blocked-area'); setMode('prod'); }
-        function updateTitle() { checkProducerValidation(); }
-        function resetAll() { if(confirm("Voulez-vous tout réinitialiser ?")) { localStorage.clear(); location.reload(); } }
-        function setMode(m) { mode = m; document.getElementById('btn-t-prod').style.background = m==='prod' ? 'var(--accent)' : '#95a5a6'; document.getElementById('btn-t-stop').style.background = m==='stop' ? 'var(--accent)' : '#95a5a6'; }
-        function onMapClick(e) { if (mode === 'stop' && document.getElementById('locked-section').classList.contains('blocked-area')) return; let lat = e.latlng.lat, lon = e.latlng.lng; fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`).then(r=>r.json()).then(d=>{ if(mode==='prod'){ pData={lat, lon, addr:d.display_name}; document.getElementById('pAddr').value=d.display_name; checkProducerValidation(); } else { sTemp={lat, lon}; document.getElementById('sAddr').value=d.display_name; } updateView(); }); }
-        function searchAddress(target) { let q = document.getElementById(target==='prod'?'pAddr':'sAddr').value; fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`).then(r=>r.json()).then(res=>{ if(res.length>0){ let lat=parseFloat(res[0].lat), lon=parseFloat(res[0].lon); map.setView([lat, lon], 14); if(target==='prod'){ pData={lat, lon, addr:res[0].display_name}; document.getElementById('pAddr').value=res[0].display_name; checkProducerValidation(); } else { sTemp={lat, lon}; document.getElementById('sAddr').value=res[0].display_name; } updateView(); } }); }
-        function showTempMarker(lat, lon) { }
-        function updateStatsTitle() { const tourName = document.getElementById('tName').value.trim(); const titleElem = document.getElementById('kpi-tour-title'); if(tourName) titleElem.innerText = "RÉCAPITULATIF GLOBAL : " + tourName.toUpperCase(); else titleElem.innerText = "RÉCAPITULATIF GLOBAL"; }
-        function addStop() { if(!pData.lat || !sTemp.lat) return alert("Position manquante."); let cName = document.getElementById('sClient').value.trim(); if(!cName) cName = "Arrêt " + (stops.length + 1); stops.push({ client:cName, icon:document.getElementById('sOpType').value, euro:parseFloat(document.getElementById('sEuro').value)||0, vol:parseFloat(document.getElementById('sVol').value)||0, time:parseFloat(document.getElementById('sTime').value)||15, lat:sTemp.lat, lon:sTemp.lon, addr:document.getElementById('sAddr').value, id:Date.now() }); sTemp={lat:null, lon:null}; document.getElementById('sAddr').value=""; document.getElementById('sClient').value=""; updateView(); }
-        function editStop(index) { let s = stops[index]; document.getElementById('sClient').value = s.client; document.getElementById('sOpType').value = s.icon; document.getElementById('sAddr').value = s.addr; document.getElementById('sEuro').value = s.euro; document.getElementById('sVol').value = s.vol; document.getElementById('sTime').value = s.time; sTemp = { lat: s.lat, lon: s.lon }; stops.splice(index, 1); updateView(); document.getElementById('sClient').focus(); }
-        function reorderStops() { let ns=[]; document.querySelectorAll('.stop-item').forEach(it=>{ const id = it.getAttribute('data-id'); if(id) { const found = stops.find(s=>s.id===parseInt(id)); if(found) ns.push(found); } }); stops=ns; updateView(); }
+        function lockDepot() { document.getElementById('header-form').style.display='none'; document.getElementById('header-summary').style.display='flex'; document.getElementById('summary-content').innerText = `✅ ${document.getElementById('pName').value} | ${pData.addr.split(',')[0]}`; document.getElementById('locked-section').style.opacity=1; document.getElementById('locked-section').style.pointerEvents='auto'; setTimeout(()=>map.invalidateSize(),200); }
+        function unlockDepot() { document.getElementById('header-form').style.display='block'; document.getElementById('header-summary').style.display='none'; document.getElementById('locked-section').style.opacity=0.5; document.getElementById('locked-section').style.pointerEvents='none'; }
+        
+        function onMapClick(e) { fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lng}`).then(r=>r.json()).then(d=>{ if(document.getElementById('header-form').style.display!=='none'){ pData={lat:e.latlng.lat, lon:e.latlng.lng, addr:d.display_name, name:document.getElementById('pName').value}; document.getElementById('pAddr').value=d.display_name; checkProducerValidation(); updateView(); } else { sTemp={lat:e.latlng.lat, lon:e.latlng.lng}; document.getElementById('sAddr').value=d.display_name; L.circleMarker(e.latlng, {color:'red'}).addTo(markers); } }); }
+        function searchAddress(t) { let q=document.getElementById(t==='prod'?'pAddr':'sAddr').value; fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}&limit=1`).then(r=>r.json()).then(d=>{ if(d[0]) { let ll=[d[0].lat, d[0].lon]; map.setView(ll,14); if(t==='prod'){ pData={lat:ll[0], lon:ll[1], addr:d[0].display_name}; document.getElementById('pAddr').value=d[0].display_name; checkProducerValidation(); updateView(); } else { sTemp={lat:ll[0], lon:ll[1]}; document.getElementById('sAddr').value=d[0].display_name; L.circleMarker(ll, {color:'red'}).addTo(markers); } } }); }
+
+        function addStop() { if(!sTemp.lat) return alert("Position ?"); stops.push({ id:Date.now(), client:document.getElementById('sClient').value||"Client", icon:document.getElementById('sOpType').value, lat:sTemp.lat, lon:sTemp.lon, addr:document.getElementById('sAddr').value, euro:parseFloat(document.getElementById('sEuro').value)||0, vol:parseFloat(document.getElementById('sVol').value)||0, time:parseFloat(document.getElementById('sTime').value)||15 }); sTemp={lat:null}; document.getElementById('sAddr').value=""; updateView(); }
+        function editStop(i) { let s=stops[i]; document.getElementById('sClient').value=s.client; document.getElementById('sEuro').value=s.euro; document.getElementById('sVol').value=s.vol; document.getElementById('sTime').value=s.time; sTemp={lat:s.lat, lon:s.lon}; stops.splice(i,1); updateView(); }
+        function reorderStops() { let ns=[]; document.querySelectorAll('.stop-item').forEach(e=>ns.push(stops.find(s=>s.id==e.getAttribute('data-id')))); stops=ns; updateView(); }
 
         function updateView() {
-            markers.clearLayers(); routeLayer.clearLayers(); const ul=document.getElementById('stops-list'); ul.innerHTML="";
-            if(pData.lat) L.marker([pData.lat, pData.lon], {icon: L.divIcon({html:'🏠', className:''})}).addTo(markers);
-            stops.forEach((s, i) => { let rawAddr = s.addr.split(',').map(p => p.trim()); let shortAddr = rawAddr.slice(0, 3).join(', '); let zipMatch = s.addr.match(/\b\d{5}\b/); if(zipMatch) shortAddr += " (" + zipMatch[0] + ")"; ul.innerHTML += `<li class="stop-item" data-id="${s.id}"><div class="stop-content"><span class="handle">☰</span>${s.icon} <div class="stop-info"><span class="stop-name">${i+1}. ${s.client}</span><span class="stop-addr">${shortAddr}</span></div></div><div class="stop-meta"><span class="stop-euro">${s.euro} €</span><span class="stop-dist-tag" id="dist-stop-${i}">... km</span><div class="ratio-tag" id="ratio-stop-${i}">...</div></div><div class="stop-actions"><button class="btn-icon" onclick="editStop(${i})" title="Modifier">✏️</button><button class="btn-icon" onclick="stops.splice(${i},1);updateView()" title="Supprimer" style="color:#e74c3c;">✕</button></div></li>`; L.circleMarker([s.lat, s.lon], {radius:4, color:'var(--info)', fillOpacity:1}).addTo(markers); });
-            if(pData.lat && stops.length > 0) { let rRaw = pData.addr.split(',').map(p => p.trim()); let rShort = rRaw.slice(0, 3).join(', '); let rZip = pData.addr.match(/\b\d{5}\b/); if(rZip) rShort += " (" + rZip[0] + ")"; ul.innerHTML += `<li class="stop-item return-item"><div class="stop-content"><span style="font-size:1.2rem; margin-right:10px;">🏁</span><div class="stop-info"><span class="stop-name">Retour au point de départ</span><span class="stop-addr">${rShort}</span></div></div><div class="stop-meta"><span class="stop-euro" style="color:#7f8c8d;" id="return-cost">0 €</span><span class="stop-dist-tag" id="dist-return">... km</span></div><div class="stop-actions" style="width:60px;"></div></li>`; }
-            if(sTemp.lat) { L.circleMarker([sTemp.lat, sTemp.lon], { radius: 5, color: '#e74c3c', fillColor: '#c0392b', fillOpacity: 0.8, weight: 3 }).addTo(markers); }
-            if(pData.lat && stops.length > 0) calcRoute(); else updateStats(0,0); updateStatsTitle();
+            markers.clearLayers(); routeLayer.clearLayers(); document.getElementById('stops-list').innerHTML="";
+            if(pData.lat) L.marker([pData.lat, pData.lon]).addTo(markers);
+            stops.forEach((s,i) => {
+                document.getElementById('stops-list').innerHTML += `<li class="stop-item" data-id="${s.id}"><div class="stop-content"><b>${i+1}</b> ${s.client}</div><div class="stop-meta"><span class="stop-dist-tag" id="d-${i}">...</span></div><div class="stop-actions"><button class="btn-icon" onclick="editStop(${i})">✏️</button><button class="btn-icon" onclick="stops.splice(${i},1);updateView()">✕</button></div></li>`;
+                L.circleMarker([s.lat, s.lon]).addTo(markers);
+            });
+            if(pData.lat && stops.length) calcRoute(); else updateStats(0,0);
         }
 
         function calcRoute() {
             let pts = [[pData.lon, pData.lat], ...stops.map(s=>[s.lon, s.lat]), [pData.lon, pData.lat]];
             fetch(`https://router.project-osrm.org/route/v1/driving/${pts.map(p=>p.join(',')).join(';')}?overview=full&geometries=geojson`).then(r=>r.json()).then(res=>{
                 if(res.code==='Ok'){
-                    let rd=res.routes[0]; lastRouteData = rd; L.polyline(rd.geometry.coordinates.map(c=>[c[1], c[0]]), {color:'var(--info)', weight:5}).addTo(routeLayer); map.fitBounds(L.featureGroup(markers.getLayers()).getBounds().pad(0.2)); updateStats(rd.distance/1000, rd.duration/60);
-                    const cH = parseFloat(document.getElementById('cH').value) || 0; const conso = parseFloat(document.getElementById('vCons').value) || 0; const fuelPrice = parseFloat(document.getElementById('fPrice').value) || 0;
-                    if(rd.legs && rd.legs.length > 0) { stops.forEach((s, i) => { let legDist = rd.legs[i].distance / 1000; let legDur = rd.legs[i].duration / 60; const costFuel = (legDist / 100) * conso * fuelPrice; const costTime = ((legDur + s.time) / 60) * cH; const totalLegCost = costFuel + costTime; let ratio = 0; let ratioText = "N/A"; let ratioClass = "ratio-bad"; if(s.euro > 0) { ratio = (totalLegCost / s.euro) * 100; ratioText = "Ratio Logistique " + ratio.toFixed(0) + " %"; if(ratio < 10) ratioClass = "ratio-good"; else if(ratio < 30) ratioClass = "ratio-mid"; } else { ratioText = "Ratio Logistique ∞"; } let elDist = document.getElementById(`dist-stop-${i}`); if(elDist) elDist.innerText = legDist.toFixed(1) + " km"; let elRatio = document.getElementById(`ratio-stop-${i}`); if(elRatio) { elRatio.innerText = ratioText; elRatio.className = "ratio-tag " + ratioClass; } }); let returnLegIndex = stops.length; if(rd.legs[returnLegIndex]) { let retDist = rd.legs[returnLegIndex].distance / 1000; let retDur = rd.legs[returnLegIndex].duration / 60; const retFuel = (retDist / 100) * conso * fuelPrice; const retTime = (retDur / 60) * cH; const retTotal = retFuel + retTime; let elRetDist = document.getElementById('dist-return'); if(elRetDist) elRetDist.innerText = retDist.toFixed(1) + " km"; let elRetCost = document.getElementById('return-cost'); if(elRetCost) elRetCost.innerText = "-" + retTotal.toFixed(2) + " €"; } }
+                    let r=res.routes[0]; L.polyline(r.geometry.coordinates.map(c=>[c[1],c[0]]), {color:'blue'}).addTo(routeLayer); map.fitBounds(routeLayer.getBounds());
+                    updateStats(r.distance/1000, r.duration/60);
+                    r.legs.forEach((l,i) => { if(i<stops.length) document.getElementById(`d-${i}`).innerText = (l.distance/1000).toFixed(1)+"km"; });
                 }
             });
         }
 
-        function updateStats(dist, driveTime) {
-            const cH = parseFloat(document.getElementById('cH').value) || 0; const conso = parseFloat(document.getElementById('vCons').value) || 0; const prixCarb = parseFloat(document.getElementById('fPrice').value) || 0; const prep = parseFloat(document.getElementById('tPrep').value) || 0; const load = parseFloat(document.getElementById('tLoad').value) || 0;
-            const sTime = stops.reduce((a,b)=>a+b.time, 0) + prep + load + driveTime; const fuelCost = (dist / 100) * conso * prixCarb; const laborCost = (sTime / 60) * cH; const totalCost = fuelCost + laborCost; const ca = stops.reduce((a,b)=>a+b.euro, 0);
-            currentStats.cost = totalCost; currentStats.ca = ca; currentStats.ratio = ca > 0 ? (totalCost/ca*100).toFixed(1) : 0; currentStats.dist = dist; currentStats.time = sTime;
-            document.getElementById('rDist').innerText=dist.toFixed(1)+" km"; document.getElementById('rTime').innerText=Math.floor(driveTime/60)+"h"+Math.round(driveTime%60).toString().padStart(2,'0'); document.getElementById('rOps').innerText=Math.floor(sTime/60)+"h"+Math.round(sTime%60).toString().padStart(2,'0'); document.getElementById('rCostTrans').innerText=fuelCost.toFixed(2)+" €"; document.getElementById('rCostOps').innerText=laborCost.toFixed(2)+" €"; document.getElementById('rTotal').innerText=totalCost.toFixed(2)+" €"; document.getElementById('rVal').innerText=ca.toFixed(2)+" €"; document.getElementById('rRatio').innerText=currentStats.ratio+" %";
+        function updateStats(km, min) {
+            let ch = parseFloat(document.getElementById('cH').value)||0, conso = parseFloat(document.getElementById('vCons').value)||0, price = parseFloat(document.getElementById('fPrice').value)||0;
+            let time = min + stops.reduce((a,b)=>a+b.time,0) + (parseFloat(document.getElementById('tPrep').value)||0) + (parseFloat(document.getElementById('tLoad').value)||0);
+            let cost = (km/100*conso*price) + (time/60*ch);
+            let ca = stops.reduce((a,b)=>a+b.euro,0);
+            currentStats = { cost, ca, ratio: ca>0?(cost/ca*100).toFixed(1):0, dist:km.toFixed(1), time };
+            document.getElementById('rTotal').innerText=cost.toFixed(0)+" €"; document.getElementById('rVal').innerText=ca.toFixed(0)+" €"; document.getElementById('rRatio').innerText=currentStats.ratio+" %";
+            document.getElementById('rDist').innerText=km.toFixed(1)+" km"; document.getElementById('rCostTrans').innerText=(km/100*conso*price).toFixed(0)+" €"; document.getElementById('rCostOps').innerText=(time/60*ch).toFixed(0)+" €";
         }
 
         function sendProjectData() {
-            if(savedTours.length === 0) { alert("Aucune tournée enregistrée à envoyer."); return; }
-            const btn=document.getElementById('btn-export-project'); btn.disabled=true; btn.innerText="⏳ Envoi du projet...";
+            const btn = document.querySelector('button[onclick="sendProjectData()"]');
+            btn.innerText = "⏳ Envoi..."; btn.disabled = true;
             const dateStr = new Date().toISOString().split('T')[0];
-            const cH = parseFloat(document.getElementById('cH').value) || 0; const conso = parseFloat(document.getElementById('vCons').value) || 0; const prixCarb = parseFloat(document.getElementById('fPrice').value) || 0;
-            const rows = [];
-
-            savedTours.forEach(tour => {
-                const tourId = tour.id;
-                // V83 : MAPPING STRICT AVEC HEADER
-                const common = { 
-                    "Producteur": document.getElementById('pName').value, 
-                    "Date de Livraison": dateStr, 
-                    "Jour": tour.day,
-                    "Tournée ID": tourId, 
-                    "Véhicule": document.getElementById('vType').value, 
-                    "Carburant": document.getElementById('fType').value,
-                    "Conso (L/100km)": conso, 
-                    "Prix Carburant (€/L)": prixCarb, 
-                    "Type Livreur": document.getElementById('driverType').value,
-                    "Cout Horaire (€/h)": cH, 
-                    "Temps Préparation (min)": parseFloat(document.getElementById('tPrep').value), 
-                    "Temps Chargement Départ (min)": parseFloat(document.getElementById('tLoad').value) 
+            let rows = [];
+            
+            // CONSTRUIRE LES LIGNES SELON LE HEADER V84
+            savedTours.forEach(t => {
+                const base = {
+                    Date: dateStr, Producteur: document.getElementById('pName').value, Tournee_Nom: t.name, Tournee_ID: t.id, Jour: t.day,
+                    Vehicule: document.getElementById('vType').value, Conso: document.getElementById('vCons').value, Prix_Carb: document.getElementById('fPrice').value,
+                    Cout_H: document.getElementById('cH').value, Depot_Nom: "Depot", Depot_Lat: pData.lat, Depot_Lon: pData.lon
                 };
-
                 // DEPART
-                rows.push({
-                    ...common, 
-                    "Ordre d'Arrêt": 0, "Client / Point de Livraison": "Départ Dépôt", 
-                    "Adresse Complète": pData.addr, "lat": pData.lat, "lon": pData.lon, "Type Arrêt": "Départ", 
-                    "Montant (€)": 0, "Volume (Kg Normalisé)": 0, "Temps d'arrêt (min)": 0,
-                    "Distance_Etape_km": 0, "Temps_Trajet_min": 0, "Cout_Transport_Etape": 0, "Cout_Arret_Etape": 0, "Cout_Total_Etape": 0, "Ratio_Etape_%": 0
+                rows.push({...base, Ordre:0, Client_Nom:"Départ", Type_Op:"Depot", Volume:0, CA:0, Temps_Arret:0});
+                // ARRETS (Simplifié pour export sans recalcul route ligne par ligne ici)
+                if(t.stops) t.stops.forEach((s,i) => {
+                    rows.push({...base, Ordre:i+1, Client_Nom:s.client, Client_Adresse:s.addr, Client_Lat:s.lat, Client_Lon:s.lon, Type_Op:s.icon, Volume:s.vol, CA:s.euro, Temps_Arret:s.time});
                 });
-
-                if(tour.stops) {
-                    tour.stops.forEach((s, i) => { 
-                        rows.push({
-                            ...common, 
-                            "Ordre d'Arrêt": i+1, "Client / Point de Livraison": s.client, "Adresse Complète": s.addr, 
-                            "lat": s.lat, "lon": s.lon, "Montant (€)": s.euro, "Volume (Kg Normalisé)": s.vol, "Temps d'arrêt (min)": s.time, "Type Arrêt": s.icon,
-                            "Distance_Etape_km": 0, "Temps_Trajet_min": 0, "Cout_Transport_Etape": 0, "Cout_Arret_Etape": 0, "Cout_Total_Etape": 0, "Ratio_Etape_%": 0
-                        }); 
-                    });
-                    
-                    rows.push({
-                        ...common, 
-                        "Ordre d'Arrêt": tour.stops.length+1, "Client / Point de Livraison": "Retour Dépôt", "Adresse Complète": pData.addr, 
-                        "lat": pData.lat, "lon": pData.lon, "Type Arrêt": "Retour", 
-                        "Montant (€)": 0, "Volume (Kg Normalisé)": 0, "Temps d'arrêt (min)": 0,
-                        "Distance_Etape_km": 0, "Temps_Trajet_min": 0, "Cout_Transport_Etape": 0, "Cout_Arret_Etape": 0, "Cout_Total_Etape": 0, "Ratio_Etape_%": 0
-                    });
-                }
+                // RETOUR
+                rows.push({...base, Ordre:99, Client_Nom:"Retour", Type_Op:"Depot", Volume:0, CA:0, Temps_Arret:0});
             });
 
-            fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rows: rows }) })
-            .then(r => { if(r.ok) { alert("✅ Projet complet envoyé avec succès !"); } })
-            .catch(() => alert("❌ Erreur de connexion"))
-            .finally(() => { btn.disabled = false; btn.innerText = "🚀 ENVOYER LE PROJET AU PNR (CSV)"; });
+            fetch(API, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({rows}) })
+            .then(r=>{ if(r.ok) alert("Envoyé !"); else alert("Erreur"); })
+            .catch(e=>alert("Erreur réseau"))
+            .finally(()=>{ btn.innerText="🚀 ENVOYER LE PROJET (CSV)"; btn.disabled=false; });
         }
+        
+        function updateStatsTitle() {} // Placeholder
     </script>
 </body>
 </html>
