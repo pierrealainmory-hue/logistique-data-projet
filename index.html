@@ -51,7 +51,7 @@
         /* LAYOUT */
         .main-container { display: flex; gap: 25px; flex: 1; }
         .left-panel { flex: 1; min-width: 420px; transition: opacity 0.3s; }
-        .right-panel { flex: 2; min-width: 300px; display: flex; flex-direction: column; }
+        .right-panel { flex: 2; min-width: 300px; display: flex; flex-direction: column; gap: 20px; }
         .blocked-area { opacity: 0.4; pointer-events: none; filter: grayscale(100%); user-select: none; }
 
         .card { background: white; padding: 20px; border-radius: 6px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #eef2f7; }
@@ -66,7 +66,7 @@
             font-size: 1rem; font-weight: bold; color: var(--primary); 
             margin-bottom: 10px; border-bottom: 2px solid #eee; padding-bottom: 5px;
         }
-        .kpi-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 10px; }
+        .kpi-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
         .kpi-card { background: white; padding: 15px; border-radius: 6px; border: 1px solid #e4e7ed; text-align: center; }
         .kpi-title { font-size: 0.7rem; font-weight: 700; color: var(--text); text-transform: uppercase; margin-bottom: 5px; }
         .kpi-value { font-size: 1.2rem; font-weight: 800; color: var(--primary); }
@@ -109,7 +109,7 @@
         .return-item .stop-name { color: var(--primary); }
 
         /* LISTE DES TOURNEES */
-        #tours-list-container { max-height: 200px; overflow-y: auto; margin-bottom: 15px; border: 1px solid #eee; border-radius: 4px; }
+        #tours-list-container { max-height: 250px; overflow-y: auto; margin-bottom: 15px; border: 1px solid #eee; border-radius: 4px; }
         .tour-row {
             padding: 10px; border-bottom: 1px solid #eee; background: #fff;
             display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background 0.2s;
@@ -143,8 +143,9 @@
         }
         #btn-export-project {
             background: var(--lib); color: white; width: 100%;
-            border: none; border-radius: 4px; padding: 12px; margin-top: 10px;
-            font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+            border: none; border-radius: 4px; padding: 15px; 
+            font-weight: bold; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
         #btn-validate-depot {
@@ -222,14 +223,6 @@
     <div class="main-container">
         <div class="left-panel blocked-area" id="locked-section">
             
-            <div class="card" style="border-left: 6px solid var(--lib); margin-bottom: 20px;">
-                <h3 style="margin-top:0; font-size:1.1rem; color:var(--lib);">📂 Mes Tournées Enregistrées</h3>
-                <div id="tours-list-container">
-                    <div style="padding:10px; color:#999; font-style:italic; text-align:center;">Aucune tournée enregistrée</div>
-                </div>
-                <button id="btn-export-project" onclick="sendProjectData()">🚀 ENVOYER LE PROJET AU PNR (CSV)</button>
-            </div>
-
             <div class="card" style="border-left: 6px solid var(--accent); margin-bottom: 20px;">
                 <h3 style="margin-top:0; font-size:1.1rem; color:var(--accent);">📅 Édition de la Tournée</h3>
                 <div style="display:flex; gap:10px;">
@@ -293,6 +286,17 @@
                     <div class="legend-item"><span class="legend-dot" style="background:#e74c3c;"></span> Critique (> 30%)</div>
                 </div>
             </div>
+
+            <div class="card" style="border-left: 6px solid var(--lib);">
+                <h3 style="margin-top:0; font-size:1.1rem; color:var(--lib);">📂 Mes Tournées Enregistrées</h3>
+                <div id="tours-list-container">
+                    <div style="padding:10px; color:#999; font-style:italic; text-align:center;">Aucune tournée enregistrée</div>
+                </div>
+                <div style="margin-top:10px; text-align:right;">
+                    <button class="btn-mini" onclick="newTour()" style="background:#95a5a6;">➕ Nouvelle Tournée</button>
+                </div>
+                <button id="btn-export-project" onclick="sendProjectData()">🚀 ENVOYER LE PROJET AU PNR (CSV)</button>
+            </div>
         </div>
     </div>
 
@@ -328,35 +332,24 @@
             loadToursLibrary(); 
             setMode('prod'); 
             checkProducerValidation();
-            
-            // GENERATION NOM AUTO AU CHARGEMENT (V74)
             autoNameTour();
         };
 
-        // --- GESTION NOM AUTOMATIQUE V74 ---
+        // --- GESTION NOM AUTOMATIQUE ---
         function generateDefaultName(day) {
             const prefix = `TOURNEE - ${day} - `;
             let max = 0;
-            // On regarde toutes les tournées sauvegardées pour ce jour
             savedTours.forEach(t => {
                 if(t.name && t.name.startsWith(prefix)) {
-                    // On extrait le chiffre à la fin
                     let rest = t.name.substring(prefix.length);
                     let num = parseInt(rest);
                     if(!isNaN(num) && num > max) max = num;
                 }
             });
-            // Si on est en train de modifier une tournée existante (currentTourId n'est pas null),
-            // on ne veut pas changer son nom si c'est déjà un nom par défaut correct.
-            // Mais pour une nouvelle, on veut max + 1.
-            
-            // Simplification : On propose toujours Max + 1 pour une NOUVELLE saisie.
             return prefix + (max + 1);
         }
 
         function autoNameTour() {
-            // Uniquement si on n'est pas en train d'éditer une tournée existante AVEC un nom déjà défini
-            // Ou si le champ est vide
             if(!currentTourId || document.getElementById('tName').value === "") {
                 const day = document.getElementById('tDay').value;
                 const newName = generateDefaultName(day);
@@ -457,27 +450,22 @@
             if(idx >= 0) savedTours[idx] = tourData;
             else savedTours.push(tourData);
 
+            currentTourId = tourData.id; 
             localStorage.setItem('logistique_tours_v71', JSON.stringify(savedTours));
             saveDepot();
             
-            // FEEDBACK & RESET AUTO
-            alert("✅ Tournée sauvegardée et ajoutée à la liste !\n\nLe formulaire va être réinitialisé pour une nouvelle saisie.");
+            // FEEDBACK VISUEL SANS EFFACER
             renderToursList();
-            
-            // RESET FORM
-            currentTourId = null;
-            document.getElementById('tDay').value = "Lundi"; // Reset day default
-            stops = [];
-            currentStats = { cost:0, ca:0, ratio:0 };
-            
-            // GENERATE NEW NAME
-            autoNameTour();
-            
-            updateView();
+            alert("✅ Tournée sauvegardée ! Vous pouvez continuer à la modifier.");
             
             setTimeout(() => {
                 let rows = document.querySelectorAll('.tour-row');
-                if(rows.length > 0) rows[rows.length-1].classList.add('newly-saved');
+                if(rows.length > 0) {
+                    // Trouver la ligne active
+                    rows.forEach(r => {
+                        if(r.classList.contains('active')) r.classList.add('newly-saved');
+                    });
+                }
             }, 100);
         }
 
@@ -495,13 +483,14 @@
         }
 
         function newTour() {
-            if(stops.length > 0 && !confirm("Créer une nouvelle tournée (la carte sera vidée) ?")) return;
+            if(stops.length > 0 && !confirm("Voulez-vous vider la carte pour créer une nouvelle tournée ?")) return;
             currentTourId = null;
             document.getElementById('tDay').value = "Lundi";
             stops = [];
             currentStats = { cost:0, ca:0, ratio:0 };
             autoNameTour();
             updateView();
+            updateStatsTitle();
             renderToursList();
         }
 
