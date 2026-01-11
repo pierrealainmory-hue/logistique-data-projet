@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulateur Logistique - PNR Préalpes (V88 - Backup JSON)</title>
+    <title>Simulateur Logistique - PNR Préalpes (V89 Centralisé)</title>
     
     <link rel="icon" href="https://github.com/pierrealainmory-hue/logistique-data-projet/blob/main/LogoEpurvertpetit.png?raw=true">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -43,7 +43,8 @@
         .summary-banner { grid-column: span 3; background: var(--primary); color: white; border-radius: 6px; padding: 15px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .banner-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; }
         .banner-metrics { display: flex; justify-content: space-around; width: 100%; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 15px; }
-        
+        .summary-value { font-size: 1.8rem; font-weight: 800; display: block; }
+
         #stops-list { list-style: none; padding: 0; }
         .stop-item { background: white; padding: 10px; margin-bottom: 8px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #ebedf0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .stop-content { display: flex; align-items: center; gap: 10px; flex: 1; overflow: hidden; }
@@ -436,57 +437,37 @@
             if(savedTours.length === 0) { alert("Aucune tournée enregistrée à envoyer."); return; }
             const btn=document.getElementById('btn-export-project'); btn.disabled=true; btn.innerText="⏳ Envoi du projet...";
             const dateStr = new Date().toISOString().split('T')[0];
-            const cH = parseFloat(document.getElementById('cH').value) || 0; const conso = parseFloat(document.getElementById('vCons').value) || 0; const prixCarb = parseFloat(document.getElementById('fPrice').value) || 0;
+            
+            // CALCUL DES TOTAUX
+            let gCA=0, gCost=0, gDist=0;
+            savedTours.forEach(t => { 
+                let st = t.stats || {ca:0, cost:0, dist:0}; 
+                gCA += st.ca; 
+                gCost += st.cost; 
+                gDist += parseFloat(st.dist); 
+            });
+
+            // PACKAGING DU JSON COMPLET (Base64)
+            const fullData = {
+                depot: JSON.parse(localStorage.getItem('pnr_logistique_v83_clean')),
+                tours: savedTours
+            };
+            // Encodage sécurisé (supporte les accents)
+            const b64Data = btoa(unescape(encodeURIComponent(JSON.stringify(fullData))));
+
             const rows = [];
-
-            savedTours.forEach(tour => {
-                const tourId = tour.id;
-                // V87 : MAPPING STRICT JSON -> CSV HEADERS
-                const common = { 
-                    "Producteur": document.getElementById('pName').value, 
-                    "Date de Livraison": dateStr, 
-                    "Jour": tour.day,
-                    "Tournee_ID": tourId, 
-                    "Vehicule": document.getElementById('vType').value, 
-                    "Carburant": document.getElementById('fType').value,
-                    "Conso": conso, 
-                    "Prix_Carb": prixCarb, 
-                    "Livreur": document.getElementById('driverType').value,
-                    "Cout_H": cH, 
-                    "Temps_Prep": parseFloat(document.getElementById('tPrep').value), 
-                    "Temps_Charg": parseFloat(document.getElementById('tLoad').value) 
-                };
-
-                // DEPART
-                rows.push({
-                    ...common, "Ordre": 0, "Client": "Départ Dépôt", "Adresse": pData.addr, "Lat": pData.lat, "Lon": pData.lon, "Type_Arret": "Départ", "Montant": 0, "Volume": 0, "Temps_Arret": 0, "Dist_Etape": 0, "Temps_Trajet": 0, "Cout_Transport": 0, "Cout_Arret": 0, "Cout_Total": 0, "Ratio": 0
-                });
-
-                if(tour.stops) {
-                    tour.stops.forEach((s, i) => { 
-                        rows.push({
-                            ...common, 
-                            "Ordre": i+1, 
-                            "Client": s.client, 
-                            "Adresse": s.addr, 
-                            "Lat": s.lat, 
-                            "Lon": s.lon, 
-                            "Type_Arret": s.icon,
-                            "Montant": s.euro,
-                            "Volume": s.vol,
-                            "Temps_Arret": s.time,
-                            "Dist_Etape": 0, "Temps_Trajet": 0, "Cout_Transport": 0, "Cout_Arret": 0, "Cout_Total": 0, "Ratio": 0
-                        }); 
-                    });
-                    
-                    rows.push({
-                        ...common, "Ordre": tour.stops.length+1, "Client": "Retour Dépôt", "Adresse": pData.addr, "Lat": pData.lat, "Lon": pData.lon, "Type_Arret": "Retour", "Montant": 0, "Volume": 0, "Temps_Arret": 0, "Dist_Etape": 0, "Temps_Trajet": 0, "Cout_Transport": 0, "Cout_Arret": 0, "Cout_Total": 0, "Ratio": 0
-                    });
-                }
+            // UNE SEULE LIGNE PAR ENVOI
+            rows.push({
+                "Date": dateStr,
+                "Producteur": document.getElementById('pName').value,
+                "Total_Tours": savedTours.length,
+                "Total_Cout": gCost.toFixed(2),
+                "Total_KM": gDist.toFixed(1),
+                "DATA_JSON_COMPLETE": b64Data
             });
 
             fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rows: rows }) })
-            .then(r => { if(r.ok) { alert("✅ Projet complet envoyé avec succès !"); } })
+            .then(r => { if(r.ok) { alert("✅ Projet centralisé envoyé avec succès !"); } })
             .catch(() => alert("❌ Erreur de connexion"))
             .finally(() => { btn.disabled = false; btn.innerText = "🚀 ENVOYER LE PROJET AU PNR (CSV)"; });
         }
