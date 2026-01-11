@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulateur Logistique - PNR Préalpes (V91 Autocomplete)</title>
+    <title>Simulateur Logistique - PNR Préalpes (V92 Visualisation)</title>
     
     <link rel="icon" href="https://github.com/pierrealainmory-hue/logistique-data-projet/blob/main/LogoEpurvertpetit.png?raw=true">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -34,11 +34,9 @@
         input, select { padding: 10px; border: 1px solid #dcdfe6; border-radius: 4px; font-size: 0.9rem; width: 100%; box-sizing: border-box; transition: border 0.3s; }
         .input-valid { border-color: var(--success) !important; background-color: #fff !important; }
         
-        /* Styles pour la liste de suggestions */
         .autocomplete-items { position: absolute; border: 1px solid #d4d4d4; border-bottom: none; border-top: none; z-index: 9999; top: 100%; left: 0; right: 0; background-color: #fff; border-radius: 0 0 4px 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .autocomplete-items div { padding: 10px; cursor: pointer; background-color: #fff; border-bottom: 1px solid #d4d4d4; font-size: 0.85rem; }
         .autocomplete-items div:hover { background-color: #e9e9e9; }
-        .autocomplete-active { background-color: DodgerBlue !important; color: #ffffff; }
 
         .btn-mini { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; }
         #btn-validate-depot { background: var(--success); color: white; margin-top: 10px; width: auto; min-width: 200px; display: block; margin: 15px auto 0 auto; border: none; border-radius: 20px; padding: 10px 30px; font-weight: bold; font-size: 0.9rem; opacity: 0.5; cursor: not-allowed; transition: all 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -52,6 +50,20 @@
         .left-panel { flex: 1; min-width: 420px; transition: opacity 0.3s; }
         .right-panel { flex: 2; min-width: 300px; display: flex; flex-direction: column; gap: 20px; }
         .blocked-area { opacity: 0.4; pointer-events: none; filter: grayscale(100%); user-select: none; }
+
+        /* MAP MARKERS (NOUVEAU) */
+        #map { height: 450px; width: 100%; border-radius: 6px; border: 1px solid #dcdfe6; background-color: #e5e9ec; display: block; }
+        .map-num-icon {
+            background: var(--info);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 24px;
+            font-weight: bold;
+            font-size: 14px;
+            border: 2px solid white;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+        }
 
         /* KPI */
         .kpi-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
@@ -107,8 +119,6 @@
         .newly-saved { animation: highlight 1.5s ease-out; }
         @keyframes highlight { 0% { background: #d2b4de; } 100% { background: #fff; } }
 
-        #map { height: 450px; width: 100%; border-radius: 6px; border: 1px solid #dcdfe6; background-color: #e5e9ec; display: block; }
-        
         /* STYLE BOUTON LARGE ET VERT (V83/V90) */
         .btn-main { background: var(--info); color: white; width: 100%; padding: 16px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 1rem; margin-top:20px; }
         .btn-mini { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; }
@@ -305,10 +315,9 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // CONFIGURATION SUPABASE (VOTRE PROJET)
+        // CONFIGURATION SUPABASE
         const SUPABASE_URL = 'https://lxoqhmfpnodyfnavmhmn.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_-LPq5CilDsNJcBuOKSG_hw_2nZUZrYg';
-        
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let map, markers, routeLayer, stops = [], mode = 'prod', pData = { lat:null, lon:null, addr:"" }, sTemp = { lat:null, lon:null };
@@ -316,7 +325,6 @@
         let savedTours = [];
         let currentTourId = null; 
         let currentStats = { cost:0, ca:0, ratio:0, dist:0, time:0 };
-        // Variable pour gérer le délai de frappe (debounce)
         let typingTimer;
 
         window.onload = function() {
@@ -327,13 +335,8 @@
             map.on('click', onMapClick);
             setTimeout(function(){ map.invalidateSize(); }, 500);
             Sortable.create(document.getElementById('stops-list'), { animation: 150, handle: '.handle', onEnd: reorderStops });
-            
-            // Fermer les listes d'autocomplétion si on clique ailleurs
-            document.addEventListener("click", function (e) {
-                closeAllLists(e.target);
-            });
+            document.addEventListener("click", function (e) { closeAllLists(e.target); });
 
-            // REPRISE DES DONNEES
             loadGlobalDepot(); 
             loadToursLibrary(); 
             setMode('prod'); 
@@ -342,54 +345,24 @@
             updateTourNameSuggestions();
         };
 
-        // --- NOUVEAU : SYSTEME D'AUTOCOMPLETION ADRESSE (BAN API) ---
+        // --- AUTOCOMPLETE ---
         function handleAddressInput(e, type) {
             clearTimeout(typingTimer);
             const val = e.target.value;
             const listId = type === 'prod' ? 'pAddr-list' : 'sAddr-list';
-            
-            // Si moins de 3 caractères, on efface la liste
-            if (!val || val.length < 3) {
-                document.getElementById(listId).innerHTML = "";
-                return;
-            }
-
-            // On attend 300ms après la fin de la frappe pour interroger l'API (éviter de spammer)
+            if (!val || val.length < 3) { document.getElementById(listId).innerHTML = ""; return; }
             typingTimer = setTimeout(() => {
-                fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(val)}&limit=5`)
-                .then(response => response.json())
-                .then(data => {
-                    const list = document.getElementById(listId);
-                    list.innerHTML = "";
-                    
+                fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(val)}&limit=5`).then(r => r.json()).then(data => {
+                    const list = document.getElementById(listId); list.innerHTML = "";
                     data.features.forEach(feature => {
                         const item = document.createElement("div");
-                        // On affiche le label (ex: 5 Rue de la Mairie, 06000 Nice)
                         item.innerHTML = "📍 " + feature.properties.label;
-                        
-                        // Quand on clique sur une suggestion
                         item.addEventListener("click", function() {
-                            // Remplir l'input
                             document.getElementById(type === 'prod' ? 'pAddr' : 'sAddr').value = feature.properties.label;
-                            
-                            // Récupérer les coordonnées (Attention: API BAN renvoie [lon, lat])
-                            const lat = feature.geometry.coordinates[1];
-                            const lon = feature.geometry.coordinates[0];
-                            
-                            // Zoomer et placer le point
+                            const lat = feature.geometry.coordinates[1]; const lon = feature.geometry.coordinates[0];
                             map.setView([lat, lon], 15);
-                            
-                            if (type === 'prod') {
-                                pData = { lat: lat, lon: lon, addr: feature.properties.label };
-                                checkProducerValidation();
-                                updateView();
-                            } else {
-                                sTemp = { lat: lat, lon: lon };
-                                // Petit marqueur rouge temporaire
-                                L.circleMarker([lat, lon], {color:'red'}).addTo(markers);
-                            }
-                            
-                            // Vider la liste
+                            if (type === 'prod') { pData = { lat: lat, lon: lon, addr: feature.properties.label }; checkProducerValidation(); updateView(); } 
+                            else { sTemp = { lat: lat, lon: lon }; L.circleMarker([lat, lon], {color:'red'}).addTo(markers); }
                             list.innerHTML = "";
                         });
                         list.appendChild(item);
@@ -397,16 +370,12 @@
                 });
             }, 300);
         }
-
         function closeAllLists(elmnt) {
             const items = document.getElementsByClassName("autocomplete-items");
-            for (let i = 0; i < items.length; i++) {
-                if (elmnt != items[i] && elmnt != document.getElementById("pAddr") && elmnt != document.getElementById("sAddr")) {
-                    items[i].innerHTML = "";
-                }
-            }
+            for (let i = 0; i < items.length; i++) { if (elmnt != items[i] && elmnt != document.getElementById("pAddr") && elmnt != document.getElementById("sAddr")) items[i].innerHTML = ""; }
         }
 
+        // --- LOGIC ---
         function formatMinutes(mins) { let h = Math.floor(mins / 60); let m = Math.round(mins % 60); return `${h}h${m.toString().padStart(2,'0')}`; }
         function updateTourNameSuggestions() { const dataList = document.getElementById('tourNameSuggestions'); dataList.innerHTML = ''; const defaults = ["Tournée Restaurants", "Tournée Cantines", "Tournée Magasins", "Tournée Particuliers", "Tournée Écoles", "Tournée AMAP"]; const existing = savedTours.map(t => t.name); const all = [...new Set([...defaults, ...existing])]; all.forEach(name => { let opt = document.createElement('option'); opt.value = name; dataList.appendChild(opt); }); }
         function generateDefaultName(day) { const prefix = `TOURNEE - ${day} - `; let max = 0; savedTours.forEach(t => { if(t.name && t.name.startsWith(prefix)) { let rest = t.name.substring(prefix.length); let num = parseInt(rest); if(!isNaN(num) && num > max) max = num; } }); return prefix + (max + 1); }
@@ -414,25 +383,14 @@
 
         function saveDepot() {
             pData.name = document.getElementById('pName').value; pData.addr = document.getElementById('pAddr').value;
-            const depotSettings = {
-                pData: pData,
-                veh: { type: document.getElementById('vType').value, fuel: document.getElementById('fType').value, cons: document.getElementById('vCons').value, price: document.getElementById('fPrice').value, driver: document.getElementById('driverType').value, cH: document.getElementById('cH').value, tPrep: document.getElementById('tPrep').value, tLoad: document.getElementById('tLoad').value }
-            };
-            localStorage.setItem('pnr_logistique_v83_clean', JSON.stringify(depotSettings));
-            updateView();
+            const depotSettings = { pData: pData, veh: { type: document.getElementById('vType').value, fuel: document.getElementById('fType').value, cons: document.getElementById('vCons').value, price: document.getElementById('fPrice').value, driver: document.getElementById('driverType').value, cH: document.getElementById('cH').value, tPrep: document.getElementById('tPrep').value, tLoad: document.getElementById('tLoad').value } };
+            localStorage.setItem('pnr_logistique_v83_clean', JSON.stringify(depotSettings)); updateView();
         }
-
         function loadGlobalDepot() {
             let s = localStorage.getItem('pnr_logistique_v83_clean');
             if(s) { const d = JSON.parse(s); pData = d.pData || { lat:null, lon:null, addr:"" }; document.getElementById('pName').value = pData.name || ""; document.getElementById('pAddr').value = pData.addr || ""; if(d.veh) { document.getElementById('vType').value = d.veh.type; document.getElementById('fType').value = d.veh.fuel; document.getElementById('vCons').value = d.veh.cons; document.getElementById('fPrice').value = d.veh.price; document.getElementById('driverType').value = d.veh.driver; document.getElementById('cH').value = d.veh.cH; document.getElementById('tPrep').value = d.veh.tPrep; document.getElementById('tLoad').value = d.veh.tLoad; } }
         }
-
-        function loadToursLibrary() {
-            let s = localStorage.getItem('logistique_tours_v83_clean');
-            savedTours = s ? JSON.parse(s) : [];
-            updateTourNameSuggestions();
-            renderToursList();
-        }
+        function loadToursLibrary() { let s = localStorage.getItem('logistique_tours_v83_clean'); savedTours = s ? JSON.parse(s) : []; updateTourNameSuggestions(); renderToursList(); }
 
         function renderToursList() {
             const container = document.getElementById('tours-list-container');
@@ -441,71 +399,31 @@
             container.innerHTML = '';
             let gCA = 0, gCost = 0, gDist = 0, gTime = 0;
             savedTours.forEach(t => {
-                const div = document.createElement('div');
-                div.className = 'tour-row ' + (t.id === currentTourId ? 'active' : '');
+                const div = document.createElement('div'); div.className = 'tour-row ' + (t.id === currentTourId ? 'active' : '');
                 let ca = t.stats ? t.stats.ca : 0; let cost = t.stats ? t.stats.cost : 0; let ratio = t.stats ? t.stats.ratio : 0; let dist = t.stats && t.stats.dist ? t.stats.dist.toFixed(1) : "0"; let time = t.stats && t.stats.time ? t.stats.time : 0; let stopCount = t.stops ? t.stops.length : 0; let preview = t.stops ? t.stops.map(s => s.client).slice(0, 6).join(', ') + (t.stops.length > 6 ? "..." : "") : "";
                 gCA += ca; gCost += cost; gDist += parseFloat(dist); gTime += time;
                 div.innerHTML = `<div onclick="loadTour('${t.id}')"><div class="t-id"><strong>${t.name}</strong></div><div class="t-day">${t.day}</div></div><div class="t-metrics" onclick="loadTour('${t.id}')"><span style="color:var(--success);">💰 ${Math.round(ca)}€</span><span style="color:var(--danger);">📉 ${Math.round(cost)}€</span><span style="color:var(--lib);">⚖️ ${ratio}%</span><span>🛣️ ${dist} km</span><span>⏱️ ${formatMinutes(time)}</span><span>🛑 ${stopCount} arrêts</span></div><div class="t-preview" onclick="loadTour('${t.id}')">${preview}</div><div class="t-actions"><button class="btn-mini" style="background:var(--lib); padding:4px 8px;" onclick="loadTour('${t.id}')">✏️</button><button class="btn-mini" style="background:var(--danger); padding:4px 8px;" onclick="deleteTour('${t.id}')">✕</button></div>`; container.appendChild(div);
             });
-            totalBox.style.display = "flex";
-            document.getElementById('gt-ca').innerText = Math.round(gCA) + " €"; document.getElementById('gt-cost').innerText = Math.round(gCost) + " €"; document.getElementById('gt-dist').innerText = Math.round(gDist) + " km"; document.getElementById('gt-time').innerText = formatMinutes(gTime);
+            totalBox.style.display = "flex"; document.getElementById('gt-ca').innerText = Math.round(gCA) + " €"; document.getElementById('gt-cost').innerText = Math.round(gCost) + " €"; document.getElementById('gt-dist').innerText = Math.round(gDist) + " km"; document.getElementById('gt-time').innerText = formatMinutes(gTime);
             let gRatio = gCA > 0 ? (gCost / gCA * 100).toFixed(1) : 0; document.getElementById('gt-ratio').innerText = gRatio + " %";
         }
 
-        // --- BACKUP JSON ---
-        function downloadBackup() {
-            const data = {
-                depot: localStorage.getItem('pnr_logistique_v83_clean'),
-                tours: localStorage.getItem('logistique_tours_v83_clean')
-            };
-            const blob = new Blob([JSON.stringify(data)], {type: "application/json"});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "backup_logistique_" + new Date().toISOString().slice(0,10) + ".json";
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        }
-
-        function uploadBackup(input) {
-            const file = input.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if(data.depot) localStorage.setItem('pnr_logistique_v83_clean', data.depot);
-                    if(data.tours) localStorage.setItem('logistique_tours_v83_clean', data.tours);
-                    alert("✅ Sauvegarde restaurée avec succès !");
-                    location.reload();
-                } catch(err) {
-                    alert("❌ Erreur : Fichier invalide.");
-                }
-            };
-            reader.readAsText(file);
-        }
+        // --- BACKUP ---
+        function downloadBackup() { const data = { depot: localStorage.getItem('pnr_logistique_v83_clean'), tours: localStorage.getItem('logistique_tours_v83_clean') }; const blob = new Blob([JSON.stringify(data)], {type: "application/json"}); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = "backup_logistique_" + new Date().toISOString().slice(0,10) + ".json"; document.body.appendChild(a); a.click(); document.body.removeChild(a); }
+        function uploadBackup(input) { const file = input.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const data = JSON.parse(e.target.result); if(data.depot) localStorage.setItem('pnr_logistique_v83_clean', data.depot); if(data.tours) localStorage.setItem('logistique_tours_v83_clean', data.tours); alert("✅ Sauvegarde restaurée avec succès !"); location.reload(); } catch(err) { alert("❌ Erreur : Fichier invalide."); } }; reader.readAsText(file); }
 
         function saveCurrentTour() {
             const tName = document.getElementById('tName').value; if(!tName) return alert("Veuillez donner un nom à la tournée.");
             const tourData = { id: currentTourId || Date.now().toString(), name: tName, day: document.getElementById('tDay').value, stops: stops, stats: { ...currentStats } };
             const idx = savedTours.findIndex(t => t.id === tourData.id); if(idx >= 0) savedTours[idx] = tourData; else savedTours.push(tourData);
-            currentTourId = tourData.id; localStorage.setItem('logistique_tours_v83_clean', JSON.stringify(savedTours)); saveDepot();
-            updateTourNameSuggestions(); renderToursList(); alert("✅ Tournée sauvegardée !");
-            setTimeout(() => { let rows = document.querySelectorAll('.tour-row'); if(rows.length > 0) { rows.forEach(r => { if(r.classList.contains('active')) r.classList.add('newly-saved'); }); } }, 100);
+            currentTourId = tourData.id; localStorage.setItem('logistique_tours_v83_clean', JSON.stringify(savedTours)); saveDepot(); updateTourNameSuggestions(); renderToursList(); alert("✅ Tournée sauvegardée !"); setTimeout(() => { let rows = document.querySelectorAll('.tour-row'); if(rows.length > 0) { rows.forEach(r => { if(r.classList.contains('active')) r.classList.add('newly-saved'); }); } }, 100);
         }
 
         function loadTour(id) { const tour = savedTours.find(t => t.id === id); if(tour) { currentTourId = tour.id; document.getElementById('tName').value = tour.name; document.getElementById('tDay').value = tour.day; stops = tour.stops || []; updateView(); updateStatsTitle(); renderToursList(); window.scrollTo({ top: 0, behavior: 'smooth' }); } }
         function newTour() { if(stops.length > 0 && !confirm("Voulez-vous vider la carte pour créer une nouvelle tournée ?")) return; currentTourId = null; document.getElementById('tDay').value = "Lundi"; stops = []; currentStats = { cost:0, ca:0, ratio:0, dist:0, time:0 }; autoNameTour(); updateView(); updateStatsTitle(); renderToursList(); }
         function deleteTour(id) { if(!confirm("Supprimer cette tournée ?")) return; savedTours = savedTours.filter(t => t.id !== id); localStorage.setItem('logistique_tours_v83_clean', JSON.stringify(savedTours)); if(currentTourId === id) newTour(); else renderToursList(); }
         function checkProducerValidation() { const pNameInput = document.getElementById('pName'); const pAddrInput = document.getElementById('pAddr'); const band = document.getElementById('prod-band'); const btnValide = document.getElementById('btn-validate-depot'); let nameOk = pNameInput.value.trim().length > 0; let addrOk = pData.lat !== null && pAddrInput.value.trim().length > 0; if(nameOk) pNameInput.classList.add('input-valid'); else pNameInput.classList.remove('input-valid'); if(addrOk) pAddrInput.classList.add('input-valid'); else pAddrInput.classList.remove('input-valid'); if(nameOk && addrOk) { band.classList.add('validated'); btnValide.classList.add('active'); btnValide.disabled = false; } else { band.classList.remove('validated'); btnValide.classList.remove('active'); btnValide.disabled = true; } saveDepot(); }
-        
-        function lockDepot() {
-            document.getElementById('header-form').style.display = 'none'; document.getElementById('header-summary').style.display = 'flex';
-            const name = document.getElementById('pName').value; let rawAddr = document.getElementById('pAddr').value; let addrParts = rawAddr.split(',').map(s => s.trim()); let shortAddr = addrParts.slice(0, 3).join(', '); let zipMatch = rawAddr.match(/\b\d{5}\b/); if(zipMatch) shortAddr += " (" + zipMatch[0] + ")"; const tPrep = parseFloat(document.getElementById('tPrep').value) || 0; const tLoad = parseFloat(document.getElementById('tLoad').value) || 0; const totalTime = tPrep + tLoad; const veh = document.getElementById('vType').value; const cons = document.getElementById('vCons').value;
-            document.getElementById('summary-content').innerHTML = `<span>✅ <strong>${name}</strong></span><span class="sep">|</span><span>📍 ${shortAddr}</span><span class="sep">|</span><span>⏱️ ${totalTime} min</span><span class="sep">|</span><span>🚚 ${veh} (${cons}L/100km)</span>`;
-            document.getElementById('locked-section').classList.remove('blocked-area'); setMode('stop'); setTimeout(function(){ map.invalidateSize(); }, 200);
-        }
+        function lockDepot() { document.getElementById('header-form').style.display = 'none'; document.getElementById('header-summary').style.display = 'flex'; const name = document.getElementById('pName').value; let rawAddr = document.getElementById('pAddr').value; let addrParts = rawAddr.split(',').map(s => s.trim()); let shortAddr = addrParts.slice(0, 3).join(', '); let zipMatch = rawAddr.match(/\b\d{5}\b/); if(zipMatch) shortAddr += " (" + zipMatch[0] + ")"; const tPrep = parseFloat(document.getElementById('tPrep').value) || 0; const tLoad = parseFloat(document.getElementById('tLoad').value) || 0; const totalTime = tPrep + tLoad; const veh = document.getElementById('vType').value; const cons = document.getElementById('vCons').value; document.getElementById('summary-content').innerHTML = `<span>✅ <strong>${name}</strong></span><span class="sep">|</span><span>📍 ${shortAddr}</span><span class="sep">|</span><span>⏱️ ${totalTime} min</span><span class="sep">|</span><span>🚚 ${veh} (${cons}L/100km)</span>`; document.getElementById('locked-section').classList.remove('blocked-area'); setMode('stop'); setTimeout(function(){ map.invalidateSize(); }, 200); }
         function unlockDepot() { document.getElementById('header-form').style.display = 'block'; document.getElementById('header-summary').style.display = 'none'; document.getElementById('locked-section').classList.add('blocked-area'); setMode('prod'); }
         function updateTitle() { checkProducerValidation(); }
         function resetAll() { if(confirm("Voulez-vous tout réinitialiser ?")) { localStorage.clear(); location.reload(); } }
@@ -518,14 +436,25 @@
         function editStop(index) { let s = stops[index]; document.getElementById('sClient').value = s.client; document.getElementById('sOpType').value = s.icon; document.getElementById('sAddr').value = s.addr; document.getElementById('sEuro').value = s.euro; document.getElementById('sVol').value = s.vol; document.getElementById('sTime').value = s.time; sTemp = { lat: s.lat, lon: s.lon }; stops.splice(index, 1); updateView(); document.getElementById('sClient').focus(); }
         function reorderStops() { let ns=[]; document.querySelectorAll('.stop-item').forEach(it=>{ const id = it.getAttribute('data-id'); if(id) { const found = stops.find(s=>s.id===parseInt(id)); if(found) ns.push(found); } }); stops=ns; updateView(); }
 
+        // --- UPDATE VIEW & ROUTE (MODIFIE POUR MARQUEURS NUMEROTES) ---
         function updateView() {
             markers.clearLayers(); routeLayer.clearLayers(); document.getElementById('stops-list').innerHTML="";
-            if(pData.lat) L.marker([pData.lat, pData.lon], {icon: L.divIcon({html:'🏠', className:''})}).addTo(markers);
+            if(pData.lat) L.marker([pData.lat, pData.lon], {icon: L.divIcon({html:'🏠', className:'map-num-icon', iconSize:[30,30], iconAnchor:[15,15]})}).addTo(markers);
+            
             stops.forEach((s, i) => { 
                 let rawAddr = s.addr.split(',').map(p => p.trim()); let shortAddr = rawAddr.slice(0, 3).join(', '); let zipMatch = s.addr.match(/\b\d{5}\b/); if(zipMatch) shortAddr += " (" + zipMatch[0] + ")";
                 document.getElementById('stops-list').innerHTML += `<li class="stop-item" data-id="${s.id}"><div class="stop-content"><span class="handle">☰</span>${s.icon} <div class="stop-info"><span class="stop-name">${i+1}. ${s.client}</span><span class="stop-addr">${shortAddr}</span></div></div><div class="stop-meta"><span class="stop-euro">${s.euro} €</span><span class="stop-dist-tag" id="dist-stop-${i}">... km</span><div class="ratio-tag" id="ratio-stop-${i}">...</div></div><div class="stop-actions"><button class="btn-icon" onclick="editStop(${i})" title="Modifier">✏️</button><button class="btn-icon" onclick="stops.splice(${i},1);updateView()" title="Supprimer" style="color:#e74c3c;">✕</button></div></li>`;
-                L.circleMarker([s.lat, s.lon], {radius:4, color:'var(--info)', fillOpacity:1}).addTo(markers);
+                
+                // ICI: MARQUEUR NUMEROTÉ
+                const numIcon = L.divIcon({
+                    className: 'map-num-icon',
+                    html: i + 1,
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 12]
+                });
+                L.marker([s.lat, s.lon], {icon: numIcon}).addTo(markers);
             });
+
             if(pData.lat && stops.length > 0) {
                 let rRaw = pData.addr.split(',').map(p => p.trim()); let rShort = rRaw.slice(0, 3).join(', '); let rZip = pData.addr.match(/\b\d{5}\b/); if(rZip) rShort += " (" + rZip[0] + ")";
                 document.getElementById('stops-list').innerHTML += `<li class="stop-item return-item"><div class="stop-content"><span style="font-size:1.2rem; margin-right:10px;">🏁</span><div class="stop-info"><span class="stop-name">Retour au point de départ</span><span class="stop-addr">${rShort}</span></div></div><div class="stop-meta"><span class="stop-euro" style="color:#7f8c8d;" id="return-cost">0 €</span><span class="stop-dist-tag" id="dist-return">... km</span></div><div class="stop-actions" style="width:60px;"></div></li>`;
@@ -551,40 +480,13 @@
             document.getElementById('rDist').innerText=dist.toFixed(1)+" km"; document.getElementById('rTime').innerText=Math.floor(driveTime/60)+"h"+Math.round(driveTime%60).toString().padStart(2,'0'); document.getElementById('rOps').innerText=Math.floor(sTime/60)+"h"+Math.round(sTime%60).toString().padStart(2,'0'); document.getElementById('rCostTrans').innerText=fuelCost.toFixed(2)+" €"; document.getElementById('rCostOps').innerText=laborCost.toFixed(2)+" €"; document.getElementById('rTotal').innerText=totalCost.toFixed(2)+" €"; document.getElementById('rVal').innerText=ca.toFixed(2)+" €"; document.getElementById('rRatio').innerText=currentStats.ratio+" %";
         }
 
-        // --- ENVOI CENTRALISÉ VERS SUPABASE ---
+        // --- ENVOI CENTRALISÉ ---
         async function sendProjectData() {
             if(savedTours.length === 0) { alert("Aucune tournée enregistrée à envoyer."); return; }
-            
-            const btn = document.getElementById('btn-export-project'); 
-            btn.disabled = true; 
-            btn.innerText = "⏳ Envoi au PNR...";
-
-            const fullData = {
-                meta: { date: new Date().toISOString(), version: "V90_Supabase" },
-                depot: JSON.parse(localStorage.getItem('pnr_logistique_v83_clean')),
-                tours: savedTours
-            };
-
+            const btn = document.getElementById('btn-export-project'); btn.disabled = true; btn.innerText = "⏳ Envoi au PNR...";
+            const fullData = { meta: { date: new Date().toISOString(), version: "V92_Autocomplete_MapNum" }, depot: JSON.parse(localStorage.getItem('pnr_logistique_v83_clean')), tours: savedTours };
             const nomProd = document.getElementById('pName').value || "Producteur Inconnu";
-
-            try {
-                // CORRECTION ICI : Utilisation de 'supabaseClient'
-                const { data, error } = await supabaseClient
-                    .from('tournees')
-                    .insert([ { nom_producteur: nomProd, data_json: fullData } ]);
-
-                if (error) throw error;
-
-                alert("✅ SUCCÈS ! Vos tournées ont bien été reçues par le PNR.");
-                console.log("Envoyé:", data);
-
-            } catch (err) {
-                console.error("Erreur Supabase:", err);
-                alert("❌ Erreur lors de l'envoi : " + err.message);
-            } finally {
-                btn.disabled = false; 
-                btn.innerText = "🚀 ENVOYER LE PROJET AU PNR";
-            }
+            try { const { data, error } = await supabaseClient.from('tournees').insert([ { nom_producteur: nomProd, data_json: fullData } ]); if (error) throw error; alert("✅ SUCCÈS ! Vos tournées ont bien été reçues par le PNR."); console.log("Envoyé:", data); } catch (err) { console.error("Erreur Supabase:", err); alert("❌ Erreur lors de l'envoi : " + err.message); } finally { btn.disabled = false; btn.innerText = "🚀 ENVOYER LE PROJET AU PNR"; }
         }
     </script>
 </body>
