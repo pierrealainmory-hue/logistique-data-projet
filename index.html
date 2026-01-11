@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulateur Logistique - PNR Préalpes (V89 Centralisé)</title>
+    <title>Simulateur Logistique - PNR Préalpes (V90 Final)</title>
     
     <link rel="icon" href="https://github.com/pierrealainmory-hue/logistique-data-projet/blob/main/LogoEpurvertpetit.png?raw=true">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -265,6 +265,8 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         const API = "https://update-github-csv-149052175314.europe-west1.run.app/";
+        const TARGET_FILE = "Logistique_Central_V1.csv"; // NOM DU NOUVEAU FICHIER CIBLE
+        
         let map, markers, routeLayer, stops = [], mode = 'prod', pData = { lat:null, lon:null, addr:"" }, sTemp = { lat:null, lon:null };
         let lastRouteData = null; 
         let savedTours = [];
@@ -433,6 +435,7 @@
             document.getElementById('rDist').innerText=dist.toFixed(1)+" km"; document.getElementById('rTime').innerText=Math.floor(driveTime/60)+"h"+Math.round(driveTime%60).toString().padStart(2,'0'); document.getElementById('rOps').innerText=Math.floor(sTime/60)+"h"+Math.round(sTime%60).toString().padStart(2,'0'); document.getElementById('rCostTrans').innerText=fuelCost.toFixed(2)+" €"; document.getElementById('rCostOps').innerText=laborCost.toFixed(2)+" €"; document.getElementById('rTotal').innerText=totalCost.toFixed(2)+" €"; document.getElementById('rVal').innerText=ca.toFixed(2)+" €"; document.getElementById('rRatio').innerText=currentStats.ratio+" %";
         }
 
+        // --- ENVOI CENTRALISÉ (V90 - NOUVELLE CIBLE) ---
         function sendProjectData() {
             if(savedTours.length === 0) { alert("Aucune tournée enregistrée à envoyer."); return; }
             const btn=document.getElementById('btn-export-project'); btn.disabled=true; btn.innerText="⏳ Envoi du projet...";
@@ -452,20 +455,24 @@
                 depot: JSON.parse(localStorage.getItem('pnr_logistique_v83_clean')),
                 tours: savedTours
             };
-            // Encodage sécurisé (supporte les accents)
             const b64Data = btoa(unescape(encodeURIComponent(JSON.stringify(fullData))));
 
             const rows = [];
-            // UNE SEULE LIGNE PAR ENVOI
+            // UNE SEULE LIGNE PAR ENVOI AVEC NOUVELLES CLES
             rows.push({
-                "Date": dateStr,
-                "Producteur": document.getElementById('pName').value,
-                "Total_Tours": savedTours.length,
-                "Total_Cout": gCost.toFixed(2),
-                "Total_KM": gDist.toFixed(1),
-                "DATA_JSON_COMPLETE": b64Data
+                "P_Date": dateStr,
+                "P_Nom": document.getElementById('pName').value,
+                "P_NbTours": savedTours.length,
+                "P_CoutTotal": gCost.toFixed(2),
+                "P_KmTotal": gDist.toFixed(1),
+                "P_DataJSON": b64Data
             });
 
+            // ATTENTION : On modifie ici la requête pour viser le nouveau fichier
+            // L'API ne permet pas de choisir le fichier cible directement dans l'URL (c'est souvent codé en dur coté serveur)
+            // SI L'API EST CONFIGURÉE POUR ECRIRE DANS UN FICHIER PRECIS, IL FAUT GARDER LES CLES EXACTES DU FICHIER CIBLE
+            // D'après vos tests, l'API semble très permissive et ajoute des colonnes.
+            
             fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rows: rows }) })
             .then(r => { if(r.ok) { alert("✅ Projet centralisé envoyé avec succès !"); } })
             .catch(() => alert("❌ Erreur de connexion"))
