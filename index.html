@@ -281,7 +281,9 @@
         // CONFIGURATION SUPABASE (VOTRE PROJET)
         const SUPABASE_URL = 'https://lxoqhmfpnodyfnavmhmn.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_-LPq5CilDsNJcBuOKSG_hw_2nZUZrYg';
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        // CORRECTION ICI : On utilise un nom différent pour le client
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let map, markers, routeLayer, stops = [], mode = 'prod', pData = { lat:null, lon:null, addr:"" }, sTemp = { lat:null, lon:null };
         let lastRouteData = null; 
@@ -468,8 +470,8 @@
             const nomProd = document.getElementById('pName').value || "Producteur Inconnu";
 
             try {
-                // Insertion dans la table 'tournees'
-                const { data, error } = await supabase
+                // CORRECTION ICI : Utilisation de 'supabaseClient'
+                const { data, error } = await supabaseClient
                     .from('tournees')
                     .insert([ { nom_producteur: nomProd, data_json: fullData } ]);
 
