@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulateur Logistique - PNR Préalpes (V87)</title>
+    <title>Simulateur Logistique - PNR Préalpes (V88 - Backup JSON)</title>
     
     <link rel="icon" href="https://github.com/pierrealainmory-hue/logistique-data-projet/blob/main/LogoEpurvertpetit.png?raw=true">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -24,8 +24,7 @@
         #header-summary { display: none; align-items: center; justify-content: space-between; }
         .summary-text { font-size: 0.9rem; color: var(--primary); display: flex; align-items: center; flex-wrap: wrap; gap: 15px; }
         .summary-text span { display: flex; align-items: center; gap: 5px; }
-        .sep { color: #bdc3c7; font-weight: normal; }
-
+        
         .main-container { display: flex; gap: 25px; flex: 1; margin-bottom: 30px;}
         .left-panel { flex: 1; min-width: 420px; transition: opacity 0.3s; }
         .right-panel { flex: 2; min-width: 300px; display: flex; flex-direction: column; gap: 20px; }
@@ -44,8 +43,7 @@
         .summary-banner { grid-column: span 3; background: var(--primary); color: white; border-radius: 6px; padding: 15px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .banner-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; }
         .banner-metrics { display: flex; justify-content: space-around; width: 100%; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 15px; }
-        .summary-value { font-size: 1.8rem; font-weight: 800; display: block; }
-
+        
         #stops-list { list-style: none; padding: 0; }
         .stop-item { background: white; padding: 10px; margin-bottom: 8px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #ebedf0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .stop-content { display: flex; align-items: center; gap: 10px; flex: 1; overflow: hidden; }
@@ -90,15 +88,17 @@
         @keyframes highlight { 0% { background: #d2b4de; } 100% { background: #fff; } }
 
         #map { height: 450px; width: 100%; border-radius: 6px; border: 1px solid #dcdfe6; background-color: #e5e9ec; display: block; }
-        
-        /* BOUTON CORRIGÉ */
         .btn-main { background: var(--success); color: white; width: 100%; padding: 16px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 1rem; }
         .btn-mini { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; }
         
         #btn-save-local { background: var(--success); color: white; margin-top: 10px; width: 100%; border: none; border-radius: 6px; padding: 15px; font-weight: bold; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         #btn-export-project { background: var(--lib); color: white; width: 300px; margin: 0 auto; border: none; border-radius: 4px; padding: 15px; font-weight: bold; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        
         #btn-validate-depot { background: var(--success); color: white; margin-top: 10px; width: auto; min-width: 200px; display: block; margin: 15px auto 0 auto; border: none; border-radius: 20px; padding: 10px 30px; font-weight: bold; font-size: 0.9rem; opacity: 0.5; cursor: not-allowed; transition: all 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         #btn-validate-depot.active { opacity: 1; cursor: pointer; transform: translateY(-1px); }
+        
+        .backup-controls { display: flex; justify-content: center; gap: 15px; margin-top: 15px; }
+        .btn-backup { background: #bdc3c7; color: white; font-size: 0.8rem; }
         .dix-footer { margin-top: 40px; padding: 20px; background: white; border-radius: 6px; display: flex; justify-content: center; align-items: center; gap: 15px; color: #7f8c8d; font-size: 0.9rem; }
         .dix-logo-small { height: 45px; width: auto; vertical-align: middle; }
     </style>
@@ -228,6 +228,7 @@
 
     <div class="card" style="border-left: 6px solid var(--lib); margin-top:30px;">
         <h3 style="margin-top:0; font-size:1.2rem; color:var(--lib); margin-bottom:15px;">📂 Mes Tournées Enregistrées (Dossier Complet)</h3>
+        
         <div id="global-totals-container" class="global-stats-box" style="display:none;">
             <div class="gs-item"><div class="gs-label">💰 CA TOTAL</div><div class="gs-value" id="gt-ca">0 €</div></div>
             <div class="gs-item"><div class="gs-label">📉 COÛT TOTAL</div><div class="gs-value" id="gt-cost">0 €</div></div>
@@ -235,9 +236,17 @@
             <div class="gs-item"><div class="gs-label">🛣️ DISTANCE</div><div class="gs-value" id="gt-dist">0 km</div></div>
             <div class="gs-item"><div class="gs-label">⏱️ TEMPS</div><div class="gs-value" id="gt-time">0h00</div></div>
         </div>
+
         <div id="tours-list-container">
             <div style="padding:20px; color:#999; font-style:italic; text-align:center;">Aucune tournée enregistrée pour l'instant. Utilisez le formulaire ci-dessus.</div>
         </div>
+        
+        <div class="backup-controls">
+            <button class="btn-mini btn-backup" onclick="downloadBackup()">📥 Sauvegarder mes données (JSON)</button>
+            <button class="btn-mini btn-backup" onclick="document.getElementById('fileInput').click()">📤 Restaurer une sauvegarde</button>
+            <input type="file" id="fileInput" accept=".json" style="display:none" onchange="uploadBackup(this)">
+        </div>
+
         <div style="display:flex; justify-content:center; margin-top:20px;">
             <button id="btn-export-project" onclick="sendProjectData()">🚀 ENVOYER LE PROJET AU PNR (CSV)</button>
         </div>
@@ -324,12 +333,46 @@
             let gRatio = gCA > 0 ? (gCost / gCA * 100).toFixed(1) : 0; document.getElementById('gt-ratio').innerText = gRatio + " %";
         }
 
+        // --- BACKUP JSON (V88) ---
+        function downloadBackup() {
+            const data = {
+                depot: localStorage.getItem('pnr_logistique_v83_clean'),
+                tours: localStorage.getItem('logistique_tours_v83_clean')
+            };
+            const blob = new Blob([JSON.stringify(data)], {type: "application/json"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "backup_logistique_" + new Date().toISOString().slice(0,10) + ".json";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function uploadBackup(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if(data.depot) localStorage.setItem('pnr_logistique_v83_clean', data.depot);
+                    if(data.tours) localStorage.setItem('logistique_tours_v83_clean', data.tours);
+                    alert("✅ Sauvegarde restaurée avec succès !");
+                    location.reload();
+                } catch(err) {
+                    alert("❌ Erreur : Fichier invalide.");
+                }
+            };
+            reader.readAsText(file);
+        }
+
         function saveCurrentTour() {
             const tName = document.getElementById('tName').value; if(!tName) return alert("Veuillez donner un nom à la tournée.");
             const tourData = { id: currentTourId || Date.now().toString(), name: tName, day: document.getElementById('tDay').value, stops: stops, stats: { ...currentStats } };
             const idx = savedTours.findIndex(t => t.id === tourData.id); if(idx >= 0) savedTours[idx] = tourData; else savedTours.push(tourData);
             currentTourId = tourData.id; localStorage.setItem('logistique_tours_v83_clean', JSON.stringify(savedTours)); saveDepot();
-            updateTourNameSuggestions(); renderToursList(); alert("✅ Tournée sauvegardée ! Vous pouvez continuer à travailler dessus.");
+            updateTourNameSuggestions(); renderToursList(); alert("✅ Tournée sauvegardée !");
             setTimeout(() => { let rows = document.querySelectorAll('.tour-row'); if(rows.length > 0) { rows.forEach(r => { if(r.classList.contains('active')) r.classList.add('newly-saved'); }); } }, 100);
         }
 
@@ -398,20 +441,20 @@
 
             savedTours.forEach(tour => {
                 const tourId = tour.id;
-                // MAPPING CORRIGE SUR LA BASE DE VOTRE JSON
+                // V87 : MAPPING STRICT JSON -> CSV HEADERS
                 const common = { 
                     "Producteur": document.getElementById('pName').value, 
                     "Date de Livraison": dateStr, 
                     "Jour": tour.day,
-                    "Tournée ID": tourId, 
-                    "Véhicule": document.getElementById('vType').value, 
+                    "Tournee_ID": tourId, 
+                    "Vehicule": document.getElementById('vType').value, 
                     "Carburant": document.getElementById('fType').value,
-                    "Conso (L/100km)": conso, 
-                    "Prix Carburant (€/L)": prixCarb, 
-                    "Type Livreur": document.getElementById('driverType').value,
-                    "Cout Horaire (€/h)": cH, 
-                    "Temps Préparation (min)": parseFloat(document.getElementById('tPrep').value), 
-                    "Temps Chargement Départ (min)": parseFloat(document.getElementById('tLoad').value) 
+                    "Conso": conso, 
+                    "Prix_Carb": prixCarb, 
+                    "Livreur": document.getElementById('driverType').value,
+                    "Cout_H": cH, 
+                    "Temps_Prep": parseFloat(document.getElementById('tPrep').value), 
+                    "Temps_Charg": parseFloat(document.getElementById('tLoad').value) 
                 };
 
                 // DEPART
@@ -428,10 +471,10 @@
                             "Adresse": s.addr, 
                             "Lat": s.lat, 
                             "Lon": s.lon, 
-                            "Type_Arret": s.icon, // MAPPING CORRECT
-                            "Montant": s.euro,    // MAPPING CORRECT
-                            "Volume": s.vol,      // MAPPING CORRECT
-                            "Temps_Arret": s.time,// MAPPING CORRECT
+                            "Type_Arret": s.icon,
+                            "Montant": s.euro,
+                            "Volume": s.vol,
+                            "Temps_Arret": s.time,
                             "Dist_Etape": 0, "Temps_Trajet": 0, "Cout_Transport": 0, "Cout_Arret": 0, "Cout_Total": 0, "Ratio": 0
                         }); 
                     });
