@@ -1,2 +1,1 @@
-Date,Producteur,Total_Tours,Total_Cout,Total_KM,DATA_JSON_COMPLETE,Tournée ID,Jour,Ordre d'Arrêt,Type Arrêt,Client / Point de Livraison,Adresse Complète,lat,lon,Véhicule,Carburant,Cout Horaire (€/h),Cout Km (€/km),Temps Préparation (min),Temps Chargement Départ (min),Poids (kg),Montant (€),Temps d'arrêt (min)
-,,,,,,None_None_20260111_1313,,0.0,Départ Dépôt,,,,,,,,,0.0,0.0,0.0,0.0,0.0
+Date,Producteur,Total_Tours,Total_Cout,Total_KM,DATA_JSON_COMPLETE
