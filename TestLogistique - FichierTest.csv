@@ -1,3 +1,1 @@
-P_Date,P_Nom,P_NbTours,P_CoutTotal,P_KmTotal,P_DataJSON,Tournée ID,Producteur,Jour,Ordre d'Arrêt,Type Arrêt,Client / Point de Livraison,Adresse Complète,lat,lon,Véhicule,Carburant,Cout Horaire (€/h),Cout Km (€/km),Temps Préparation (min),Temps Chargement Départ (min),Poids (kg),Montant (€),Temps d'arrêt (min)
-,,,,,,None_None_20260111_1354,,,0.0,Départ Dépôt,,,,,,,,,0.0,0.0,0.0,0.0,0.0
-,,,,,,None_None_20260111_1358,,,0.0,Départ Dépôt,,,,,,,,,0.0,0.0,0.0,0.0,0.0
+P_Date,P_Nom,P_NbTours,P_CoutTotal,P_KmTotal,P_DataJSON
