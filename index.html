@@ -335,14 +335,15 @@
         </div>
     </div>
 
+    <!-- MODAL RGPD -->
     <div id="rgpd-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">🛡️ Consentement & Données</div>
             <div class="modal-body">
-                <p>En soumettant ces données au PNR des Préalpes d'Azur, vous participez à une étude de <strong>diagnostic logistique territorial</strong>.</p>
+                <p>En soumettant ces données, vous participez à une étude de <strong>diagnostic logistique territorial</strong>.</p>
                 <ul style="margin: 10px 0; padding-left: 20px;">
                     <li><strong>Usage :</strong> Optimisation des flux et recherche de solutions mutualisées.</li>
-                    <li><strong>Accès :</strong> Données accessibles uniquement par l'équipe projet du PNR et le cabinet DIX AUTREMENT.</li>
+                    <li><strong>Accès :</strong> Données accessibles uniquement par l'équipe projet et le cabinet DIX AUTREMENT.</li>
                     <li><strong>Confidentialité :</strong> Vos données ne seront pas divulguées publiquement sans votre accord.</li>
                 </ul>
                 <p>En cliquant sur "J'accepte", vous validez l'utilisation de ces informations dans ce cadre exclusif.</p>
@@ -350,6 +351,23 @@
             <div class="modal-footer">
                 <button class="btn-cancel" onclick="closeRgpdModal()">Annuler</button>
                 <button class="btn-confirm" onclick="confirmAndSend()">✅ J'accepte & J'envoie</button>
+            </div>
+        </div>
+    </div>
+    
+        <!-- MODAL SUCCES & REBOND -->
+    <div id="success-modal" class="modal">
+        <div class="modal-content" style="max-width: 500px; text-align: center;">
+            <div class="modal-header" style="color:#27ae60; border:none; padding-bottom:0;">🎉 Transmission Réussie !</div>
+            <div class="modal-body" style="padding-top:10px;">
+                <p style="font-size:1.1rem;">Vos données de tournée ont bien été reçues par le PNR.</p>
+                <hr style="border:0; border-top:1px solid #eee; margin:20px 0;">
+                <p style="margin-bottom:15px;"><strong>Aidez-nous à aller plus loin :</strong></p>
+                <p style="color:#666; font-size:0.9rem; margin-bottom:20px;">Seriez-vous d'accord pour préciser quelques informations logistiques supplémentaires via un court formulaire ?</p>
+                <div style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+                    <button class="btn-confirm" onclick="openFormulaire()" style="background:var(--accent);">📝 Oui, accéder au formulaire</button>
+                    <button class="btn-cancel" onclick="closeSuccessModal()" style="background:#bdc3c7;">Non, merci</button>
+                </div>
             </div>
         </div>
     </div>
@@ -590,9 +608,10 @@
             sendProjectData();
         }
 
+         // --- ENVOI CENTRALISÉ ---
         async function sendProjectData() {
+            if(savedTours.length === 0) { alert("Aucune tournée enregistrée à envoyer."); return; }
             const btn = document.getElementById('btn-export-project'); 
-            // On désactive via l'ID mais on ne le grise pas visuellement pendant le modal, juste après
             btn.disabled = true; btn.innerText = "⏳ Envoi en cours...";
             
             const fullData = { meta: { date: new Date().toISOString(), version: "V94.1_Final" }, depot: JSON.parse(localStorage.getItem('pnr_logistique_v83_clean')), tours: savedTours };
@@ -601,7 +620,7 @@
             try { 
                 const { data, error } = await supabaseClient.from('tournees').insert([ { nom_producteur: nomProd, data_json: fullData } ]); 
                 if (error) throw error; 
-                alert("✅ SUCCÈS ! Vos données ont été transmises au PNR."); 
+                document.getElementById('success-modal').style.display = 'flex';
                 console.log("Envoyé:", data); 
             } catch (err) { 
                 console.error("Erreur Supabase:", err); 
@@ -610,6 +629,19 @@
                 btn.disabled = false; btn.innerText = "🚀 ENVOYER LE PROJET AU PNR"; 
             }
         }
+
+        function openRgpdModal() {
+            if(savedTours.length === 0) { alert("Aucune tournée enregistrée à envoyer."); return; }
+            document.getElementById('rgpd-modal').style.display = 'flex';
+        }
+        function closeRgpdModal() { document.getElementById('rgpd-modal').style.display = 'none'; }
+        function confirmAndSend() { closeRgpdModal(); sendProjectData(); }
+        function closeSuccessModal() { document.getElementById('success-modal').style.display = 'none'; }
+        function openFormulaire() {
+            window.open("https://docs.google.com/forms/d/e/1FAIpQLScMmrKbdAiJUVtnELuBg-yph0us6A5d-Cccv3jMdlmJJElNvQ/viewform?usp=header", "_blank");
+            closeSuccessModal();
+        }
+
     </script>
 </body>
 </html>
