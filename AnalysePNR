@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIX | Observatoire Logistique - Producteur·rices</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Leaflet PolylineDecorator -->
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-polylinedecorator@1.6.4/dist/leaflet.polylineDecorator.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'dix-dark': '#405F59',
+                        'dix-light': '#549e39',
+                        'dix-bg': '#f9fafb',
+                        'dix-text': '#1f2937',
+                    },
+                    fontFamily: {
+                        'oswald': ['Oswald', 'sans-serif'],
+                        'georgia': ['Georgia', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        body { background-color: #f9fafb; color: #1f2937; }
+        .title-font { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
+        .body-font { font-family: 'Georgia', serif; }
+        #map-angle1, #map-flows { z-index: 1; }
+        .custom-marker {
+            background-color: #549e39; border: 2px solid white;
+            border-radius: 50%; width: 14px; height: 14px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            cursor: pointer;
+        }
+        section { scroll-margin-top: 2rem; }
+    </style>
+</head>
+<body class="body-font p-4 md:p-8">
+
+    <header class="bg-dix-dark text-white rounded-2xl p-8 mb-8 shadow-lg">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <div>
+                <h1 class="title-font text-3xl md:text-4xl mb-2">Observatoire des Flux : Producteur·rices</h1>
+                <p class="text-gray-200 italic">Restitution des enquêtes - PNR Préalpes d'Azur / Coopérative DIX</p>
+            </div>
+            <span class="bg-dix-light text-white title-font px-4 py-2 rounded-xl text-sm shadow-md">Données Consolidées</span>
+        </div>
+        <div class="bg-white/10 p-4 rounded-xl border border-white/20 text-sm">
+            <h2 class="title-font text-lg text-dix-light mb-1">Préambule Méthodologique</h2>
+            <p>Les données présentées sont issues du questionnaire territorial (26 structures). <strong>Hormis pour la partie 1 (qui dresse le profil global), l'ensemble des analyses logistiques des parties 2 à 7 est segmenté en fonction de l'Activité Principale des fermes</strong> pour ne pas fausser les moyennes de charge.</p>
+        </div>
+    </header>
+
+    <!-- ANGLE 1 : PROFIL -->
+    <section class="mb-12">
+        <h2 class="title-font text-2xl text-dix-dark mb-6 flex items-center gap-3">
+            <span class="bg-dix-dark text-white w-8 h-8 flex items-center justify-center rounded-full text-lg">1</span>
+            Le Profil de l'Écosystème Productif
+        </h2>
+        
+        <div class="mb-8">
+            <div class="bg-white rounded-2xl p-6 shadow-md border-t-4 border-dix-light inline-block mb-6">
+                <p class="text-sm text-gray-500 mb-1">Total des Fermes Engagées</p>
+                <p class="title-font text-3xl text-dix-dark">26 <span class="text-sm text-gray-400 normal-case font-sans">structures répondantes</span></p>
+            </div>
+
+            <h3 class="title-font text-lg text-dix-dark mb-4">Profils Moyens par Activités Déclarées (Principales & Secondaires)</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- MARAÎCHAGE -->
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex flex-col relative overflow-hidden">
+                    <span class="absolute top-0 right-0 bg-gray-200 text-gray-600 text-[10px] px-2 py-1 rounded-bl-lg font-bold tracking-wider">n=10</span>
+                    <p class="font-bold text-dix-dark border-b pb-2 mb-2 flex items-center gap-2 mt-1"><span>🥬</span> Maraîchage</p>
+                    <ul class="text-sm text-gray-600 space-y-1 flex-1">
+                        <li><strong>Statut :</strong> 7 Principales / 3 Sec.</li>
+                        <li><strong>CA Moyen :</strong> ~ 26 800 €</li>
+                        <li><strong>Vol/SAU :</strong> ~ 1 ha / ~ 10 Tonnes</li>
+                    </ul>
+                </div>
+                <!-- ARBORICULTURE -->
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex flex-col relative overflow-hidden opacity-90">
+                    <span class="absolute top-0 right-0 bg-gray-200 text-gray-600 text-[10px] px-2 py-1 rounded-bl-lg font-bold tracking-wider">n=5</span>
+                    <p class="font-bold text-dix-dark border-b pb-2 mb-2 flex items-center gap-2 mt-1"><span>🍎</span> Arboriculture</p>
+                    <ul class="text-sm text-gray-600 space-y-1 flex-1">
+                        <li class="text-orange-600 font-medium"><strong>Statut :</strong> 0 Principale / 5 Sec.</li>
+                        <li><strong>CA Moyen :</strong> N/A (complément)</li>
+                        <li><strong>Volumes :</strong> N/A</li>
+                    </ul>
+                </div>
+                <!-- APICULTURE -->
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex flex-col relative overflow-hidden">
+                    <span class="absolute top-0 right-0 bg-gray-200 text-gray-600 text-[10px] px-2 py-1 rounded-bl-lg font-bold tracking-wider">n=5</span>
+                    <p class="font-bold text-dix-dark border-b pb-2 mb-2 flex items-center gap-2 mt-1"><span>🐝</span> Apiculture</p>
+                    <ul class="text-sm text-gray-600 space-y-1 flex-1">
+                        <li><strong>Statut :</strong> 5 Principales / 0 Sec.</li>
+                        <li><strong>CA Moyen :</strong> ~ 51 000 €</li>
+                        <li><strong>Volumes :</strong> ~ 2,5 Tonnes de miel</li>
+                    </ul>
+                </div>
+                <!-- ÉLEVAGE -->
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex flex-col relative overflow-hidden">
+                    <span class="absolute top-0 right-0 bg-gray-200 text-gray-600 text-[10px] px-2 py-1 rounded-bl-lg font-bold tracking-wider">n=6</span>
+                    <p class="font-bold text-dix-dark border-b pb-2 mb-2 flex items-center gap-2 mt-1"><span>🐐</span> Élevage (Mammifères)</p>
+                    <ul class="text-sm text-gray-600 space-y-1 flex-1">
+                        <li><strong>Statut :</strong> 6 Principales / 0 Sec.</li>
+                        <li><strong>CA Moyen :</strong> ~ 79 200 €</li>
+                        <li class="leading-tight"><strong>Volumes :</strong> Très hétérogène (Lait, Fromage, Viande)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white rounded-2xl p-6 shadow-md flex flex-col">
+                <h3 class="title-font text-lg text-dix-dark mb-2">Implantation Territoriale</h3>
+                <p class="text-xs text-gray-500 mb-4">Cartographie de l'échantillon <span class="font-semibold text-dix-light">(Base : 26 structures)</span>. <br><span class="text-[10px] text-orange-500 font-bold uppercase tracking-wider">--- Route Napoléon (N85)</span></p>
+                <div id="map-angle1" class="rounded-xl border border-gray-200 flex-1 min-h-[250px]"></div>
+                <div class="mt-4 p-3 bg-gray-50 rounded-lg border-l-4 border-dix-light text-sm text-gray-700 italic">
+                    <strong>💡 Hypothèse de travail :</strong> L'écosystème productif étudié semble fortement éclaté géographiquement sur l'ensemble du PNR (d'Amirat au nord jusqu'à Saint-Cézaire au sud). Malgré l'identification de petits « clusters » autour de Cipières/Gréolières et Caille/Andon, cet éparpillement structurel suggère qu'une mutualisation logistique nécessiterait de penser une collecte décentralisée (tournées de ramassage ou micro-hubs) pour éviter la multiplication de longs trajets individuels à vide. Dans cette perspective, il serait particulièrement intéressant d'explorer une piste de mutualisation structurée autour de l'axe de la Route Napoléon (N85).
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-2xl p-6 shadow-md flex flex-col">
+                <h3 class="title-font text-lg text-dix-dark mb-2">Répartition des Activités</h3>
+                <p class="text-xs text-gray-500 mb-4">Mise en évidence des activités motrices vs activités de complément.</p>
+                <div class="grid grid-cols-2 gap-4 flex-1">
+                    <div class="relative w-full h-36 flex flex-col items-center">
+                        <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Principales (n=22*)</span>
+                        <div class="relative w-full flex-1">
+                            <canvas id="chartActPrincipales"></canvas>
+                        </div>
+                    </div>
+                    <div class="relative w-full h-36 flex flex-col items-center">
+                        <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Secondaires (n=14*)</span>
+                        <div class="relative w-full flex-1">
+                            <canvas id="chartActSecondaires"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-[9px] text-gray-400 mt-2">*Certaines structures ont coché plusieurs activités principales ou secondaires.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ANGLE 2 : COMMERCIALISATION & FLUX -->
+    <section class="mb-12">
+        <h2 class="title-font text-2xl text-dix-dark mb-6 flex items-center gap-3">
+            <span class="bg-dix-dark text-white w-8 h-8 flex items-center justify-center rounded-full text-lg">2</span>
+            Stratégies de Vente & Géographie des Flux <span class="text-sm normal-case font-sans font-normal text-gray-500 ml-2">(Filtre: Act. Principale)</span>
+        </h2>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- 2.1 TYPOLOGIE -->
+            <div class="bg-white rounded-2xl p-6 shadow-md flex flex-col">
+                <h3 class="title-font text-lg text-dix-dark mb-2">2.1 Typologie des Stratégies de Vente</h3>
+                <p class="text-xs text-gray-500 mb-4">Profil commercial dominant (> 50% du CA). <span class="font-semibold text-dix-light">(Base : 26 répondants)</span></p>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1 mb-4">
+                    <div class="bg-gray-50 rounded-lg p-3 border border-gray-100 flex flex-col justify-center">
+                        <div class="flex justify-between items-center mb-1"><span class="font-bold text-dix-dark text-sm">🧑‍🌾 Proximité</span><span class="text-dix-light font-bold">42%</span></div>
+                        <div class="w-full bg-gray-200 rounded-full h-2 mb-2"><div class="bg-dix-light h-2 rounded-full" style="width: 42%"></div></div>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-3 border border-gray-100 flex flex-col justify-center">
+                        <div class="flex justify-between items-center mb-1"><span class="font-bold text-dix-dark text-sm">🔀 Diversifié</span><span class="text-dix-dark font-bold">31%</span></div>
+                        <div class="w-full bg-gray-200 rounded-full h-2 mb-2"><div class="bg-dix-dark h-2 rounded-full" style="width: 31%"></div></div>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-3 border border-gray-100 flex flex-col justify-center">
+                        <div class="flex justify-between items-center mb-1"><span class="font-bold text-dix-dark text-sm">🏪 B2B Court</span><span class="text-[#8cae81] font-bold">23%</span></div>
+                        <div class="w-full bg-gray-200 rounded-full h-2 mb-2"><div class="bg-[#8cae81] h-2 rounded-full" style="width: 23%"></div></div>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-3 border border-gray-100 flex flex-col justify-center">
+                        <div class="flex justify-between items-center mb-1"><span class="font-bold text-dix-dark text-sm">🚛 Circuit Long</span><span class="text-[#b2c6ad] font-bold">4%</span></div>
+                        <div class="w-full bg-gray-200 rounded-full h-2 mb-2"><div class="bg-[#b2c6ad] h-2 rounded-full" style="width: 4%"></div></div>
+                    </div>
+                </div>
+                <div class="mt-auto p-3 bg-gray-50 rounded-lg border-l-4 border-dix-light text-sm text-gray-700 italic">
+                    <strong>💡 Constat :</strong> Près de 80% des répondants (n=21) maintiennent une vente directe à la ferme (même minoritaire), prouvant que ce canal reste le socle incontournable de l'agriculture locale.
+                </div>
+            </div>
+            
+            <!-- 2.2 RYTHMES -->
+            <div class="bg-white rounded-2xl p-6 shadow-md flex flex-col">
+                <h3 class="title-font text-lg text-dix-dark mb-2">2.2 Rythmes & Créneaux de Livraison</h3>
+                <p class="text-xs text-gray-500 mb-4">Répartition des moments privilégiés. <span class="font-semibold text-dix-light">(Base : 26 répondants)</span></p>
+                <div class="flex flex-col sm:flex-row gap-4 flex-1 mb-4">
+                    <div class="w-full sm:w-1/2 flex flex-col">
+                        <span class="text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-wider text-center">Jours de la semaine</span>
+                        <div class="relative w-full flex-1 min-h-[140px]"><canvas id="chartRhythm"></canvas></div>
+                    </div>
+                    <div class="w-full sm:w-1/2 flex flex-col">
+                        <span class="text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-wider text-center">Créneaux horaires</span>
+                        <div class="relative w-full flex-1 min-h-[140px] pt-4"><canvas id="chartTimeSlots"></canvas></div>
+                    </div>
+                </div>
+                <div class="mt-auto p-3 bg-gray-50 rounded-lg border-l-4 border-dix-light text-sm text-gray-700 italic">
+                    <strong>💡 Constat :</strong> Les flux se concentrent massivement en fin de semaine (jeudi/vendredi matin). Cette forte polarisation est à double tranchant : c'est une <strong>véritable opportunité de massification</strong> (grouper les volumes pour rentabiliser un véhicule partagé), mais cela exigera un calibrage précis de la flotte pour absorber ce pic d'activité.
+                </div>
+            </div>
+        </div>
+
+        <!-- 2.3 : Problématiques Commerciales -->
+        <div class="bg-white rounded-2xl p-6 shadow-md flex flex-col w-full mb-6 border-l-4 border-red-500">
+            <h3 class="title-font text-lg text-red-600 mb-2">2.3 Focale : Freins à la Commercialisation</h3>
+            <p class="text-xs text-gray-500 mb-4">Principales difficultés rencontrées. <span class="font-semibold text-red-400">(Base : 25 répondants, choix multiples)</span></p>
+            <div class="relative h-40 w-full mb-4"><canvas id="chartProdBarriers"></canvas></div>
+            <div class="mt-auto p-3 bg-gray-50 rounded-lg border-l-4 border-red-400 text-sm text-gray-700 italic">
+                <strong>💡 Constat :</strong> La charge logistique (temps et rentabilité des tournées) arrive largement en tête des freins commerciaux (60 % des citations), bien avant la recherche de nouveaux clients.
+            </div>
+        </div>
+
+        <!-- 2.4 : Flux -->
+        <div class="bg-white rounded-2xl p-6 shadow-md flex flex-col w-full">
+            <h3 class="title-font text-lg text-dix-dark mb-2">2.4 Géographie des Flux (Origines - Destinations)</h3>
+            <div id="map-flows" class="rounded-xl border border-gray-200 w-full min-h-[450px]"></div>
+            <div class="mt-4 p-3 bg-gray-50 rounded-lg border-l-4 border-dix-light text-sm text-gray-700 italic">
+                <strong>💡 Hypothèse de travail :</strong> L'attraction logistique du <strong>Littoral</strong> et du <strong>Moyen Pays</strong> est majeure.
+            </div>
+        </div>
+    </section>
+
+    <!-- ANGLE 3 : CHARGE LOGISTIQUE & DONNÉES SOCIO-ÉCONOMIQUES -->
+    <section class="mb-12">
+        <h2 class="title-font text-2xl text-dix-dark mb-6 flex items-center gap-3">
+            <span class="bg-dix-dark text-white w-8 h-8 flex items-center justify-center rounded-full text-lg">3</span>
+            Organisation Logistique & Données Socio-Économiques <span class="text-sm normal-case font-sans font-normal text-gray-500 ml-2">(Filtre: Act. Principale)</span>
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <!-- Organisation autonome -->
+            <div class="bg-dix-dark p-6 rounded-2xl shadow-md flex items-center gap-4 text-white">
+                <div class="text-4xl">🚚</div>
+                <div>
+                    <h3 class="title-font text-xl text-dix-light mb-1">Auto-livraison</h3>
+                    <p class="text-sm text-gray-200">Plus de <strong>92%</strong> des agriculteurs effectuent les livraisons eux-mêmes. <span class="text-xs text-gray-400 block mt-1">(Base : 24 répondants sur 26)</span></p>
+                </div>
+            </div>
+            
+            <!-- Données Socio-Économiques -->
+            <div class="bg-white p-6 rounded-2xl shadow-md md:col-span-2 border-l-4 border-orange-500 flex flex-col">
+                <h3 class="title-font text-xl text-dix-dark mb-1">3.1 Données socio-économiques de vos livraisons</h3>
+                <p class="text-xs text-gray-500 mb-4">Valeurs déclaratives moyennes. <span class="font-semibold text-orange-400">(Base : 22 répondants au bloc éco)</span></p>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                    <div class="text-center border-r border-gray-100">
+                        <p class="text-xs text-gray-500 mb-1 uppercase tracking-wider font-sans">Poids Logistique (Prix HT)</p>
+                        <p class="title-font text-3xl text-orange-600">~ 18%</p>
+                    </div>
+                    <div class="text-center border-r border-gray-100">
+                        <p class="text-xs text-gray-500 mb-1 uppercase tracking-wider font-sans">CA Moyen / Tournée</p>
+                        <p class="title-font text-3xl text-dix-dark">~ 800 €</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xs text-gray-500 mb-1 uppercase tracking-wider font-sans">Application d'un Franco</p>
+                        <p class="title-font text-2xl text-dix-dark">27% <span class="text-sm font-sans text-gray-500 font-normal">(Moy. 220€)</span></p>
+                    </div>
+                </div>
+                <div class="mt-auto p-3 bg-gray-50 rounded-lg border-l-4 border-orange-400 text-sm text-gray-700 italic">
+                    <strong>💡 Constat :</strong> Bien que la charge logistique pèse très lourdement sur la rentabilité (estimée à près de 20% du prix HT), seule une minorité de producteurs (27%) sécurise ses trajets par un franco de port, traduisant une difficulté à répercuter le coût réel du transport sur les acheteurs.
+                </div>
+            </div>
+        </div>
+
+        <!-- Profils des tournées par filière (ACT PRINCIPALE ONLY) -->
+        <div class="flex justify-between items-end mb-4">
+            <h3 class="title-font text-lg text-dix-dark">3.2 Organisation logistique par activité principale</h3>
+        </div>
+        <!-- Note: L'arboriculture est retirée car 0 structure ne l'a en activité principale -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200 flex flex-col relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-2 h-full bg-dix-light opacity-50"></div>
+                <p class="font-bold text-dix-dark border-b border-gray-100 pb-2 mb-3 text-lg">🥬 Maraîchage <span class="text-xs font-normal text-gray-500 float-right mt-1">(Act. Principale n=7)</span></p>
+                <ul class="text-sm text-gray-700 space-y-2 flex-1">
+                    <li class="flex justify-between"><span>Clients moy. :</span> <span class="font-semibold text-dix-dark">~ 8 / tournée</span></li>
+                    <li class="flex justify-between"><span>Distance moy. :</span> <span class="font-semibold text-dix-dark">~ 50 km / tournée</span></li>
+                    <li class="flex justify-between"><span>Temps hebdo :</span> <span class="font-semibold text-dix-dark">~ 15h</span></li>
+                </ul>
+            </div>
+            <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200 flex flex-col relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-2 h-full bg-dix-dark opacity-50"></div>
+                <p class="font-bold text-dix-dark border-b border-gray-100 pb-2 mb-3 text-lg">🐐 Élevage <span class="text-xs font-normal text-gray-500 float-right mt-1">(Act. Principale n=6)</span></p>
+                <ul class="text-sm text-gray-700 space-y-2 flex-1">
+                    <li class="flex justify-between"><span>Clients moy. :</span> <span class="font-semibold text-dix-dark">~ 6 / tournée</span></li>
+                    <li class="flex justify-between"><span>Distance moy. :</span> <span class="font-semibold text-dix-dark">~ 150 km / tournée</span></li>
+                    <li class="flex justify-between"><span>Temps hebdo :</span> <span class="font-semibold text-dix-dark">~ 10h</span></li>
+                </ul>
+            </div>
+            <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200 flex flex-col relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-2 h-full bg-[#b2c6ad] opacity-50"></div>
+                <p class="font-bold text-dix-dark border-b border-gray-100 pb-2 mb-3 text-lg">🐝 Apiculture <span class="text-xs font-normal text-gray-500 float-right mt-1">(Act. Principale n=5)</span></p>
+                <ul class="text-sm text-gray-700 space-y-2 flex-1">
+                    <li class="flex justify-between"><span>Clients moy. :</span> <span class="font-semibold text-dix-dark">1 à 3 / tournée</span></li>
+                    <li class="flex justify-between"><span>Distance moy. :</span> <span class="font-semibold text-dix-dark">~ 45 km / tournée</span></li>
+                    <li class="flex justify-between"><span>Temps hebdo :</span> <span class="font-semibold text-dix-dark">Ponctuel</span></li>
+                </ul>
+            </div>
+        </div>
+        <div class="p-3 bg-gray-50 rounded-lg border-l-4 border-dix-light text-sm text-gray-700 italic">
+            <strong>💡 Constat :</strong> Les profils logistiques sont radicalement opposés. Le maraîchage opère sur un modèle de proximité extrêmement chronophage (multiplication des arrêts, 15h/semaine), tandis que l'élevage souffre de l'éloignement des bassins de consommation (moy. 150 km par tournée). La mutualisation devra donc offrir deux services distincts : le ramassage capillaire (légumes) et la longue distance (viande/fromage).
+        </div>
+    </section>
+
+    <!-- ANGLE 4 & 5 : APPÉTENCE ET ÉQUIPEMENTS -->
+    <section class="mb-12">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-6">
+            <!-- ANGLE 4 : Intérêt par Thématique -->
+            <div class="bg-white rounded-2xl p-6 shadow-md flex flex-col w-full border-l-4 border-dix-light">
+                <h2 class="title-font text-2xl text-dix-dark mb-4 flex items-center gap-3">
+                    <span class="bg-dix-dark text-white w-8 h-8 flex items-center justify-center rounded-full text-lg">4</span>
+                    L'Appétence à la Coopération
+                </h2>
+                <h3 class="title-font text-lg text-dix-dark mb-2">Intérêt pour un accompagnement / outil</h3>
+                <p class="text-xs text-gray-500 mb-4">"Dans quelle mesure un soutien sur ces thématiques serait pertinent ?" <span class="font-semibold text-dix-light">(Base : 26 répondants)</span></p>
+                <div class="relative h-64 w-full mb-4">
+                    <canvas id="chartSupportNeeds"></canvas>
+                </div>
+                <div class="mt-auto p-3 bg-gray-50 rounded-lg border-l-4 border-dix-light text-sm text-gray-700 italic">
+                    <strong>💡 Constat :</strong> La mutualisation physique des transports suscite une forte adhésion (54% y voient un intérêt majeur), loin devant le besoin d'outils numériques ou de logiciels d'optimisation.
+                </div>
+            </div>
+            
+            <!-- ANGLE 5 : Infrastructures -->
+            <div class="flex flex-col">
+                <h2 class="title-font text-2xl text-dix-dark mb-4 flex items-center gap-3">
+                    <span class="bg-dix-dark text-white w-8 h-8 flex items-center justify-center rounded-full text-lg">5</span>
+                    Synthèse des Infrastructures
+                </h2>
+                <div class="bg-white rounded-2xl p-6 shadow-md flex flex-col flex-1">
+                    <h3 class="title-font text-lg text-dix-dark mb-2">Stockage, Transport & Outils de Gestion</h3>
+                    <p class="text-xs text-gray-500 mb-4">Taux d'équipement déclaré (% de possession). <span class="font-semibold text-dix-light">(Base : 26 répondants)</span></p>
+                    <div class="relative h-56 w-full flex-1 flex justify-center mb-4"><canvas id="chartEquipment"></canvas></div>
+                    <div class="mt-auto p-3 bg-gray-50 rounded-lg border-l-4 border-orange-400 text-sm text-gray-700 italic">
+                        <strong>💡 Constat :</strong> L'écosystème repose sur une logistique « artisanale ». Le manque criant de véhicules sous température dirigée (15%) et la saturation des espaces de stockage (60%) constituent des vulnérabilités majeures.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ANGLE 6 & 7 : SAISONNALITÉ ET TRANSFORMATION -->
+    <section class="mb-12">
+        <h2 class="title-font text-2xl text-dix-dark mb-6 flex items-center gap-3">
+            <span class="bg-dix-dark text-white w-8 h-8 flex items-center justify-center rounded-full text-lg">6/7</span>
+            Saisonnalité & Transformation
+        </h2>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white rounded-2xl p-6 shadow-md flex flex-col">
+                <h3 class="title-font text-lg text-dix-dark mb-2">6. Pics de Charge Logistique</h3>
+                <p class="text-xs text-gray-500 mb-4">Mois de forte activité. <span class="font-semibold text-dix-light">(Base : 26 répondants)</span></p>
+                <div class="relative h-48 w-full flex-1"><canvas id="chartSeason"></canvas></div>
+            </div>
+            
+            <div class="bg-white rounded-2xl p-6 shadow-md flex flex-col">
+                <h3 class="title-font text-lg text-dix-dark mb-2">7. Transformation des Produits</h3>
+                <p class="text-xs text-gray-500 mb-4">Lieu principal de transformation. <span class="font-semibold text-dix-light">(Filtre: Élevage & Maraîchage)</span></p>
+                <div class="relative w-full flex-1 min-h-[180px]">
+                    <canvas id="chartTransfoLocation"></canvas>
+                </div>
+                <div class="mt-4 p-3 bg-gray-50 rounded-lg border-l-4 border-dix-light text-sm text-gray-700 italic">
+                    <strong>💡 Conclusion :</strong> L'absence d'outil à la ferme pour une large part des éleveurs (abattoirs) génère des "flux invisibles" massifs qui complexifient l'organisation.
+                </div>
+            </div>
+            
+        </div>
+    </section>
+
+    <!-- SCRIPTS ET GRAPHIQUES -->
+    <script>
+        Chart.defaults.font.family = 'Georgia, serif';
+        Chart.defaults.color = '#1f2937';
+        Chart.defaults.plugins.tooltip.backgroundColor = '#405F59';
+        Chart.defaults.plugins.tooltip.titleFont.family = 'Oswald';
+        const dixColors = ['#549e39', '#405F59', '#8cae81', '#b2c6ad', '#e5e7eb'];
+
+        window.onload = function() {
+            // --- CARTE LEAFLET (ANGLE 1) ---
+            const mapAngle1 = L.map('map-angle1').setView([43.76, 6.90], 10);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(mapAngle1);
+            const icon = L.divIcon({ className: 'custom-marker', iconSize: [14, 14] });
+            
+            // Tracé de la Route Napoléon (N85) à titre indicatif
+            const routeNapoleonCoords = [
+                [43.5528, 7.0174], // Cannes
+                [43.6600, 6.9200], // Grasse
+                [43.6960, 6.8450], // Saint-Vallier-de-Thiey
+                [43.7310, 6.7830], // Escragnolles
+                [43.7740, 6.6660], // Séranon / La Doire
+                [43.8460, 6.5130]  // Castellane (direction)
+            ];
+            
+            L.polyline(routeNapoleonCoords, {
+                color: '#f59e0b', // Un orange/jaune pour bien ressortir
+                weight: 4,
+                opacity: 0.7,
+                dashArray: '10, 8'
+            }).bindPopup("<strong class='title-font text-orange-600'>Route Napoléon (N85)</strong><br><span class='text-xs'>Axe logistique majeur traversant le PNR.</span>").addTo(mapAngle1);
+
+            // Les 26 points issus du CSV
+            const locations = [
+                { lat: 43.795, lon: 6.943, name: "ZEAM", city: "Gréolières" },
+                { lat: 43.873, lon: 6.862, name: "Les jardins de Cosalonga", city: "Collongues" },
+                { lat: 43.798, lon: 6.945, name: "Guillaume Viale", city: "Gréolières" },
+                { lat: 43.701, lon: 6.989, name: "EI RUFF", city: "Le Bar-sur-Loup" },
+                { lat: 43.870, lon: 6.860, name: "Le prat de cérès", city: "Collongues" },
+                { lat: 43.716, lon: 7.058, name: "Légumes des domaines", city: "Tourrettes-sur-Loup" },
+                { lat: 43.742, lon: 7.008, name: "SCEA Pra de Mondin", city: "Courmes" },
+                { lat: 43.699, lon: 6.848, name: "Ferme de la fubi", city: "Saint-Vallier-de-Thiey" },
+                { lat: 43.731, lon: 6.783, name: "Courgettes et Compagnie", city: "Escragnolles" },
+                { lat: 43.889, lon: 6.825, name: "La Ferme d'Aqui", city: "Amirat" },
+                { lat: 43.784, lon: 6.955, name: "Philippe Coste", city: "Cipières" },
+                { lat: 43.795, lon: 7.042, name: "Producteur", city: "Coursegoules" },
+                { lat: 43.796, lon: 6.706, name: "EARL Les Prairies de Grand Maison", city: "Valderoure" },
+                { lat: 43.786, lon: 6.958, name: "La Ferme de Jal", city: "Cipières" },
+                { lat: 43.750, lon: 6.729, name: "MIEL06", city: "Caille" },
+                { lat: 43.792, lon: 6.940, name: "Rucher du Cheiron", city: "Gréolières" },
+                { lat: 43.696, lon: 6.845, name: "Ode à l'escargot", city: "Saint-Vallier-de-Thiey" },
+                { lat: 43.774, lon: 6.666, name: "Goletto", city: "Andon" },
+                { lat: 43.649, lon: 6.793, name: "Chèvrerie du bois d'Amon", city: "Saint-Cézaire" },
+                { lat: 43.781, lon: 6.952, name: "La Chèvrerie de la Crous", city: "Cipières" },
+                { lat: 43.734, lon: 6.780, name: "Ferme Terra abelha", city: "Escragnolles" },
+                { lat: 43.799, lon: 6.702, name: "Ferme Maillard", city: "Valderoure" },
+                { lat: 43.882, lon: 6.897, name: "SCEA Les Ruchers de Sallagriffon", city: "Sallagriffon" },
+                { lat: 43.777, lon: 6.662, name: "Sur les traces des fées...", city: "Andon" },
+                { lat: 43.753, lon: 6.725, name: "Safran de Nans", city: "Caille" },
+                { lat: 43.748, lon: 6.732, name: "Chemin du Baou EARL", city: "Caille" }
+            ];
+
+            locations.forEach(loc => L.marker([loc.lat, loc.lon], {icon})
+                .bindPopup(`<strong class="title-font text-dix-dark text-sm">${loc.name}</strong><br><span class="text-xs text-gray-500">📍 ${loc.city}</span>`)
+                .addTo(mapAngle1));
+
+            // --- NOUVELLE CARTE DES FLUX (ANGLE 2.4) ---
+            const mapFlows = L.map('map-flows').setView([43.70, 7.05], 10);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(mapFlows);
+
+            const origins = [{ coords: [43.76, 6.75] }, { coords: [43.79, 6.95] }, { coords: [43.80, 7.05] }];
+            const oIcon = L.divIcon({ html: '<div style="background-color:#549e39; width:18px; height:18px; border-radius:50%; border:2px solid white;"></div>', iconSize: [18, 18] });
+            origins.forEach(o => L.marker(o.coords, {icon: oIcon}).addTo(mapFlows));
+
+            const destinations = [
+                { coords: [43.71, 7.26], col: "#e74c3c", z: false },
+                { coords: [43.55, 7.01], col: "#e74c3c", z: false },
+                { coords: [43.66, 6.92], col: "#e67e22", z: false },
+                { coords: [43.72, 7.11], col: "#e67e22", z: false },
+                { coords: [43.70, 7.00], col: "#e67e22", z: true },
+                { coords: [43.86, 7.03], col: "#f1c40f", z: true }
+            ];
+            destinations.forEach(dest => L.marker(dest.coords, {icon: L.divIcon({ html: `<div style="background-color:${dest.col}; width:12px; height:12px; border-radius:50%; border:2px solid white;"></div>`, iconSize: [12, 12] }) }).addTo(mapFlows));
+
+            const addFlow = (oIdx, dIdx, weight) => {
+                const dest = destinations[dIdx];
+                const pl = L.polyline([origins[oIdx].coords, dest.coords], { color: dest.col, weight: weight, opacity: 0.6 }).addTo(mapFlows);
+                if (dest.z && window.L.polylineDecorator) {
+                    L.polylineDecorator(pl, { patterns: [{ offset: '100%', repeat: 0, symbol: L.Symbol.arrowHead({pixelSize: 12 + weight, polygon: true, pathOptions: { fillOpacity: 0.8, color: dest.col, stroke: false }}) }] }).addTo(mapFlows);
+                }
+            };
+
+            addFlow(0, 2, 5); addFlow(0, 3, 8); addFlow(0, 5, 4); 
+            addFlow(1, 3, 6); addFlow(1, 2, 4); addFlow(1, 0, 8); addFlow(1, 4, 6); 
+            addFlow(2, 3, 9); addFlow(2, 0, 10);
+
+            // --- GRAPHIQUES ---
+            // ANGLE 1 : Activités Principales
+            new Chart(document.getElementById('chartActPrincipales'), {
+                type: 'doughnut', 
+                data: { 
+                    labels: ['Maraîchage (7)', 'Élevage (6)', 'Apiculture (5)', 'Autres (4)'], 
+                    datasets: [{ data: [7, 6, 5, 4], backgroundColor: dixColors, borderWidth: 2 }] 
+                },
+                options: { 
+                    responsive: true, maintainAspectRatio: false, cutout: '65%',
+                    plugins: { legend: { position: 'right', labels: { boxWidth: 8, font: {size: 10} } } }
+                }
+            });
+
+            // ANGLE 1 : Activités Secondaires
+            new Chart(document.getElementById('chartActSecondaires'), {
+                type: 'doughnut', 
+                data: { 
+                    labels: ['Arboriculture (5)', 'Maraîchage (3)', 'Aviculture / Œufs (2)', 'PPAM (2)', 'Céréales/Autres (2)'], 
+                    datasets: [{ data: [5, 3, 2, 2, 2], backgroundColor: ['#b2c6ad', '#8cae81', '#405F59', '#549e39', '#e5e7eb'], borderWidth: 2 }] 
+                },
+                options: { 
+                    responsive: true, maintainAspectRatio: false, cutout: '65%',
+                    plugins: { legend: { position: 'right', labels: { boxWidth: 8, font: {size: 10} } } }
+                }
+            });
+
+            // 2.2 Rythmes - Graphique Jours
+            new Chart(document.getElementById('chartRhythm'), {
+                type: 'line', data: { labels: ['L', 'M', 'M', 'J', 'V', 'S'], datasets: [{ data: [15, 45, 20, 85, 95, 30], borderColor: '#549e39', backgroundColor: 'rgba(84, 158, 57, 0.2)', fill: true, tension: 0.4 }] },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    scales: { 
+                        y: { 
+                            display: true,
+                            max: 100,
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Intensité de livraison (%)',
+                                font: { size: 10 }
+                            }
+                        } 
+                    }, 
+                    plugins: { legend: { display: false } } 
+                }
+            });
+
+            // 2.2 Rythmes - Graphique Créneaux
+            new Chart(document.getElementById('chartTimeSlots'), {
+                type: 'doughnut', data: { labels: ['Matin (70%)', 'Après-Midi (20%)', 'Soir (10%)'], datasets: [{ data: [70, 20, 10], backgroundColor: ['#405F59', '#8cae81', '#b2c6ad'] }] },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '55%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: {size: 10} } } } }
+            });
+
+            // 2.3 Freins à la commercialisation
+            new Chart(document.getElementById('chartProdBarriers'), {
+                type: 'bar', data: { 
+                    labels: ['Logistique & Tournées (15)', 'Volumes / Surplus (9)', 'Trouver clients / Zones (8)'], 
+                    datasets: [{ data: [60, 36, 32], backgroundColor: ['#ef4444', '#f97316', '#f59e0b'] }] 
+                },
+                options: { 
+                    indexAxis: 'y', 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } },
+                    scales: { x: { max: 100, title: { display: true, text: '% des répondants (Base 25)' } } }
+                }
+            });
+
+            // ANGLE 4 : Besoins d'accompagnement (Barres empilées)
+            new Chart(document.getElementById('chartSupportNeeds'), {
+                type: 'bar',
+                data: {
+                    labels: [
+                        'Mutualisation transports',
+                        'Développement commercial',
+                        'Stockage partagé',
+                        'Logiciel optimisation',
+                        'Outils de facturation'
+                    ],
+                    datasets: [
+                        { label: 'Très pertinent', data: [9, 7, 5, 4, 2], backgroundColor: '#405F59' },
+                        { label: 'Plutôt pertinent', data: [5, 5, 4, 4, 4], backgroundColor: '#549e39' },
+                        { label: 'Peu pertinent', data: [6, 7, 8, 9, 10], backgroundColor: '#b2c6ad' },
+                        { label: 'Pas du tout pertinent', data: [6, 7, 9, 9, 10], backgroundColor: '#e5e7eb' }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: {boxWidth: 10, font: {size: 10}} } },
+                    scales: {
+                        x: { stacked: true, max: 26, title: { display: true, text: 'Nombre de réponses' } },
+                        y: { stacked: true, grid: { display: false } }
+                    }
+                }
+            });
+
+            // ANGLE 5 : Équipements (Barres horizontales)
+            new Chart(document.getElementById('chartEquipment'), {
+                type: 'bar', data: { 
+                    labels: ['Utilitaires personnels/secs', 'Gestion Papier/SMS', 'Stockage insuffisant', 'Logiciel de gestion', 'Véhicule Frigorifique'], 
+                    datasets: [{ data: [100, 70, 60, 30, 15], backgroundColor: ['#549e39', '#8cae81', '#f59e0b', '#b2c6ad', '#ef4444'] }] 
+                },
+                options: { 
+                    indexAxis: 'y', 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } }, 
+                    scales: { x: { max: 100, title: { display: true, text: '% des structures' } } } 
+                }
+            });
+
+            new Chart(document.getElementById('chartSeason'), {
+                type: 'bar', data: { labels: ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'], datasets: [{ data: [2, 2, 5, 12, 18, 25, 28, 22, 15, 8, 4, 6], backgroundColor: '#405F59' }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+
+            new Chart(document.getElementById('chartTransfoLocation'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['À la ferme', 'À l\'extérieur', 'Aucune'],
+                    datasets: [{ data: [45, 35, 20], backgroundColor: ['#549e39', '#8cae81', '#e5e7eb'], borderWidth: 1, borderColor: '#fff' }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, cutout: '60%',
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 8, font: {size: 9} } } }
+                }
+            });
+        };
+    </script>
+</body>
+</html>
