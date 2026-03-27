@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carte Logistique Multi-Sources - PNR Préalpes d'Azur</title>
+    
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600&family=Georgia&display=swap" rel="stylesheet">
+
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Georgia', serif;
+            color: #405F59;
+            background-color: #f3f3f3;
+            overflow: hidden;
+        }
+
+        /* --- HEADER --- */
+        #header {
+            background-color: #405F59;
+            color: white;
+            padding: 15px 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 1000;
+            height: 85px;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #header h1 {
+            font-family: 'Oswald', sans-serif;
+            margin: 0;
+            font-size: 20px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        #header p {
+            margin: 4px 0 0 0;
+            font-size: 13px;
+            color: #e2e8f0;
+        }
+
+        /* --- LAYOUT PRINCIPAL --- */
+        #main-container {
+            display: flex;
+            height: calc(100vh - 85px);
+            width: 100%;
+        }
+
+        /* --- SIDEBAR --- */
+        #sidebar {
+            width: 380px;
+            background-color: #ffffff;
+            border-right: 1px solid #d1d5db;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            z-index: 500;
+        }
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #e5e7eb;
+            background-color: #f9fafb;
+        }
+        .sidebar-header h2 {
+            font-family: 'Oswald', sans-serif;
+            margin: 0 0 15px 0;
+            color: #405F59;
+            font-size: 16px;
+            text-transform: uppercase;
+        }
+        .filter-group {
+            margin-bottom: 10px;
+        }
+        .filter-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            font-weight: bold;
+            color: #6b7280;
+            margin-bottom: 5px;
+            display: block;
+        }
+        .filter-select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-family: 'Georgia', serif;
+            font-size: 14px;
+            color: #405F59;
+            margin-bottom: 10px;
+        }
+
+        /* Liste des acteurs */
+        #actor-list {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+        .actor-item {
+            padding: 12px 20px;
+            border-bottom: 1px solid #f3f4f6;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: background-color 0.2s;
+        }
+        .actor-item:hover {
+            background-color: #f5f3ff;
+        }
+        .actor-badge {
+            width: 12px;
+            height: 12px;
+            margin-right: 15px;
+            flex-shrink: 0;
+            border: 2px solid white;
+            box-shadow: 0 0 3px rgba(0,0,0,0.2);
+        }
+        .badge-entretien { border-radius: 50%; }
+        .badge-questionnaire { border-radius: 0; transform: rotate(45deg); }
+
+        .actor-details {
+            display: flex;
+            flex-direction: column;
+        }
+        .actor-name {
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .actor-meta {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        /* --- CARTE --- */
+        #map {
+            flex-grow: 1;
+            height: 100%;
+        }
+        
+        .legend {
+            background: white;
+            padding: 12px;
+            line-height: 1.4em;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            font-size: 13px;
+        }
+        .legend i {
+            width: 14px;
+            height: 14px;
+            float: left;
+            margin-right: 8px;
+            border: 1.5px solid #fff;
+            box-shadow: 0 0 2px rgba(0,0,0,0.3);
+        }
+        .shape-circle { border-radius: 50% !important; }
+        .shape-diamond { transform: rotate(45deg); margin-left: 2px; margin-right: 10px !important; }
+
+        .custom-popup .leaflet-popup-content-wrapper {
+            border-top: 5px solid #8b5cf6;
+            border-radius: 4px;
+        }
+        .custom-popup h3 {
+            font-family: 'Oswald', sans-serif;
+            margin: 0 0 5px 0;
+            font-size: 16px;
+            text-transform: uppercase;
+        }
+        .source-tag {
+            display: inline-block;
+            font-size: 10px;
+            background: #e2e8f0;
+            padding: 2px 6px;
+            border-radius: 10px;
+            text-transform: uppercase;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="header">
+        <div>
+            <h1>Carte Logistique PNR Préalpes d'Azur</h1>
+            <p>Observatoire Multi-Sources (Entretiens & Questionnaires)</p>
+        </div>
+    </div>
+
+    <div id="main-container">
+        <div id="sidebar">
+            <div class="sidebar-header">
+                <div class="filter-group">
+                    <span class="filter-label">Catégorie</span>
+                    <select id="filter-type" class="filter-select" onchange="renderActors()">
+                        <option value="Tous">Toutes les catégories</option>
+                        <option value="Producteur">Producteurs</option>
+                        <option value="Acheteur">Acheteurs / Distributeurs</option>
+                        <option value="Mixte / Hub">Hubs Logistiques</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <span class="filter-label">Source de donnée</span>
+                    <select id="filter-source" class="filter-select" onchange="renderActors()">
+                        <option value="Tous">Toutes les sources</option>
+                        <option value="Entretien">Entretiens (Qualitatif)</option>
+                        <option value="Questionnaire">Questionnaires (Données)</option>
+                    </select>
+                </div>
+            </div>
+            <div id="actor-list"></div>
+        </div>
+
+        <div id="map"></div>
+    </div>
+
+    <script>
+        // --- 1. SETUP CARTE ---
+        var map = L.map('map').setView([43.76, 6.9], 11);
+        L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+            attribution: 'DIX / PNR Préalpes d\'Azur'
+        }).addTo(map);
+
+        var markersGroup = L.layerGroup().addTo(map);
+
+        var colors = {
+            "Producteur": "#8b5cf6", // Violet Vibrant
+            "Acheteur": "#3b82f6",    // Bleu
+            "Mixte / Hub": "#ef4444"  // Rouge
+        };
+
+        // --- 2. DONNÉES (Fusion Entretiens + Questionnaires Producteurs + Questionnaires Acheteurs) ---
+        var actorsData = [
+            // PRODUCTEURS (Entretiens)
+            { name: "La Biquetterie des Bois", type: "Producteur", source: "Entretien", village: "Vence", lat: 43.722, lng: 7.111, desc: "Chevrière, vente directe." },
+            { name: "Chèvrerie du Bois d'Amon", type: "Producteur", source: "Entretien", village: "St-Cézaire", lat: 43.648, lng: 6.793, desc: "Fromages, forte exigence transport." },
+            { name: "Courgettes & Compagnie", type: "Producteur", source: "Entretien", village: "Escragnolles", lat: 43.731, lng: 6.783, desc: "Œufs bio, agritourisme." },
+            { name: "Ferme Brassicole Maillard", type: "Producteur", source: "Entretien", village: "Valderoure", lat: 43.795, lng: 6.705, desc: "Bière & Viande." },
+            { name: "Le Gattilier", type: "Producteur", source: "Entretien", village: "Valderoure", lat: 43.795, lng: 6.705, desc: "Plantes médicinales." },
+            { name: "Les Prairies de Grand Maison", type: "Producteur", source: "Entretien", village: "Valderoure", lat: 43.795, lng: 6.705, desc: "Farine." },
+            { name: "Ferme de la Fubi", type: "Producteur", source: "Entretien", village: "Saint-Vallier", lat: 43.698, lng: 6.848, desc: "Aviculture." },
+            { name: "Le Safran de Nans", type: "Producteur", source: "Entretien", village: "Saint-Vallier", lat: 43.698, lng: 6.848, desc: "Safran." },
+            { name: "Ferme Pépite", type: "Producteur", source: "Entretien", village: "Courmes", lat: 43.742, lng: 7.008, desc: "Maraîchage." },
+            { name: "GAEC du Cheiron", type: "Producteur", source: "Entretien", village: "Coursegoules", lat: 43.794, lng: 7.043, desc: "Élevage." },
+            { name: "La Provençâne", type: "Producteur", source: "Entretien", village: "Coursegoules", lat: 43.794, lng: 7.043, desc: "Cosmétiques." },
+            { name: "Les Ruchers de Cipières", type: "Producteur", source: "Entretien", village: "Cipières", lat: 43.784, lng: 6.955, desc: "Miel." },
+            { name: "Le Prat de Ceres", type: "Producteur", source: "Entretien", village: "Collongues", lat: 43.874, lng: 6.868, desc: "Maraîchage." },
+            { name: "Ruchers de Sallagriffon", type: "Producteur", source: "Entretien", village: "Sallagriffon", lat: 43.882, lng: 6.878, desc: "Miel/Viande." },
+            { name: "Zoélières", type: "Producteur", source: "Entretien", village: "Gréolières", lat: 43.796, lng: 6.943, desc: "Maraîchage local." },
+
+            // PRODUCTEURS (Questionnaires)
+            { name: "Philippe COSTE", type: "Producteur", source: "Questionnaire", village: "Cipières", lat: 43.784, lng: 6.955, desc: "Apiculture." },
+            { name: "MIEL06", type: "Producteur", source: "Questionnaire", village: "Caille", lat: 43.778, lng: 6.729, desc: "Apiculture." },
+            { name: "RUCHER DU CHEIRON", type: "Producteur", source: "Questionnaire", village: "Gréolières", lat: 43.796, lng: 6.943, desc: "Apiculture." },
+            { name: "Ferme Terra Abelha", type: "Producteur", source: "Questionnaire", village: "Escragnolles", lat: 43.731, lng: 6.783, desc: "Apiculture." },
+            { name: "SCEA LES RUCHERS DE SALLAGRIFFON", type: "Producteur", source: "Questionnaire", village: "Sallagriffon", lat: 43.882, lng: 6.878, desc: "Apiculture / Elevage Ovin." },
+            { name: "ZEAM", type: "Producteur", source: "Questionnaire", village: "Gréolières", lat: 43.796, lng: 6.943, desc: "Maraîchage." },
+            { name: "Les Jardins de Cosalonga", type: "Producteur", source: "Questionnaire", village: "Collongues", lat: 43.874, lng: 6.868, desc: "Maraîchage." },
+            { name: "Guillaume Viale", type: "Producteur", source: "Questionnaire", village: "Gréolières", lat: 43.796, lng: 6.943, desc: "Maraîchage / Horticulture." },
+            { name: "EI RUFF", type: "Producteur", source: "Questionnaire", village: "Le Bar-sur-Loup", lat: 43.701, lng: 6.988, desc: "Horticulture." },
+            { name: "Le Prat de Cérès (Q)", type: "Producteur", source: "Questionnaire", village: "Collongues", lat: 43.874, lng: 6.868, desc: "Maraîchage." },
+            { name: "Légumes des Domaines", type: "Producteur", source: "Questionnaire", village: "Tourrettes-sur-Loup", lat: 43.716, lng: 7.059, desc: "Maraîchage." },
+            { name: "SCEA Pra de Mondin", type: "Producteur", source: "Questionnaire", village: "Courmes", lat: 43.742, lng: 7.008, desc: "Maraîchage." },
+            { name: "Ferme de la Fubi (Q)", type: "Producteur", source: "Questionnaire", village: "Saint-Vallier", lat: 43.698, lng: 6.848, desc: "Aviculture." },
+            { name: "COURGETTES ET COMPAGNIE (Q)", type: "Producteur", source: "Questionnaire", village: "Escragnolles", lat: 43.731, lng: 6.783, desc: "Aviculture / Maraîchage." },
+            { name: "La Ferme d'Amirat", type: "Producteur", source: "Questionnaire", village: "Amirat", lat: 43.891, lng: 6.823, desc: "Elevage Caprin / Maraîchage." },
+            { name: "EARL Les Prairies de Grand Maison (Q)", type: "Producteur", source: "Questionnaire", village: "Valderoure", lat: 43.795, lng: 6.705, desc: "Grandes cultures." },
+            { name: "LA FERME DE JAL", type: "Producteur", source: "Questionnaire", village: "Cipières", lat: 43.784, lng: 6.955, desc: "Aviculture." },
+            { name: "Ode à l'escargot", type: "Producteur", source: "Questionnaire", village: "Saint-Vallier", lat: 43.698, lng: 6.848, desc: "Autre élevage (héliciculture)." },
+            { name: "Goletto", type: "Producteur", source: "Questionnaire", village: "Andon", lat: 43.773, lng: 6.786, desc: "Elevage bovin allaitant." },
+            { name: "Chèvrerie du bois d'Amon (Q)", type: "Producteur", source: "Questionnaire", village: "Saint-Cézaire", lat: 43.648, lng: 6.793, desc: "Elevage caprin." },
+            { name: "La Chèvrerie de la Crous", type: "Producteur", source: "Questionnaire", village: "Cipières", lat: 43.784, lng: 6.955, desc: "Elevage caprin." },
+            { name: "Maillard (Q)", type: "Producteur", source: "Questionnaire", village: "Valderoure", lat: 43.795, lng: 6.705, desc: "Elevage bovin / Caprin." },
+            { name: "Sur les traces des fées...", type: "Producteur", source: "Questionnaire", village: "Andon", lat: 43.773, lng: 6.786, desc: "PPAM." },
+            { name: "Safran de Nans (Q)", type: "Producteur", source: "Questionnaire", village: "Caille", lat: 43.778, lng: 6.729, desc: "PPAM." },
+            { name: "Chemin du Baou EARL", type: "Producteur", source: "Questionnaire", village: "Caille", lat: 43.778, lng: 6.729, desc: "Elevage Ovin allaitant." },
+
+            // ACHETEURS (Entretiens)
+            { name: "BIOCOOP Les Pois Bio", type: "Acheteur", source: "Entretien", village: "Grasse", lat: 43.660, lng: 6.926, desc: "Besoin plateforme B2B." },
+            { name: "Épicerie La Penne", type: "Acheteur", source: "Entretien", village: "La Penne", lat: 43.928, lng: 6.948, desc: "Ramasse bénévole." },
+            { name: "Épicerie des Patous", type: "Acheteur", source: "Entretien", village: "Gréolières", lat: 43.796, lng: 6.943, desc: "Indépendant." },
+            { name: "Épicerie du Cheiron", type: "Acheteur", source: "Entretien", village: "Coursegoules", lat: 43.794, lng: 7.043, desc: "Casiers." },
+            { name: "Lou Goustaroun des Bel's", type: "Acheteur", source: "Entretien", village: "Séranon", lat: 43.774, lng: 6.706, desc: "Réseau familial." },
+            { name: "Marché de nos Collines", type: "Acheteur", source: "Entretien", village: "Le Rouret", lat: 43.674, lng: 6.987, desc: "Coopérative solide." },
+            { name: "Marché Paysan (SCIC)", type: "Acheteur", source: "Entretien", village: "Châteauneuf", lat: 43.675, lng: 6.975, desc: "Cantines." },
+            { name: "Marché de Caussols", type: "Acheteur", source: "Entretien", village: "Caussols", lat: 43.742, lng: 6.899, desc: "Ramasse subie." },
+            { name: "Montagnes Paysannes", type: "Acheteur", source: "Entretien", village: "Puget-Théniers", lat: 43.955, lng: 6.895, desc: "Magasin associatif." },
+            { name: "Potager du Thiey", type: "Acheteur", source: "Entretien", village: "Saint-Vallier", lat: 43.698, lng: 6.848, desc: "Indépendant." },
+
+            // ACHETEURS (Questionnaires)
+            { name: "LES FINES ROCHES", type: "Acheteur", source: "Questionnaire", village: "Roquesteron", lat: 43.875, lng: 7.005, desc: "Restauration commerciale." },
+            { name: "La maison du bonheur", type: "Acheteur", source: "Questionnaire", village: "Roquesteron", lat: 43.875, lng: 7.005, desc: "Hébergeur." },
+            { name: "Roses et mets", type: "Acheteur", source: "Questionnaire", village: "Grasse", lat: 43.660, lng: 6.926, desc: "Restauration commerciale." },
+            { name: "La Bergerie (Q)", type: "Acheteur", source: "Questionnaire", village: "Saint-Vallier", lat: 43.698, lng: 6.848, desc: "Détaillant de proximité." },
+            { name: "La Vieille Ferme de Grasse", type: "Acheteur", source: "Questionnaire", village: "Grasse", lat: 43.660, lng: 6.926, desc: "Hébergeur." },
+            { name: "Bulles de reves", type: "Acheteur", source: "Questionnaire", village: "Bezaudun les Alpes", lat: 43.807, lng: 7.096, desc: "Hébergeur." },
+            { name: "Bastide Napoléon", type: "Acheteur", source: "Questionnaire", village: "Séranon", lat: 43.774, lng: 6.706, desc: "Hébergeur." },
+            { name: "Marché de nos Collines (Q)", type: "Acheteur", source: "Questionnaire", village: "Le Rouret", lat: 43.674, lng: 6.987, desc: "Magasin de producteurs." },
+            { name: "Le potager de thiey (Q)", type: "Acheteur", source: "Questionnaire", village: "Saint-Vallier", lat: 43.698, lng: 6.848, desc: "Détaillant de proximité." },
+            { name: "Epicerie des Patous (Q)", type: "Acheteur", source: "Questionnaire", village: "Gréolières", lat: 43.796, lng: 6.943, desc: "Détaillant de proximité." },
+            { name: "Domaine des Courmettes", type: "Acheteur", source: "Questionnaire", village: "Tourrettes-sur-Loup", lat: 43.716, lng: 7.059, desc: "Hébergeur." },
+            { name: "BIOriginal", type: "Acheteur", source: "Questionnaire", village: "Le Broc", lat: 43.809, lng: 7.170, desc: "Autre Restauration Hors Domicile." },
+            { name: "tiers lieu des Grandes Roches", type: "Acheteur", source: "Questionnaire", village: "Gréolières", lat: 43.796, lng: 6.943, desc: "Hébergeur." },
+            { name: "Maison Massanet", type: "Acheteur", source: "Questionnaire", village: "Grasse", lat: 43.660, lng: 6.926, desc: "Hébergeur." },
+            { name: "Villa bibaou", type: "Acheteur", source: "Questionnaire", village: "Vence", lat: 43.722, lng: 7.111, desc: "Hébergeur." },
+            { name: "PLANETE PARADIS BIOCOOP", type: "Acheteur", source: "Questionnaire", village: "Vence", lat: 43.722, lng: 7.111, desc: "Détaillant de proximité." },
+            { name: "LA BOLEE SUDISTE", type: "Acheteur", source: "Questionnaire", village: "Vence", lat: 43.722, lng: 7.111, desc: "Restauration commerciale." },
+
+            // HUBS
+            { name: "La Bergerie (HUB)", type: "Mixte / Hub", source: "Entretien", village: "Saint-Vallier", lat: 43.698, lng: 6.848, desc: "Point de transit froid." },
+            { name: "La PaysAneRit (HUB)", type: "Mixte / Hub", source: "Entretien", village: "Escragnolles", lat: 43.731, lng: 6.783, desc: "Massification Haut-Pays." }
+        ];
+
+        // --- 3. LOGIQUE POSITIONNEMENT ET DÉCALAGE ---
+        function calculateOffsets() {
+            let coordsMap = {};
+            actorsData.forEach(actor => {
+                let key = `${actor.lat.toFixed(4)}_${actor.lng.toFixed(4)}`;
+                if (!coordsMap[key]) coordsMap[key] = [];
+                coordsMap[key].push(actor);
+            });
+
+            Object.values(coordsMap).forEach(group => {
+                if (group.length === 1) {
+                    group[0].displayLat = group[0].lat;
+                    group[0].displayLng = group[0].lng;
+                } else {
+                    let radius = group.length > 5 ? 0.008 : 0.005; 
+                    group.forEach((actor, index) => {
+                        let angle = (index / group.length) * Math.PI * 2;
+                        actor.displayLat = actor.lat + (radius * Math.cos(angle));
+                        actor.displayLng = actor.lng + (radius * 1.3 * Math.sin(angle));
+                    });
+                }
+            });
+        }
+
+        // --- 4. RENDU ---
+        function renderActors() {
+            var typeVal = document.getElementById('filter-type').value;
+            var sourceVal = document.getElementById('filter-source').value;
+            var listContainer = document.getElementById('actor-list');
+            
+            markersGroup.clearLayers();
+            listContainer.innerHTML = '';
+
+            actorsData.forEach((actor, index) => {
+                if (typeVal !== 'Tous' && actor.type !== typeVal) return;
+                if (sourceVal !== 'Tous' && actor.source !== sourceVal) return;
+
+                let color = colors[actor.type];
+                let isEntretien = actor.source === "Entretien";
+
+                let marker;
+                if (isEntretien) {
+                    marker = L.circleMarker([actor.displayLat, actor.displayLng], {
+                        radius: 8,
+                        fillColor: color,
+                        color: "#fff",
+                        weight: 2,
+                        fillOpacity: 1
+                    });
+                } else {
+                    let icon = L.divIcon({
+                        className: 'custom-div-icon',
+                        html: `<div style="background-color:${color}; width:12px; height:12px; transform:rotate(45deg); border:2px solid #fff; box-shadow:0 0 3px rgba(0,0,0,0.3);"></div>`,
+                        iconSize: [12, 12],
+                        iconAnchor: [6, 6]
+                    });
+                    marker = L.marker([actor.displayLat, actor.displayLng], { icon: icon });
+                }
+
+                let popupHtml = `
+                    <div class="custom-popup">
+                        <span class="source-tag" style="background:${isEntretien ? '#e2e8f0' : '#fef3c7'}">${actor.source}</span>
+                        <h3 style="color:${color}">${actor.name}</h3>
+                        <p><strong>Commune :</strong> ${actor.village}</p>
+                        <p>${actor.desc}</p>
+                    </div>
+                `;
+                
+                // Configuration du Popup pour le survol
+                marker.bindPopup(popupHtml, { 
+                    closeButton: false, 
+                    offset: L.point(0, -5) 
+                });
+                
+                // Interaction au passage de la souris
+                marker.on('mouseover', function (e) {
+                    this.openPopup();
+                });
+                marker.on('mouseout', function (e) {
+                    this.closePopup();
+                });
+                
+                // Le clic permet toujours de recentrer et zoomer
+                marker.on('click', function(e) {
+                    map.setView(e.latlng, 14);
+                });
+
+                markersGroup.addLayer(marker);
+                actor.leafletMarker = marker;
+
+                let badgeClass = isEntretien ? 'badge-entretien' : 'badge-questionnaire';
+                let listItem = document.createElement('div');
+                listItem.className = 'actor-item';
+                listItem.onclick = () => {
+                    map.setView([actor.displayLat, actor.displayLng], 14);
+                    actor.leafletMarker.openPopup();
+                };
+                listItem.innerHTML = `
+                    <div class="actor-badge ${badgeClass}" style="background-color: ${color};"></div>
+                    <div class="actor-details">
+                        <span class="actor-name">${actor.name}</span>
+                        <span class="actor-meta">${actor.village} • ${actor.source}</span>
+                    </div>
+                `;
+                listContainer.appendChild(listItem);
+            });
+        }
+
+        // Initialisation
+        calculateOffsets();
+        renderActors();
+
+        // Route Napoléon
+        L.polyline([[43.660, 6.926], [43.698, 6.848], [43.731, 6.783], [43.774, 6.706]], {
+            color: "#f29900", weight: 6, opacity: 0.6, dashArray: '8, 12'
+        }).addTo(map).bindPopup("<b>Axe Route Napoléon</b><br>Artère logistique de l'Ouest.");
+
+        // Légende
+        var legend = L.control({position: 'bottomright'});
+        legend.onAdd = function () {
+            var div = L.DomUtil.create('div', 'legend');
+            div.innerHTML = `
+                <b>Catégories</b><br>
+                <i style="background:${colors.Producteur}" class="shape-circle"></i> Producteurs (Violet)<br>
+                <i style="background:${colors.Acheteur}" class="shape-circle"></i> Acheteurs (Bleu)<br>
+                <i style="background:${colors['Mixte / Hub']}" class="shape-circle"></i> Hubs (Rouge)<br><br>
+                <b>Sources</b><br>
+                <i style="background:#666" class="shape-circle"></i> Entretiens (Cercle)<br>
+                <i style="background:#666" class="shape-diamond"></i> Questionnaires (Losange)
+            `;
+            return div;
+        };
+        legend.addTo(map);
+
+    </script>
+</body>
+</html>
