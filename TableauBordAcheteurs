@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIX | Observatoire Logistique - Acheteurs</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'dix-dark': '#2c3e50', /* Thème Acheteurs (Bleu Ardoise) */
+                        'dix-light': '#e67e22', /* Thème Acheteurs (Orange) */
+                        'dix-green': '#549e39',
+                        'dix-bg': '#f8fafc',
+                        'dix-text': '#1e293b',
+                    },
+                    fontFamily: {
+                        'oswald': ['Oswald', 'sans-serif'],
+                        'georgia': ['Georgia', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        body { background-color: #f8fafc; color: #1e293b; }
+        .title-font { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
+        .body-font { font-family: 'Georgia', serif; }
+        #map-buyers { z-index: 1; }
+        .buyer-marker {
+            background-color: #e67e22; border: 2px solid white;
+            border-radius: 50%; width: 16px; height: 16px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            cursor: pointer;
+        }
+        section { scroll-margin-top: 2rem; }
+    </style>
+</head>
+<body class="body-font p-4 md:p-8">
+
+    <header class="bg-dix-dark text-white rounded-2xl p-8 mb-8 shadow-lg relative overflow-hidden">
+        <!-- Bandeau décoratif -->
+        <div class="absolute top-0 right-0 w-64 h-full bg-dix-light opacity-20" style="clip-path: polygon(20% 0, 100% 0, 100% 100%, 0% 100%);"></div>
+        
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 relative z-10">
+            <div>
+                <h1 class="title-font text-3xl md:text-4xl mb-2 text-dix-light">Observatoire des Flux : Acheteurs</h1>
+                <p class="text-gray-300 italic">Restauration, Hébergements & Commerces - PNR Préalpes d'Azur</p>
+            </div>
+            <span class="bg-white text-dix-dark title-font px-4 py-2 rounded-xl text-sm shadow-md font-bold">Données Consolidées : Validées</span>
+        </div>
+        <div class="bg-white/10 p-4 rounded-xl border border-white/20 text-sm relative z-10">
+            <h2 class="title-font text-lg text-dix-light mb-1">Préambule Méthodologique</h2>
+            <p>Les données sont issues de <strong>17 structures acheteuses</strong> (hors lignes vides). Les volumes financiers déclarés ont été retraités pour exclure la coopérative de vente directe (valeur exceptionnelle de 2.5M€) lors du calcul des moyennes et de l'écart-type, afin de refléter la réalité des commerces et restaurants indépendants.</p>
+        </div>
+    </header>
+
+    <!-- ANGLE 1 : LE PROFIL DE LA DEMANDE -->
+    <section class="mb-12">
+        <h2 class="title-font text-2xl text-dix-dark mb-6 flex items-center gap-3 border-b-2 border-dix-light pb-2">
+            <span class="bg-dix-light text-white w-8 h-8 flex items-center justify-center rounded-full text-lg">1</span>
+            Le Profil de la Demande (Qui achète et où ?)
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <!-- Total Panel -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border-l-4 border-dix-dark flex flex-col justify-center">
+                <p class="text-sm text-gray-500 mb-1 uppercase tracking-wider font-sans">Panel d'acheteurs</p>
+                <p class="title-font text-5xl text-dix-dark">17 <span class="text-lg text-gray-400 normal-case font-sans">structures</span></p>
+            </div>
+            
+            <!-- CA Moyen -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border-l-4 border-dix-light flex flex-col justify-center">
+                <p class="text-sm text-gray-500 mb-1 uppercase tracking-wider font-sans">Volume d'Achat Moyen</p>
+                <p class="title-font text-4xl text-dix-light">~ 55 000 € <span class="text-sm text-gray-400 normal-case font-sans">/ an</span></p>
+                <p class="text-xs text-gray-400 mt-1 italic">*Moyenne hors coopérative (valeur atypique)</p>
+            </div>
+
+            <!-- CA Médian & Écart-Type -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border-l-4 border-dix-green flex flex-col justify-center">
+                <p class="text-sm text-gray-500 mb-1 uppercase tracking-wider font-sans">Médiane & Dispersion</p>
+                <p class="title-font text-4xl text-dix-green">16 500 € <span class="text-sm text-gray-400 normal-case font-sans">/ an</span></p>
+                <p class="text-xs text-gray-400 mt-1 italic">Forte dispersion (Écart-type : ~ 86 000 €)</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Typologie -->
+            <div class="bg-white rounded-2xl p-6 shadow-md flex flex-col">
+                <h3 class="title-font text-lg text-dix-dark mb-4">Typologie des Acheteurs</h3>
+                <div class="relative w-full flex-1 min-h-[250px]">
+                    <canvas id="chartBuyerTypology"></canvas>
+                </div>
+                <div class="mt-4 grid grid-cols-3 gap-2 text-center text-sm">
+                    <div class="bg-gray-50 p-2 rounded">
+                        <span class="block font-bold text-dix-dark text-lg">7</span>
+                        <span class="text-xs text-gray-500 uppercase">Hébergements</span>
+                    </div>
+                    <div class="bg-gray-50 p-2 rounded">
+                        <span class="block font-bold text-dix-light text-lg">5</span>
+                        <span class="text-xs text-gray-500 uppercase">Commerces</span>
+                    </div>
+                    <div class="bg-gray-50 p-2 rounded">
+                        <span class="block font-bold text-dix-green text-lg">5</span>
+                        <span class="text-xs text-gray-500 uppercase">Restauration</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Implantation -->
+            <div class="bg-white rounded-2xl p-6 shadow-md flex flex-col">
+                <h3 class="title-font text-lg text-dix-dark mb-2">Implantation Territoriale de la Demande</h3>
+                <p class="text-xs text-gray-500 mb-4">Cartographie des 17 structures par commune.</p>
+                <div id="map-buyers" class="rounded-xl border border-gray-200 flex-1 min-h-[250px]"></div>
+                <div class="mt-4 p-3 bg-gray-50 rounded-lg border-l-4 border-dix-light text-sm text-gray-700 italic">
+                    <strong>💡 Constat :</strong> Contrairement aux producteurs qui sont très éclatés géographiquement (notamment dans le Haut-Pays), ce panel d'acheteurs se positionne sur les franges sud et est du territoire (Vence, Grasse, Roquesteron). Cette géographie semble aller dans le sens du pouvoir attractif du Moyen-Pays pour les débouchés commerciaux.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ANGLE 2 : PRATIQUES D'APPROVISIONNEMENT -->
+    <section class="mb-12">
+        <h2 class="title-font text-2xl text-dix-dark mb-6 flex items-center gap-3 border-b-2 border-dix-light pb-2">
+            <span class="bg-dix-light text-white w-8 h-8 flex items-center justify-center rounded-full text-lg">2</span>
+            Pratiques d'Approvisionnement Actuelles
+        </h2>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- 2.1 Origine des Achats -->
+            <div class="bg-white rounded-2xl p-6 shadow-md flex flex-col">
+                <h3 class="title-font text-lg text-dix-dark mb-2">2.1 Répartition moyenne des achats</h3>
+                <p class="text-xs text-gray-500 mb-4">"Comment se répartissent vos achats alimentaires en % ?"</p>
+                
+                <div class="flex-1 flex flex-col justify-center gap-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-32 text-right text-sm font-bold text-dix-dark title-font">Prod. Locaux</div>
+                        <div class="flex-1 bg-gray-100 rounded-full h-6 relative overflow-hidden">
+                            <div class="bg-dix-green h-full flex items-center px-2 text-white text-xs font-bold" style="width: 49%">49%</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="w-32 text-right text-sm font-bold text-gray-600 title-font">Grossistes</div>
+                        <div class="flex-1 bg-gray-100 rounded-full h-6 relative overflow-hidden">
+                            <div class="bg-gray-400 h-full flex items-center px-2 text-white text-xs font-bold" style="width: 23%">23%</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="w-32 text-right text-sm font-bold text-gray-600 title-font">PME Transfo.</div>
+                        <div class="flex-1 bg-gray-100 rounded-full h-6 relative overflow-hidden">
+                            <div class="bg-dix-light h-full flex items-center px-2 text-white text-xs font-bold" style="width: 13%">13%</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="w-32 text-right text-sm font-bold text-gray-600 title-font">Centrales / GMS</div>
+                        <div class="flex-1 bg-gray-100 rounded-full h-6 relative overflow-hidden">
+                            <div class="bg-gray-300 h-full flex items-center px-2 text-gray-700 text-xs font-bold" style="width: 8%">8%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2.2 La définition du Local & Bio -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <!-- Définition du Local -->
+                <div class="bg-white rounded-2xl p-6 shadow-md flex flex-col justify-center text-center border-t-4 border-dix-light">
+                    <h3 class="text-xs text-gray-500 uppercase tracking-wider font-sans mb-2">Distance jugée "Locale"</h3>
+                    <i class="fa-solid fa-map-pin text-3xl text-gray-300 mb-2"></i>
+                    <p class="title-font text-5xl text-dix-dark">50 <span class="text-xl">km</span></p>
+                    <p class="text-sm text-gray-500 mt-2 italic">Distance médiane acceptée autour de la structure</p>
+                </div>
+                
+                <!-- Positionnement Bio / SIQO -->
+                <div class="bg-white rounded-2xl p-6 shadow-md flex flex-col justify-center items-center text-center border-t-4 border-dix-green">
+                    <h3 class="text-xs text-gray-500 uppercase tracking-wider font-sans mb-2">Engagement Bio / SIQO</h3>
+                    <div class="relative w-24 h-24 mb-2">
+                        <canvas id="chartBioSiqo"></canvas>
+                    </div>
+                    <p class="text-xl font-bold text-dix-green title-font">59 %</p>
+                    <p class="text-xs text-gray-500 mt-1 italic">Ont un positionnement qualitatif spécifique (10/17)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2.3 Critères de Choix -->
+        <div class="bg-white rounded-2xl p-6 shadow-md flex flex-col">
+            <h3 class="title-font text-lg text-dix-dark mb-2">2.3 Les déterminants de l'achat</h3>
+            <p class="text-xs text-gray-500 mb-4">"Quels sont vos principaux critères de choix ?" (Choix multiples)</p>
+            <div class="relative w-full flex-1 min-h-[250px]">
+                <canvas id="chartCriteria"></canvas>
+            </div>
+            <div class="mt-4 p-3 bg-gray-50 rounded-lg border-l-4 border-dix-light text-sm text-gray-700 italic">
+                <strong>💡 Constat :</strong> Le panel étudié semble déjà bien sensibilisé aux circuits courts. Près de la moitié de leurs achats se fait déjà en direct, et les critères d'"Origine" et de "Qualité" priment très largement sur la variable "Prix".
+            </div>
+        </div>
+    </section>
+
+    <!-- ANGLE 3 : POTENTIEL DE DÉVELOPPEMENT & FREINS -->
+    <section class="mb-12">
+        <h2 class="title-font text-2xl text-dix-dark mb-6 flex items-center gap-3 border-b-2 border-dix-light pb-2">
+            <span class="bg-dix-light text-white w-8 h-8 flex items-center justify-center rounded-full text-lg">3</span>
+            Potentiel de Développement & Freins
+        </h2>
+        
+        <!-- Encart Volonté d'augmentation -->
+        <div class="bg-dix-dark text-white rounded-2xl p-6 shadow-md mb-6 flex flex-col md:flex-row items-center gap-6">
+            <div class="flex-shrink-0 text-center md:border-r md:border-white/20 md:pr-6">
+                <p class="title-font text-6xl text-dix-light">94 %</p>
+                <p class="text-sm font-sans uppercase tracking-wider text-gray-300 mt-1">des répondants</p>
+            </div>
+            <div>
+                <h3 class="title-font text-2xl mb-2">Une demande locale très forte</h3>
+                <p class="text-lg text-gray-200"><strong>16 acheteurs sur 17</strong> ont répondu "Oui" à la question : <br><em>"Souhaiteriez-vous augmenter vos approvisionnements locaux ?"</em></p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- 3.1 Typologie de produits -->
+            <div class="bg-white rounded-2xl p-6 shadow-md flex flex-col">
+                <h3 class="title-font text-lg text-dix-dark mb-2">3.1 Produits les plus recherchés</h3>
+                <p class="text-xs text-gray-500 mb-4">Typologies de produits que les acheteurs souhaitent augmenter.</p>
+                <div class="relative w-full flex-1 min-h-[300px]">
+                    <canvas id="chartProducts"></canvas>
+                </div>
+            </div>
+
+            <!-- 3.2 Freins Majeurs -->
+            <div class="bg-white rounded-2xl p-6 shadow-md flex flex-col border-l-4 border-red-500">
+                <h3 class="title-font text-lg text-red-600 mb-2">3.2 Focale : Freins à l'approvisionnement local</h3>
+                <p class="text-xs text-gray-500 mb-4">"Quelles difficultés rencontrez-vous pour augmenter l'achat local ?"</p>
+                <div class="relative w-full flex-1 min-h-[300px]">
+                    <canvas id="chartObstacles"></canvas>
+                </div>
+                <div class="mt-4 p-3 bg-red-50 rounded-lg border-l-4 border-red-400 text-sm text-gray-800 italic">
+                    <strong>💡 Constat :</strong> La méconnaissance de l'offre (65%) semble un des facteurs réduisant le niveau d’approvisionnement local. Il serait pertinent d’imaginer un outil de mise en relation et de centralisation de l'offre (catalogue).
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ANGLE 4 : LOGISTIQUE DE RÉCEPTION ET COMMANDES -->
+    <section class="mb-12">
+        <h2 class="title-font text-2xl text-dix-dark mb-6 flex items-center gap-3 border-b-2 border-dix-light pb-2">
+            <span class="bg-dix-light text-white w-8 h-8 flex items-center justify-center rounded-full text-lg">4</span>
+            Logistique de Réception et Commandes
+        </h2>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- 4.1 Modes de Livraison -->
+            <div class="bg-white rounded-2xl p-6 shadow-md flex flex-col">
+                <h3 class="title-font text-lg text-dix-dark mb-2">4.1 Modalités d'acheminement & Commandes</h3>
+                <p class="text-xs text-gray-500 mb-4">"Quel est le mode de livraison principalement utilisé ?"</p>
+                
+                <div class="flex-1 flex flex-col sm:flex-row gap-6 items-center justify-center">
+                    <div class="relative w-40 h-40">
+                        <canvas id="chartDeliveryMode"></canvas>
+                    </div>
+                    <div class="flex flex-col gap-2 w-full sm:w-auto">
+                        <div class="flex justify-between text-sm border-b pb-1">
+                            <span class="text-dix-dark font-bold"><span class="inline-block w-3 h-3 bg-[#549e39] rounded-sm mr-1"></span> Prod. livre</span>
+                            <span class="font-bold">47%</span>
+                        </div>
+                        <div class="flex justify-between text-sm border-b pb-1">
+                            <span class="text-dix-dark font-bold"><span class="inline-block w-3 h-3 bg-[#e67e22] rounded-sm mr-1"></span> Acheteur collecte</span>
+                            <span class="font-bold">41%</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-500"><span class="inline-block w-3 h-3 bg-gray-400 rounded-sm mr-1"></span> Transporteur externe</span>
+                            <span class="font-bold text-gray-500">12%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="title-font text-sm text-dix-dark mt-6 mb-2">Outils de prise de commande :</h3>
+                <div class="relative w-full h-24">
+                    <canvas id="chartOrderMode"></canvas>
+                </div>
+            </div>
+
+            <!-- 4.2 Jours de réception -->
+            <div class="bg-white rounded-2xl p-6 shadow-md flex flex-col border-l-4 border-dix-light">
+                <h3 class="title-font text-lg text-dix-dark mb-2">4.2 Jours de réception exigés</h3>
+                <p class="text-xs text-gray-500 mb-4">Nombre d'acheteurs exigeant des livraisons selon le jour de la semaine.</p>
+                
+                <div class="relative w-full flex-1 min-h-[200px]">
+                    <canvas id="chartReceptionDays"></canvas>
+                </div>
+                
+                <div class="mt-4 p-3 bg-gray-50 rounded-lg border-l-4 border-dix-dark text-sm text-gray-700 italic">
+                    <strong>💡 Constat :</strong> Les acheteurs ont besoin d'être livrés de façon <strong>très lissée tout au long de la semaine</strong>. De plus, l'absence d'outils de commande centralisés pourrait contribuer au "manque de fiabilité et de régularité" que certains acteurs soulignent.
+                </div>
+            </div>
+        </div>
+
+        <!-- 4.3 Contraintes Logistiques Acheteurs -->
+        <div class="bg-white rounded-2xl p-6 shadow-md flex flex-col w-full">
+            <h3 class="title-font text-lg text-dix-dark mb-2">4.3 Les contraintes à la réception</h3>
+            <p class="text-xs text-gray-500 mb-4">"Quelles sont les principales contraintes logistiques rencontrées ?"</p>
+            <div class="relative w-full h-48">
+                <canvas id="chartReceptionConstraints"></canvas>
+            </div>
+            <div class="mt-4 p-3 bg-gray-50 rounded-lg border-l-4 border-dix-light text-sm text-gray-700 italic">
+                Face à l'incapacité de certains producteurs à livrer, 4 acheteurs sur 10 font eux-mêmes la route pour récupérer la marchandise (le "poids de la collecte" des petites épiceries).
+            </div>
+        </div>
+    </section>
+
+    <script>
+        Chart.defaults.font.family = 'Georgia, serif';
+        Chart.defaults.color = '#1e293b';
+        Chart.defaults.plugins.tooltip.backgroundColor = '#2c3e50';
+        Chart.defaults.plugins.tooltip.titleFont.family = 'Oswald';
+
+        window.onload = function() {
+            // --- CARTE LEAFLET (ACHETEURS) ---
+            const mapBuyers = L.map('map-buyers').setView([43.76, 7.00], 10);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(mapBuyers);
+            const buyerIcon = L.divIcon({ className: 'buyer-marker', iconSize: [16, 16] });
+            
+            // Axe N85 indicatif
+            const routeNapoleonCoords = [
+                [43.5528, 7.0174], [43.6600, 6.9200], [43.6960, 6.8450], 
+                [43.7310, 6.7830], [43.7740, 6.6660], [43.8460, 6.5130]
+            ];
+            L.polyline(routeNapoleonCoords, { color: '#cbd5e1', weight: 4, dashArray: '10, 8' }).addTo(mapBuyers);
+
+            // Points Acheteurs
+            const buyerLocations = [
+                { lat: 43.87, lon: 7.00, name: "Les Fines Roches / Maison du bonheur", city: "Roquesteron" },
+                { lat: 43.66, lon: 6.92, name: "Roses et Mets / Vieille Ferme / Massanet", city: "Grasse" },
+                { lat: 43.70, lon: 6.85, name: "La Bergerie / Potager de Thiey", city: "St-Vallier" },
+                { lat: 43.81, lon: 7.09, name: "Bulles de Rêves", city: "Bézaudun" },
+                { lat: 43.77, lon: 6.66, name: "Bastide Napoléon", city: "Séranon" },
+                { lat: 43.67, lon: 7.00, name: "Coopérative Le Marché", city: "Le Rouret" },
+                { lat: 43.79, lon: 6.94, name: "Épicerie Patous / Tiers-Lieu Roches", city: "Gréolières" },
+                { lat: 43.71, lon: 7.06, name: "Domaine des Courmettes", city: "Tourrettes s/ Loup" },
+                { lat: 43.81, lon: 7.17, name: "BIOriginal", city: "Le Broc" },
+                { lat: 43.72, lon: 7.11, name: "Villa Bibaou / Planète Paradis / Bolée", city: "Vence" }
+            ];
+
+            buyerLocations.forEach(loc => L.marker([loc.lat, loc.lon], {icon: buyerIcon})
+                .bindPopup(`<strong class="title-font text-dix-dark text-sm">${loc.city}</strong><br><span class="text-xs text-gray-500">${loc.name}</span>`)
+                .addTo(mapBuyers));
+
+            // --- GRAPHIQUES (Angles 1, 2, 3) ---
+            new Chart(document.getElementById('chartBuyerTypology'), {
+                type: 'doughnut', 
+                data: { 
+                    labels: ['Hébergement (7)', 'Commerces (5)', 'Restauration (5)'], 
+                    datasets: [{ data: [7, 5, 5], backgroundColor: ['#2c3e50', '#e67e22', '#549e39'], borderWidth: 2 }] 
+                },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: {size: 12} } } } }
+            });
+
+            new Chart(document.getElementById('chartBioSiqo'), {
+                type: 'doughnut', 
+                data: { labels: ['Bio / SIQO', 'Non Spécifique'], datasets: [{ data: [10, 7], backgroundColor: ['#549e39', '#e2e8f0'], borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins: { legend: { display: false }, tooltip: { enabled: true } } }
+            });
+
+            new Chart(document.getElementById('chartCriteria'), {
+                type: 'bar', data: { 
+                    labels: ['Origine locale', 'Qualité', 'Lien producteur', 'Prix', 'Régularité', 'Logistique', 'Labels'], 
+                    datasets: [{ data: [15, 10, 9, 8, 5, 5, 3], backgroundColor: '#2c3e50', borderRadius: 4 }] 
+                },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { max: 17, title: { display: true, text: 'Nb de citations' } }, y: { grid: { display: false } } } }
+            });
+
+            new Chart(document.getElementById('chartProducts'), {
+                type: 'bar', data: { 
+                    labels: ['Légumes', 'Fruits', 'Épicerie', 'Viandes', 'Légumes secs', 'Prod. Laitiers', 'Céréales'], 
+                    datasets: [{ data: [14, 13, 11, 10, 9, 8, 4], backgroundColor: '#549e39', borderRadius: 4 }] 
+                },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { max: 17, title: { display: true, text: 'Nb d\'acheteurs intéressés' } }, y: { grid: { display: false } } } }
+            });
+
+            new Chart(document.getElementById('chartObstacles'), {
+                type: 'bar', data: { 
+                    labels: ['Méconnaissance des fournisseurs', 'Logistique (Transport/Réception)', 'Prix trop élevé', 'Manque de volume / Multiplicité'], 
+                    datasets: [{ data: [11, 6, 5, 4], backgroundColor: ['#ef4444', '#f97316', '#f59e0b', '#fbbf24'], borderRadius: 4 }] 
+                },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { max: 17, title: { display: true, text: 'Nb de citations' } }, y: { grid: { display: false } } } }
+            });
+
+            // --- NOUVEAUX GRAPHIQUES (Angle 4) ---
+
+            // 4.1 Mode de livraison (Doughnut)
+            new Chart(document.getElementById('chartDeliveryMode'), {
+                type: 'doughnut', 
+                data: { 
+                    labels: ['Prod. livre', 'Acheteur collecte', 'Transporteur externe'], 
+                    datasets: [{ data: [8, 7, 2], backgroundColor: ['#549e39', '#e67e22', '#9ca3af'], borderWidth: 2 }] 
+                },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { display: false } } }
+            });
+
+            // 4.1 Prise de commande (Bar horizontale fine)
+            new Chart(document.getElementById('chartOrderMode'), {
+                type: 'bar', data: { 
+                    labels: ['Tél / SMS', 'Email / Excel', 'Plateforme Web'], 
+                    datasets: [{ data: [11, 6, 2], backgroundColor: '#2c3e50', borderRadius: 4 }] 
+                },
+                options: { 
+                    indexAxis: 'y', 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false }, tooltip: {enabled: true} }, 
+                    scales: { 
+                        x: { display: false, max: 15 }, 
+                        y: { grid: { display: false }, ticks: { font: { size: 11 } } } 
+                    } 
+                }
+            });
+
+            // 4.2 Le paradoxe temporel (Bar Chart vs Producteurs)
+            new Chart(document.getElementById('chartReceptionDays'), {
+                type: 'bar', data: { 
+                    labels: ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'], 
+                    datasets: [{ 
+                        label: "Demande Acheteurs",
+                        data: [9, 8, 7, 8, 9, 2, 0], 
+                        backgroundColor: '#e67e22', 
+                        borderRadius: 4 
+                    }] 
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: true, position: 'top' } },
+                    scales: { 
+                        y: { beginAtZero: true, max: 10, title: { display: true, text: "Nb d'acheteurs exigeant ce jour" } },
+                        x: { grid: { display: false } }
+                    } 
+                }
+            });
+
+            // 4.3 Contraintes Logistiques (Bar)
+            new Chart(document.getElementById('chartReceptionConstraints'), {
+                type: 'bar', data: { 
+                    labels: ['Fiabilité / Régularité', 'Pas de contrainte majeure', 'Absence code barre', 'Facturation complexe', 'Anticipation des commandes'], 
+                    datasets: [{ data: [6, 5, 2, 1, 1], backgroundColor: ['#ef4444', '#10b981', '#9ca3af', '#9ca3af', '#9ca3af'], borderRadius: 4 }] 
+                },
+                options: { 
+                    indexAxis: 'y', 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } },
+                    scales: { 
+                        x: { max: 8, title: { display: true, text: 'Nb de citations' } },
+                        y: { grid: { display: false } }
+                    } 
+                }
+            });
+        };
+    </script>
+</body>
+</html>
