@@ -50,6 +50,13 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.3);
             cursor: pointer;
         }
+        .hub-marker {
+            background-color: #549e39; border: 3px solid white;
+            border-radius: 50%; width: 24px; height: 24px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.4);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: bold; font-family: sans-serif; font-size: 12px;
+        }
         section { scroll-margin-top: 2rem; }
     </style>
 </head>
@@ -91,7 +98,7 @@
                     <ul class="text-sm text-gray-600 space-y-1 flex-1">
                         <li><strong>Statut :</strong> 7 Principales / 3 Sec.</li>
                         <li><strong>CA Moyen :</strong> ~ 26 800 €</li>
-                        <li><strong>Vol/SAU :</strong> ~ 1 ha / ~ 10 Tonnes</li>
+                        <li><strong>Vol. / Surf. moy. :</strong> ~ 10 T / ~ 1 ha</li>
                     </ul>
                 </div>
                 <!-- ARBORICULTURE -->
@@ -101,7 +108,7 @@
                     <ul class="text-sm text-gray-600 space-y-1 flex-1">
                         <li class="text-orange-600 font-medium"><strong>Statut :</strong> 0 Principale / 5 Sec.</li>
                         <li><strong>CA Moyen :</strong> N/A (complément)</li>
-                        <li><strong>Volumes :</strong> N/A</li>
+                        <li><strong>Vol. moyen :</strong> N/A</li>
                     </ul>
                 </div>
                 <!-- APICULTURE -->
@@ -111,7 +118,7 @@
                     <ul class="text-sm text-gray-600 space-y-1 flex-1">
                         <li><strong>Statut :</strong> 5 Principales / 0 Sec.</li>
                         <li><strong>CA Moyen :</strong> ~ 51 000 €</li>
-                        <li><strong>Volumes :</strong> ~ 2,5 Tonnes de miel</li>
+                        <li><strong>Vol. moyen :</strong> ~ 2,5 T de miel</li>
                     </ul>
                 </div>
                 <!-- ÉLEVAGE -->
@@ -121,7 +128,7 @@
                     <ul class="text-sm text-gray-600 space-y-1 flex-1">
                         <li><strong>Statut :</strong> 6 Principales / 0 Sec.</li>
                         <li><strong>CA Moyen :</strong> ~ 79 200 €</li>
-                        <li class="leading-tight"><strong>Volumes :</strong> Très hétérogène (Lait, Fromage, Viande)</li>
+                        <li class="leading-tight"><strong>Vol. moyen :</strong> Hétérogène (Lait, Fromage, Viande)</li>
                     </ul>
                 </div>
             </div>
@@ -174,20 +181,32 @@
                 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1 mb-4">
                     <div class="bg-gray-50 rounded-lg p-3 border border-gray-100 flex flex-col justify-center">
-                        <div class="flex justify-between items-center mb-1"><span class="font-bold text-dix-dark text-sm">🧑‍🌾 Proximité</span><span class="text-dix-light font-bold">42%</span></div>
-                        <div class="w-full bg-gray-200 rounded-full h-2 mb-2"><div class="bg-dix-light h-2 rounded-full" style="width: 42%"></div></div>
+                        <div class="flex flex-col mb-1">
+                            <div class="flex justify-between items-center"><span class="font-bold text-dix-dark text-sm">🧑‍🌾 Proximité</span><span class="text-dix-light font-bold">42%</span></div>
+                            <span class="text-[10px] text-gray-500 leading-tight mt-0.5">Ferme, marchés, paniers > 50% du CA</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2 mb-1 mt-1"><div class="bg-dix-light h-2 rounded-full" style="width: 42%"></div></div>
                     </div>
                     <div class="bg-gray-50 rounded-lg p-3 border border-gray-100 flex flex-col justify-center">
-                        <div class="flex justify-between items-center mb-1"><span class="font-bold text-dix-dark text-sm">🔀 Diversifié</span><span class="text-dix-dark font-bold">31%</span></div>
-                        <div class="w-full bg-gray-200 rounded-full h-2 mb-2"><div class="bg-dix-dark h-2 rounded-full" style="width: 31%"></div></div>
+                        <div class="flex flex-col mb-1">
+                            <div class="flex justify-between items-center"><span class="font-bold text-dix-dark text-sm">🔀 Diversifié</span><span class="text-dix-dark font-bold">31%</span></div>
+                            <span class="text-[10px] text-gray-500 leading-tight mt-0.5">Aucun canal majoritaire (> 50%)</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2 mb-1 mt-1"><div class="bg-dix-dark h-2 rounded-full" style="width: 31%"></div></div>
                     </div>
                     <div class="bg-gray-50 rounded-lg p-3 border border-gray-100 flex flex-col justify-center">
-                        <div class="flex justify-between items-center mb-1"><span class="font-bold text-dix-dark text-sm">🏪 B2B Court</span><span class="text-[#8cae81] font-bold">23%</span></div>
-                        <div class="w-full bg-gray-200 rounded-full h-2 mb-2"><div class="bg-[#8cae81] h-2 rounded-full" style="width: 23%"></div></div>
+                        <div class="flex flex-col mb-1">
+                            <div class="flex justify-between items-center"><span class="font-bold text-dix-dark text-sm">🏪 B2B Court</span><span class="text-[#8cae81] font-bold">23%</span></div>
+                            <span class="text-[10px] text-gray-500 leading-tight mt-0.5">Magasins bio, épiceries, resto > 50% du CA</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2 mb-1 mt-1"><div class="bg-[#8cae81] h-2 rounded-full" style="width: 23%"></div></div>
                     </div>
                     <div class="bg-gray-50 rounded-lg p-3 border border-gray-100 flex flex-col justify-center">
-                        <div class="flex justify-between items-center mb-1"><span class="font-bold text-dix-dark text-sm">🚛 Circuit Long</span><span class="text-[#b2c6ad] font-bold">4%</span></div>
-                        <div class="w-full bg-gray-200 rounded-full h-2 mb-2"><div class="bg-[#b2c6ad] h-2 rounded-full" style="width: 4%"></div></div>
+                        <div class="flex flex-col mb-1">
+                            <div class="flex justify-between items-center"><span class="font-bold text-dix-dark text-sm">🚛 Circuit Long</span><span class="text-[#b2c6ad] font-bold">4%</span></div>
+                            <span class="text-[10px] text-gray-500 leading-tight mt-0.5">GMS, grossistes > 50% du CA</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2 mb-1 mt-1"><div class="bg-[#b2c6ad] h-2 rounded-full" style="width: 4%"></div></div>
                     </div>
                 </div>
                 <div class="mt-auto p-3 bg-gray-50 rounded-lg border-l-4 border-dix-light text-sm text-gray-700 italic">
@@ -225,12 +244,69 @@
             </div>
         </div>
 
-        <!-- 2.4 : Flux -->
+        <!-- 2.4 : Flux (CORRIGÉ ET DÉTAILLÉ) -->
         <div class="bg-white rounded-2xl p-6 shadow-md flex flex-col w-full">
-            <h3 class="title-font text-lg text-dix-dark mb-2">2.4 Géographie des Flux (Origines - Destinations)</h3>
-            <div id="map-flows" class="rounded-xl border border-gray-200 w-full min-h-[450px]"></div>
+            <h3 class="title-font text-lg text-dix-dark mb-2">2.4 Géographie des Flux (Corridors Logistiques)</h3>
+            <p class="text-xs text-gray-500 mb-4"><strong>Méthodologie :</strong> Modélisation macro-logistique regroupant les fermes en <strong>3 Pôles d'expédition</strong> et les livraisons en <strong>bassins de destination</strong>. L'épaisseur des lignes représente la masse du flux, calculée en croisant la <strong>fréquence des trajets</strong> (nb de producteurs) et <strong>l'intensité économique</strong> (part du CA ciblé).</p>
+            
+            <div class="relative w-full">
+                <!-- Wrapper relatif pour intégrer la carte et la légende -->
+                <div id="map-flows" class="rounded-xl border border-gray-200 w-full min-h-[480px] z-10"></div>
+                
+                <!-- LÉGENDE SUPERPOSÉE -->
+                <div class="absolute bottom-4 right-4 bg-white/95 p-3 rounded-lg shadow-lg border border-gray-100 z-[1000] text-xs font-sans">
+                    <div class="flex flex-col gap-3">
+                        <!-- Bloc Origines -->
+                        <div>
+                            <p class="font-bold text-gray-700 mb-2 border-b border-gray-200 pb-1">Origines (Pôles)</p>
+                            <div class="grid grid-cols-1 gap-1 text-gray-600">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-4 h-4 bg-dix-light rounded-full text-white flex items-center justify-center font-bold" style="font-size: 9px; box-shadow: 0 1px 2px rgba(0,0,0,0.3);">P1</div> 
+                                    Pôle Ouest
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-4 h-4 bg-dix-light rounded-full text-white flex items-center justify-center font-bold" style="font-size: 9px; box-shadow: 0 1px 2px rgba(0,0,0,0.3);">P2</div> 
+                                    Pôle Centre
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-4 h-4 bg-dix-light rounded-full text-white flex items-center justify-center font-bold" style="font-size: 9px; box-shadow: 0 1px 2px rgba(0,0,0,0.3);">P3</div> 
+                                    Pôle Sud
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bloc Destinations -->
+                        <div>
+                            <p class="font-bold text-gray-700 mb-2 border-b border-gray-200 pb-1">Destinations</p>
+                            <div class="flex items-center gap-2 mb-1 text-gray-600">
+                                <div class="w-3 h-3 rounded-full bg-[#e74c3c] border-2 border-white shadow-sm box-content"></div> 
+                                Villes (Cibles denses)
+                            </div>
+                            <div class="flex items-center gap-2 text-gray-600">
+                                <svg viewBox="0 0 24 24" fill="#e67e22" stroke="white" stroke-width="1.5" class="w-4 h-4 drop-shadow-sm" style="transform: rotate(135deg);"><polygon points="12,2 22,22 12,17 2,22"/></svg>
+                                Zones (Cibles diffuses)
+                            </div>
+                        </div>
+                        
+                        <!-- Bloc Intensité -->
+                        <div>
+                            <p class="font-bold text-gray-700 mb-2 border-b border-gray-200 pb-1">Intensité des Flux (CA)</p>
+                            <div class="flex items-center gap-2 mb-1 text-gray-600">
+                                <div class="w-6 bg-gray-400 rounded" style="height: 2px;"></div> Flux mineur
+                            </div>
+                            <div class="flex items-center gap-2 mb-1 text-gray-600">
+                                <div class="w-6 bg-gray-400 rounded" style="height: 5px;"></div> Flux modéré
+                            </div>
+                            <div class="flex items-center gap-2 text-gray-600">
+                                <div class="w-6 bg-gray-400 rounded" style="height: 8px;"></div> Flux majeur
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="mt-4 p-3 bg-gray-50 rounded-lg border-l-4 border-dix-light text-sm text-gray-700 italic">
-                <strong>💡 Hypothèse de travail :</strong> L'attraction logistique du <strong>Littoral</strong> et du <strong>Moyen Pays</strong> est majeure.
+                <strong>💡 Hypothèse de travail :</strong> La carte met en évidence deux défis logistiques distincts. D'une part, la puissance de l'attraction littorale vers des <strong>villes très denses</strong> (nécessitant des véhicules adaptés au centre-ville). D'autre part, la livraison vers des <strong>zones diffuses</strong> (Moyen et Haut Pays) où les arrêts sont espacés. C'est sur les "corridors" descendants vers la côte que la massification aura le plus d'impact économique et environnemental.
             </div>
         </div>
     </section>
@@ -255,19 +331,22 @@
             <!-- Données Socio-Économiques -->
             <div class="bg-white p-6 rounded-2xl shadow-md md:col-span-2 border-l-4 border-orange-500 flex flex-col">
                 <h3 class="title-font text-xl text-dix-dark mb-1">3.1 Données socio-économiques de vos livraisons</h3>
-                <p class="text-xs text-gray-500 mb-4">Valeurs déclaratives moyennes. <span class="font-semibold text-orange-400">(Base : 22 répondants au bloc éco)</span></p>
+                <p class="text-xs text-gray-500 mb-4">Valeurs déclaratives moyennes et médianes. <span class="font-semibold text-orange-400">(Base : 22 répondants au bloc éco)</span></p>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-                    <div class="text-center border-r border-gray-100">
+                    <div class="text-center border-r border-gray-100 flex flex-col justify-center">
                         <p class="text-xs text-gray-500 mb-1 uppercase tracking-wider font-sans">Poids Logistique (Prix HT)</p>
                         <p class="title-font text-3xl text-orange-600">~ 18%</p>
+                        <p class="text-xs text-gray-500 font-sans mt-1">Médiane : 10%</p>
                     </div>
-                    <div class="text-center border-r border-gray-100">
+                    <div class="text-center border-r border-gray-100 flex flex-col justify-center">
                         <p class="text-xs text-gray-500 mb-1 uppercase tracking-wider font-sans">CA Moyen / Tournée</p>
                         <p class="title-font text-3xl text-dix-dark">~ 800 €</p>
+                        <p class="text-xs text-gray-500 font-sans mt-1">Médiane : 400 €</p>
                     </div>
-                    <div class="text-center">
+                    <div class="text-center flex flex-col justify-center">
                         <p class="text-xs text-gray-500 mb-1 uppercase tracking-wider font-sans">Application d'un Franco</p>
                         <p class="title-font text-2xl text-dix-dark">27% <span class="text-sm font-sans text-gray-500 font-normal">(Moy. 220€)</span></p>
+                        <p class="text-xs text-gray-500 font-sans mt-1">Médiane : 150 €</p>
                     </div>
                 </div>
                 <div class="mt-auto p-3 bg-gray-50 rounded-lg border-l-4 border-orange-400 text-sm text-gray-700 italic">
@@ -288,7 +367,7 @@
                 <ul class="text-sm text-gray-700 space-y-2 flex-1">
                     <li class="flex justify-between"><span>Clients moy. :</span> <span class="font-semibold text-dix-dark">~ 8 / tournée</span></li>
                     <li class="flex justify-between"><span>Distance moy. :</span> <span class="font-semibold text-dix-dark">~ 50 km / tournée</span></li>
-                    <li class="flex justify-between"><span>Temps hebdo :</span> <span class="font-semibold text-dix-dark">~ 15h</span></li>
+                    <li class="flex justify-between"><span>Temps hebdo moy. :</span> <span class="font-semibold text-dix-dark">~ 15h</span></li>
                 </ul>
             </div>
             <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200 flex flex-col relative overflow-hidden">
@@ -297,7 +376,7 @@
                 <ul class="text-sm text-gray-700 space-y-2 flex-1">
                     <li class="flex justify-between"><span>Clients moy. :</span> <span class="font-semibold text-dix-dark">~ 6 / tournée</span></li>
                     <li class="flex justify-between"><span>Distance moy. :</span> <span class="font-semibold text-dix-dark">~ 150 km / tournée</span></li>
-                    <li class="flex justify-between"><span>Temps hebdo :</span> <span class="font-semibold text-dix-dark">~ 10h</span></li>
+                    <li class="flex justify-between"><span>Temps hebdo moy. :</span> <span class="font-semibold text-dix-dark">~ 10h</span></li>
                 </ul>
             </div>
             <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200 flex flex-col relative overflow-hidden">
@@ -306,7 +385,7 @@
                 <ul class="text-sm text-gray-700 space-y-2 flex-1">
                     <li class="flex justify-between"><span>Clients moy. :</span> <span class="font-semibold text-dix-dark">1 à 3 / tournée</span></li>
                     <li class="flex justify-between"><span>Distance moy. :</span> <span class="font-semibold text-dix-dark">~ 45 km / tournée</span></li>
-                    <li class="flex justify-between"><span>Temps hebdo :</span> <span class="font-semibold text-dix-dark">Ponctuel</span></li>
+                    <li class="flex justify-between"><span>Temps hebdo moy. :</span> <span class="font-semibold text-dix-dark">Ponctuel</span></li>
                 </ul>
             </div>
         </div>
@@ -391,6 +470,8 @@
             // --- CARTE LEAFLET (ANGLE 1) ---
             const mapAngle1 = L.map('map-angle1').setView([43.76, 6.90], 10);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(mapAngle1);
+            
+            // Correction de l'icône de base pour retirer le style par défaut de leaflet
             const icon = L.divIcon({ className: 'custom-marker', iconSize: [14, 14] });
             
             // Tracé de la Route Napoléon (N85) à titre indicatif
@@ -444,35 +525,117 @@
                 .bindPopup(`<strong class="title-font text-dix-dark text-sm">${loc.name}</strong><br><span class="text-xs text-gray-500">📍 ${loc.city}</span>`)
                 .addTo(mapAngle1));
 
-            // --- NOUVELLE CARTE DES FLUX (ANGLE 2.4) ---
+            // --- CARTE DES FLUX MODÉLISÉE PAR PÔLES ET TYPES DE DESTINATIONS (ANGLE 2.4) ---
             const mapFlows = L.map('map-flows').setView([43.70, 7.05], 10);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(mapFlows);
 
-            const origins = [{ coords: [43.76, 6.75] }, { coords: [43.79, 6.95] }, { coords: [43.80, 7.05] }];
-            const oIcon = L.divIcon({ html: '<div style="background-color:#549e39; width:18px; height:18px; border-radius:50%; border:2px solid white;"></div>', iconSize: [18, 18] });
-            origins.forEach(o => L.marker(o.coords, {icon: oIcon}).addTo(mapFlows));
-
-            const destinations = [
-                { coords: [43.71, 7.26], col: "#e74c3c", z: false },
-                { coords: [43.55, 7.01], col: "#e74c3c", z: false },
-                { coords: [43.66, 6.92], col: "#e67e22", z: false },
-                { coords: [43.72, 7.11], col: "#e67e22", z: false },
-                { coords: [43.70, 7.00], col: "#e67e22", z: true },
-                { coords: [43.86, 7.03], col: "#f1c40f", z: true }
+            // Création des 3 Pôles d'expédition (Regroupement)
+            const poles = [
+                { coords: [43.76, 6.75], name: "Pôle Ouest", desc: "(Caille, Andon, Valderoure, Escragnolles...)" },
+                { coords: [43.78, 6.95], name: "Pôle Centre", desc: "(Gréolières, Cipières, Courmes...)" },
+                { coords: [43.68, 6.88], name: "Pôle Sud", desc: "(Grasse, St-Vallier, St-Cézaire...)" }
             ];
-            destinations.forEach(dest => L.marker(dest.coords, {icon: L.divIcon({ html: `<div style="background-color:${dest.col}; width:12px; height:12px; border-radius:50%; border:2px solid white;"></div>`, iconSize: [12, 12] }) }).addTo(mapFlows));
 
-            const addFlow = (oIdx, dIdx, weight) => {
-                const dest = destinations[dIdx];
-                const pl = L.polyline([origins[oIdx].coords, dest.coords], { color: dest.col, weight: weight, opacity: 0.6 }).addTo(mapFlows);
-                if (dest.z && window.L.polylineDecorator) {
-                    L.polylineDecorator(pl, { patterns: [{ offset: '100%', repeat: 0, symbol: L.Symbol.arrowHead({pixelSize: 12 + weight, polygon: true, pathOptions: { fillOpacity: 0.8, color: dest.col, stroke: false }}) }] }).addTo(mapFlows);
+            // Marqueurs pour les Pôles
+            poles.forEach((p, index) => {
+                const poleIcon = L.divIcon({ 
+                    html: `<div class="hub-marker">P${index+1}</div>`, 
+                    className: '', // Règle le problème du carré noir natif de Leaflet
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 12]
+                });
+                L.marker(p.coords, {icon: poleIcon})
+                    .bindPopup(`<strong class="title-font text-dix-dark text-sm">${p.name}</strong><br><span class="text-xs text-gray-500">${p.desc}</span>`)
+                    .addTo(mapFlows);
+            });
+
+            // Bassins de consommation (Villes vs Zones)
+            const bassins = [
+                { coords: [43.70, 7.26], name: "Ville : Nice", color: "#e74c3c", type: "ville" }, // 0
+                { coords: [43.58, 7.12], name: "Ville : Antibes", color: "#e74c3c", type: "ville" }, // 1
+                { coords: [43.55, 7.01], name: "Ville : Cannes", color: "#e74c3c", type: "ville" }, // 2
+                { coords: [43.66, 6.92], name: "Ville : Grasse", color: "#e74c3c", type: "ville" }, // 3
+                { coords: [43.72, 7.11], name: "Ville : Vence", color: "#e74c3c", type: "ville" }, // 4
+                { coords: [43.68, 7.02], name: "Zone : Moyen Pays", color: "#e67e22", type: "zone", rotation: 150 }, // 5 (Entre Grasse et Vence, pointe au Sud-Est)
+                { coords: [43.85, 6.95], name: "Zone : Haut Pays", color: "#f1c40f", type: "zone", rotation: 45 } // 6 (Pointe au Nord-Est)
+            ];
+
+            // Marqueurs pour les bassins
+            bassins.forEach(b => {
+                let htmlContent, iSize, iAnchor;
+                
+                if (b.type === 'ville') {
+                    // Cercle rouge pour les villes denses
+                    htmlContent = `<div class="rounded-full border-solid w-4 h-4 border-2 border-white shadow-md box-border" style="background-color:${b.color};"></div>`;
+                    iSize = [16, 16];
+                    iAnchor = [8, 8];
+                } else {
+                    // Flèche curseur orange/jaune pour les zones diffuses
+                    let rot = b.rotation || 0;
+                    htmlContent = `<svg viewBox="0 0 24 24" fill="${b.color}" stroke="white" stroke-width="1.5" class="w-6 h-6" style="filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.3)); transform: rotate(${rot}deg);"><polygon points="12,2 22,22 12,17 2,22"/></svg>`;
+                    iSize = [24, 24];
+                    iAnchor = [12, 12];
                 }
-            };
 
-            addFlow(0, 2, 5); addFlow(0, 3, 8); addFlow(0, 5, 4); 
-            addFlow(1, 3, 6); addFlow(1, 2, 4); addFlow(1, 0, 8); addFlow(1, 4, 6); 
-            addFlow(2, 3, 9); addFlow(2, 0, 10);
+                L.marker(b.coords, {
+                    icon: L.divIcon({ 
+                        html: htmlContent, 
+                        className: '', // Règle le problème du carré noir
+                        iconSize: iSize, 
+                        iconAnchor: iAnchor 
+                    }) 
+                })
+                .bindPopup(`<strong class="text-sm" style="color:${b.color};">${b.name}</strong>`)
+                .addTo(mapFlows);
+            });
+
+            // Dessin des flux avec pondération (Épaisseur du trait = Masse)
+            // Format: [Index Pole, Index Bassin, Poids(1 à 8)]
+            const flows = [
+                // Pôle Ouest (P1)
+                [0, 2, 6], // Vers Cannes (Fort)
+                [0, 3, 7], // Vers Grasse (Très fort via N85)
+                [0, 0, 3], // Vers Nice (Moyen)
+                [0, 6, 3], // Vers Haut Pays
+                // Pôle Centre (P2)
+                [1, 0, 7], // Vers Nice (Très fort)
+                [1, 4, 5], // Vers Vence (Fort)
+                [1, 1, 4], // Vers Antibes (Moyen)
+                [1, 5, 6], // Vers Moyen Pays (NOUVEAU - Fort)
+                [1, 6, 2], // Vers Haut Pays
+                // Pôle Sud (P3)
+                [2, 3, 8], // Vers Grasse (Max)
+                [2, 2, 6], // Vers Cannes (Fort)
+                [2, 5, 4], // Vers Moyen Pays (NOUVEAU - Moyen)
+                [2, 0, 2]  // Vers Nice (Faible)
+            ];
+
+            flows.forEach(f => {
+                const origin = poles[f[0]];
+                const dest = bassins[f[1]];
+                const weight = f[2];
+                
+                const pl = L.polyline([origin.coords, dest.coords], { 
+                    color: dest.color, 
+                    weight: weight, 
+                    opacity: 0.6 
+                }).addTo(mapFlows);
+
+                // Ajout des flèches directionnelles
+                if (window.L.polylineDecorator) {
+                    L.polylineDecorator(pl, { 
+                        patterns: [{ 
+                            offset: '80%', // Placé à 80% pour ne pas être caché par le marqueur
+                            repeat: 0, 
+                            symbol: L.Symbol.arrowHead({
+                                pixelSize: 10 + weight, // Légèrement plus grand pour bien voir la direction
+                                polygon: true, 
+                                pathOptions: { fillOpacity: 1, color: dest.color, stroke: false }
+                            }) 
+                        }] 
+                    }).addTo(mapFlows);
+                }
+            });
 
             // --- GRAPHIQUES ---
             // ANGLE 1 : Activités Principales
