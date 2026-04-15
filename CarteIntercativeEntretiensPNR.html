@@ -12,7 +12,7 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600&family=Georgia&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
+    
     <style>
         body, html {
             margin: 0;
@@ -38,6 +38,7 @@
             justify-content: space-between;
             align-items: center;
         }
+
         #header h1 {
             font-family: 'Oswald', sans-serif;
             margin: 0;
@@ -45,6 +46,7 @@
             letter-spacing: 1px;
             text-transform: uppercase;
         }
+
         #header p {
             margin: 4px 0 0 0;
             font-size: 13px;
@@ -68,6 +70,7 @@
             box-shadow: 2px 0 10px rgba(0,0,0,0.05);
             z-index: 500;
         }
+
         .sidebar-header {
             padding: 15px 20px;
             border-bottom: 1px solid #e5e7eb;
@@ -153,6 +156,8 @@
         .checkbox-item { display: flex; align-items: center; font-size: 13px; color: #405F59; cursor: pointer; padding: 4px; border-radius: 4px; transition: 0.2s; }
         .checkbox-item:hover { background-color: #f1f5f9; }
         .checkbox-item input { margin-right: 10px; cursor: pointer; transform: scale(1.1); }
+        
+        /* Taille des icônes rétablie à 12px */
         .checkbox-color { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; }
 
         /* Liste des acteurs avec ACCORDÉON */
@@ -194,7 +199,7 @@
         .badge-entretien { border-radius: 50%; }
         .badge-questionnaire { border-radius: 0; transform: rotate(45deg); }
         .badge-both { border-radius: 0; } /* Carré */
-
+        
         .actor-details { display: flex; flex-direction: column; }
         .actor-name { font-weight: bold; font-size: 13px; }
         .actor-meta { font-size: 11px; color: #6b7280; }
@@ -213,18 +218,15 @@
         .source-tag { display: inline-block; font-size: 9px; background: #e2e8f0; padding: 2px 6px; border-radius: 10px; text-transform: uppercase; font-weight: bold; margin-bottom: 6px; }
 
         .zone-label { background: rgba(255,255,255,0.85); border: 2px solid #405F59; border-radius: 4px; padding: 6px; font-weight: bold; font-family: 'Oswald', sans-serif; color: #405F59; font-size: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        
     </style>
 </head>
 <body>
-
     <div id="header">
         <div>
             <h1>Carte Logistique PNR Préalpes d'Azur</h1>
             <p>Observatoire Multi-Sources & Outil de Simulation de Tournées</p>
         </div>
     </div>
-
     <div id="main-container">
         <div id="sidebar">
             <div class="sidebar-header">
@@ -234,11 +236,30 @@
                     <input type="checkbox" id="toggle-analysis" autocomplete="off" onchange="toggleAnalysisLayer()">
                     <label for="toggle-analysis">Analyse des Bassins de Vie</label>
                 </div>
-
+                
                 <!-- Toggle Simulateur Tournées -->
                 <div class="custom-toggle toggle-tours">
                     <input type="checkbox" id="toggle-tours" autocomplete="off" onchange="toggleToursLayer()">
                     <label for="toggle-tours">Afficher les Flux de Tournées</label>
+                </div>
+
+                <!-- Filtres dynamiques pour les tournées -->
+                <div id="dynamic-tours-filters-container" style="display: none; margin-bottom: 15px; background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #bfdbfe;">
+                    <span class="filter-label" style="color: #1d4ed8; margin-bottom: 8px;">Coloration des tracés</span>
+                    <div class="checkbox-group" style="margin-bottom: 12px; display: flex; flex-direction: row; gap: 15px; font-size: 12px; color: #4b5563;">
+                        <label style="cursor: pointer; display: flex; align-items: center;"><input type="radio" name="colorMode" value="producer" checked onchange="changeColorMode(this.value)" style="margin-right: 5px; cursor: pointer; transform: scale(1.1);"> Par Producteur</label>
+                        <label style="cursor: pointer; display: flex; align-items: center;"><input type="radio" name="colorMode" value="day" onchange="changeColorMode(this.value)" style="margin-right: 5px; cursor: pointer; transform: scale(1.1);"> Par Jour</label>
+                    </div>
+
+                    <span class="filter-label" style="color: #1d4ed8; margin-bottom: 8px; border-top: 1px solid #e5e7eb; padding-top: 8px;">Jours de tournée</span>
+                    <div class="checkbox-group" id="dynamic-days-list" style="margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 6px; flex-direction: row;">
+                        <!-- Les jours seront générés ici -->
+                    </div>
+
+                    <span class="filter-label" style="color: #1d4ed8; margin-bottom: 8px; border-top: 1px solid #e5e7eb; padding-top: 8px;">Producteurs importés</span>
+                    <div class="checkbox-group" id="dynamic-producers-list" style="max-height: 140px; overflow-y: auto;">
+                        <!-- Les cases à cocher seront générées ici -->
+                    </div>
                 </div>
 
                 <!-- Bloc Statistiques (Caché par défaut) -->
@@ -265,7 +286,7 @@
 
                 <h2>Filtres Rapides</h2>
                 
-                <!-- Filtrage par Catégories -->
+                <!-- Filtrage par Catégories (Icônes rétablies à 12px) -->
                 <div class="filter-group">
                     <span class="filter-label">Catégories Affichées</span>
                     <div class="checkbox-group">
@@ -284,7 +305,7 @@
                     </div>
                 </div>
 
-                <!-- Filtrage par Sources -->
+                <!-- Filtrage par Sources (Icônes rétablies à 10px) -->
                 <div class="filter-group">
                     <span class="filter-label">Source de donnée</span>
                     <div class="checkbox-group">
@@ -319,7 +340,6 @@
             <!-- Liste dynamique avec accordéons -->
             <div id="actor-list"></div>
         </div>
-
         <div id="map"></div>
     </div>
 
@@ -419,12 +439,15 @@
         ];
 
         // --- 3. LOGIQUE DES TOURNÉES ---
+        var selectedDays = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche', 'Non défini'];
+
         var simulatedToursData = [
             {
                 nom_producteur: "La Ferme de Jal (Démonstration)",
                 tours: [
                     {
                         name: "TOURNEE - Mardi - Littoral",
+                        day: "Mardi",
                         ca: 1239, dist: 138, stopsCount: 5,
                         coords: [ [6.958, 43.785], [7.265, 43.727], [7.281, 43.702], [7.149, 43.663], [7.004, 43.674], [6.958, 43.785] ]
                     }
@@ -435,6 +458,7 @@
                 tours: [
                     {
                         name: "TOURNEE - Jeudi - Grasse",
+                        day: "Jeudi",
                         ca: 450, dist: 65, stopsCount: 3,
                         coords: [ [6.783, 43.731], [6.926, 43.660], [6.987, 43.674], [6.783, 43.731] ]
                     }
@@ -445,6 +469,7 @@
                 tours: [
                     {
                         name: "Livraison Littoral - Vendredi",
+                        day: "Vendredi",
                         ca: 850, dist: 95, stopsCount: 4,
                         coords: [ [6.868, 43.874], [6.848, 43.698], [6.926, 43.660], [7.005, 43.550], [6.868, 43.874] ]
                     }
@@ -460,10 +485,38 @@
             return s.length % 2 !== 0 ? s[m] : (s[m-1]+s[m])/2;
         };
 
+        // Variables pour gérer la coloration des tournées
+        var currentTourColorMode = 'producer';
+        
+        // Couleurs vives/pastels pour les jours
+        var dayColors = {
+            'Lundi': '#3b82f6',     // Bleu clair
+            'Mardi': '#22c55e',     // Vert clair
+            'Mercredi': '#f59e0b',  // Ambre
+            'Jeudi': '#ef4444',     // Rouge clair
+            'Vendredi': '#a855f7',  // Violet clair
+            'Samedi': '#ec4899',    // Rose
+            'Dimanche': '#06b6d4',  // Cyan
+            'Non défini': '#94a3b8' // Gris clair
+        };
+
+        // Couleurs sombres/intenses pour les producteurs (très différentes des jours)
+        var producerColors = ['#4A148C', '#004D40', '#E65100', '#3E2723', '#01579B', '#1B5E20', '#B71C1C', '#827717', '#311B92', '#BF360C'];
+
+        function changeColorMode(mode) {
+            currentTourColorMode = mode;
+            if (document.getElementById('toggle-tours').checked) {
+                drawSpiderTracks(); // Redessine les tracés immédiatement avec la nouvelle couleur
+                renderTourFilters(); // Met à jour les pastilles de couleur dans la liste
+            }
+        }
+
         function updateTourStats() {
             let cas = [], dists = [], stops = [];
             simulatedToursData.forEach(prod => {
+                if (prod.visible === false) return; // Ignore les producteurs masqués
                 prod.tours.forEach(t => {
+                    if (!selectedDays.includes(t.day)) return; // Ignore les jours non sélectionnés
                     cas.push(t.ca); dists.push(t.dist); stops.push(t.stopsCount);
                 });
             });
@@ -478,13 +531,16 @@
         function toggleToursLayer() {
             var isChecked = document.getElementById('toggle-tours').checked;
             var statsBox = document.getElementById('tour-stats-box');
+            var dynContainer = document.getElementById('dynamic-tours-filters-container');
             if (isChecked) { 
                 statsBox.style.display = 'block';
+                if (simulatedToursData.length > 0) dynContainer.style.display = 'block';
                 map.addLayer(toursGroup);
                 updateTourStats();
                 drawSpiderTracks();
             } else { 
                 statsBox.style.display = 'none';
+                dynContainer.style.display = 'none';
                 map.removeLayer(toursGroup);
                 toursGroup.clearLayers(); 
             }
@@ -492,39 +548,156 @@
 
         function drawSpiderTracks() {
             toursGroup.clearLayers();
-            let routeColors = ['#2563eb', '#059669', '#d97706', '#7c3aed', '#dc2626', '#10b981', '#f43f5e'];
             let colorIndex = 0;
+
             for(let prod of simulatedToursData) {
+                if (prod.visible === false) continue; // Ignore les producteurs masqués
+                
+                let producerColor = producerColors[colorIndex % producerColors.length];
+
                 for(let tour of prod.tours) {
+                    if (!selectedDays.includes(tour.day)) continue; // Ignore les jours non sélectionnés
                     if(!tour.coords || tour.coords.length < 2) continue;
+                    
                     let latlngs = tour.coords.map(c => [c[1], c[0]]);
-                    let routeColor = routeColors[colorIndex % routeColors.length];
+                    let routeColor = (currentTourColorMode === 'day') ? (dayColors[tour.day] || '#64748b') : producerColor;
+                    
                     let spiderLine = L.polyline(latlngs, {
                         color: routeColor, weight: 4, opacity: 0.9, dashArray: '6, 8', lineJoin: 'round'
                     });
+
                     spiderLine.bindPopup(`
                         <div class="custom-popup" style="border-top-color: ${routeColor}">
                             <span class="source-tag">Flux de Tournée</span>
                             <h3>${prod.nom_producteur}</h3>
                             <p><strong>${tour.name}</strong></p>
                             <hr style="border:0; border-top:1px solid #e5e7eb; margin:8px 0;">
+                            Jour : <strong>${tour.day}</strong><br>
                             Distance estimée : <strong>${Math.round(tour.dist)} km</strong><br>
                             Chiffre d'Affaires : <strong>${Math.round(tour.ca)} €</strong><br>
                             Arrêts clients : <strong>${tour.stopsCount}</strong>
                         </div>
                     `);
+
                     spiderLine.on('mouseover', function(e) { this.setStyle({ weight: 7, opacity: 1 }); });
                     spiderLine.on('mouseout', function(e) { this.setStyle({ weight: 4, opacity: 0.9 }); });
+
                     toursGroup.addLayer(spiderLine);
-                    colorIndex++;
                 }
+                colorIndex++; 
             }
+        }
+
+        function normalizeDay(inputStr) {
+            if (!inputStr) return 'Non défini';
+            let str = String(inputStr).toLowerCase();
+            const days = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
+            for(let d of days) {
+                if (str.includes(d)) return d.charAt(0).toUpperCase() + d.slice(1);
+            }
+            return 'Non défini';
+        }
+
+        function renderTourFilters() {
+            var container = document.getElementById('dynamic-tours-filters-container');
+            var prodList = document.getElementById('dynamic-producers-list');
+            var daysList = document.getElementById('dynamic-days-list');
+            
+            prodList.innerHTML = '';
+            daysList.innerHTML = '';
+
+            if (simulatedToursData.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+
+            if (document.getElementById('toggle-tours').checked) {
+                container.style.display = 'block';
+            }
+
+            // 1. Jours (Pastilles 8px conservées pour la liste dynamique)
+            let availableDays = new Set();
+            simulatedToursData.forEach(p => p.tours.forEach(t => availableDays.add(t.day)));
+            const dayOrder = { 'Lundi': 1, 'Mardi': 2, 'Mercredi': 3, 'Jeudi': 4, 'Vendredi': 5, 'Samedi': 6, 'Dimanche': 7, 'Non défini': 8 };
+            
+            Array.from(availableDays).sort((a, b) => (dayOrder[a] || 99) - (dayOrder[b] || 99)).forEach(day => {
+                let label = document.createElement('label');
+                label.className = 'checkbox-item';
+                label.style.fontSize = '11px';
+                label.style.background = '#e2e8f0';
+                label.style.padding = '4px 8px';
+                label.style.borderRadius = '12px';
+                label.style.margin = '0';
+                
+                let input = document.createElement('input');
+                input.type = 'checkbox';
+                input.checked = selectedDays.includes(day);
+                input.style.transform = 'scale(1)';
+                input.style.marginRight = '4px';
+                
+                input.onchange = function() {
+                    if (this.checked) {
+                        if (!selectedDays.includes(day)) selectedDays.push(day);
+                    } else {
+                        selectedDays = selectedDays.filter(d => d !== day);
+                    }
+                    updateTourStats();
+                    if (document.getElementById('toggle-tours').checked) drawSpiderTracks();
+                };
+                
+                let colorDot = document.createElement('span');
+                colorDot.style.display = 'inline-block';
+                colorDot.style.width = '8px';
+                colorDot.style.height = '8px';
+                colorDot.style.borderRadius = '50%';
+                colorDot.style.backgroundColor = dayColors[day] || '#64748b';
+                colorDot.style.marginRight = '4px';
+
+                label.appendChild(input);
+                label.appendChild(colorDot);
+                label.appendChild(document.createTextNode(day));
+                daysList.appendChild(label);
+            });
+
+            // 2. Producteurs (Pastilles 8px conservées pour la liste dynamique)
+            simulatedToursData.forEach((prod, index) => {
+                if (prod.visible === undefined) prod.visible = true; 
+                
+                let label = document.createElement('label');
+                label.className = 'checkbox-item';
+                label.style.fontSize = '12px';
+                
+                let input = document.createElement('input');
+                input.type = 'checkbox';
+                input.checked = prod.visible;
+                input.style.transform = 'scale(1)';
+                
+                input.onchange = function() {
+                    prod.visible = this.checked;
+                    updateTourStats();
+                    if (document.getElementById('toggle-tours').checked) drawSpiderTracks();
+                };
+
+                let colorDot = document.createElement('span');
+                colorDot.style.display = 'inline-block';
+                colorDot.style.width = '8px';
+                colorDot.style.height = '8px';
+                colorDot.style.borderRadius = '50%';
+                colorDot.style.backgroundColor = producerColors[index % producerColors.length];
+                colorDot.style.marginRight = '4px';
+                
+                label.appendChild(input);
+                label.appendChild(colorDot);
+                label.appendChild(document.createTextNode(' ' + prod.nom_producteur));
+                prodList.appendChild(label);
+            });
         }
 
         // --- 4. IMPORTATION JSON SUPABASE ---
         function handleJsonUpload(event) {
             let file = event.target.files[0];
             if(!file) return;
+
             let reader = new FileReader();
             reader.onload = function(e) {
                 try {
@@ -542,35 +715,44 @@
                     let data = typeof row.data_json === 'string' ? JSON.parse(row.data_json) : row.data_json;
                     let depotObj = data.depot.pData || data.depot;
                     let tours = data.tours || [];
+                    let depotLon = parseFloat(depotObj.lon !== undefined ? depotObj.lon : depotObj.lng);
+                    let depotLat = parseFloat(depotObj.lat);
+                    
+                    if (isNaN(depotLon) || isNaN(depotLat)) return;
+
                     let parsedTours = [];
                     tours.forEach(t => {
                         let stops = t.stops || [];
                         if(stops.length === 0) return;
-                        let coords = [];
-                        coords.push([depotObj.lon, depotObj.lat]); 
+                        let coords = [[depotLon, depotLat]]; 
                         stops.forEach(s => {
-                            let slon = s.lon !== undefined ? s.lon : s.lng;
-                            let slat = s.lat;
-                            if(slon && slat) coords.push([slon, slat]);
-                        }); 
-                        coords.push([depotObj.lon, depotObj.lat]); 
+                            let slon = parseFloat(s.lon !== undefined ? s.lon : s.lng);
+                            let slat = parseFloat(s.lat);
+                            if(!isNaN(slon) && !isNaN(slat)) coords.push([slon, slat]);
+                        });
+                        coords.push([depotLon, depotLat]); 
+                        let tourName = t.name || t.day || 'Tournée';
                         parsedTours.push({
-                            name: t.name || t.day,
-                            ca: t.stats ? parseFloat(t.stats.ca) : 0,
-                            dist: t.stats ? parseFloat(t.stats.dist) : 0,
+                            name: tourName,
+                            day: normalizeDay(t.day ? t.day : tourName),
+                            ca: t.stats ? parseFloat(t.stats.ca) || 0 : 0,
+                            dist: t.stats ? parseFloat(t.stats.dist) || 0 : 0,
                             stopsCount: stops.length,
                             coords: coords
                         });
                     });
+
                     if(parsedTours.length > 0) {
                         simulatedToursData.push({
-                            nom_producteur: row.nom_producteur,
-                            tours: parsedTours
+                            nom_producteur: row.nom_producteur || 'Inconnu',
+                            tours: parsedTours,
+                            visible: true 
                         });
                     }
                 } catch(e) { console.warn("Ligne ignorée", e); }
             });
             alert(`Succès : ${simulatedToursData.length} producteurs importés.`);
+            renderTourFilters();
             var checkbox = document.getElementById('toggle-tours');
             if(!checkbox.checked) { checkbox.checked = true; toggleToursLayer(); } 
             else { updateTourStats(); drawSpiderTracks(); }
@@ -578,11 +760,8 @@
 
         // --- 5. LOGIQUE INITIALE (Analyse & Acteurs) ---
         function setupAnalysisLayer() {
-            var westZone = L.polygon([
-                [43.81, 6.65], [43.78, 6.78], [43.63, 6.98], [43.66, 6.82]  
-            ], { color: '#f29900', fillOpacity: 0.15, weight: 2, dashArray: '5, 10' }).addTo(analysisGroup);
+            var westZone = L.polygon([[43.81, 6.65], [43.78, 6.78], [43.63, 6.98], [43.66, 6.82]], { color: '#f29900', fillOpacity: 0.15, weight: 2, dashArray: '5, 10' }).addTo(analysisGroup);
             westZone.bindTooltip("BASSIN OUEST : L'ENTONNOIR<br>Massification vers la Route Napoléon", { permanent: true, direction: 'center', className: 'zone-label' });
-
             var bubble1 = L.circle([43.79, 7.04], { radius: 3000, color: '#3b82f6', fillOpacity: 0.1, weight: 2, dashArray: '5, 5' }).addTo(analysisGroup);
             bubble1.bindTooltip("EST : BULLE COURSEGOULES", { permanent: true, direction: 'top', className: 'zone-label' });
             
@@ -595,8 +774,7 @@
 
         function toggleAnalysisLayer() {
             var isChecked = document.getElementById('toggle-analysis').checked;
-            if (isChecked) { map.addLayer(analysisGroup); } 
-            else { map.removeLayer(analysisGroup); }
+            if (isChecked) map.addLayer(analysisGroup); else map.removeLayer(analysisGroup);
         }
 
         function calculateOffsets() {
@@ -624,85 +802,48 @@
             var showProd = document.getElementById('chk-prod').checked;
             var showAch = document.getElementById('chk-ach').checked;
             var showHub = document.getElementById('chk-hub').checked;
-            
             var showEnt = document.getElementById('chk-src-ent').checked;
             var showQuest = document.getElementById('chk-src-quest').checked;
             var showBoth = document.getElementById('chk-src-both').checked;
-
             var listContainer = document.getElementById('actor-list');
             markersGroup.clearLayers(); 
             listContainer.innerHTML = '';
-
             let groups = { "Producteur": [], "Acheteur": [], "Mixte / Hub": [] };
-
             actorsData.forEach((actor) => {
                 if (actor.type === "Producteur" && !showProd) return;
                 if (actor.type === "Acheteur" && !showAch) return;
                 if (actor.type === "Mixte / Hub" && !showHub) return;
-                
                 let isEntretien = actor.source === "Entretien";
                 let isQuest = actor.source === "Questionnaire";
                 let isBoth = actor.source === "Entretien + Questionnaire";
-
                 if (isEntretien && !showEnt) return;
                 if (isQuest && !showQuest) return;
                 if (isBoth && !showBoth) return;
-
                 let color = colors[actor.type];
-
                 let marker;
                 if (isBoth) {
-                    // Carré pour les deux
-                    let icon = L.divIcon({
-                        className: 'custom-div-icon',
-                        html: `<div style="background-color:${color}; width:12px; height:12px; border:2px solid #fff; box-shadow:0 0 3px rgba(0,0,0,0.3);"></div>`,
-                        iconSize: [12, 12], iconAnchor: [6, 6]
-                    });
+                    let icon = L.divIcon({ className: 'custom-div-icon', html: `<div style="background-color:${color}; width:12px; height:12px; border:2px solid #fff; box-shadow:0 0 3px rgba(0,0,0,0.3);"></div>`, iconSize: [12, 12], iconAnchor: [6, 6] });
                     marker = L.marker([actor.displayLat, actor.displayLng], { icon: icon });
                 } else if (isQuest) {
-                    // Losange pour questionnaire seul
-                    let icon = L.divIcon({
-                        className: 'custom-div-icon',
-                        html: `<div style="background-color:${color}; width:12px; height:12px; transform:rotate(45deg); border:2px solid #fff; box-shadow:0 0 3px rgba(0,0,0,0.3);"></div>`,
-                        iconSize: [12, 12], iconAnchor: [6, 6]
-                    });
+                    let icon = L.divIcon({ className: 'custom-div-icon', html: `<div style="background-color:${color}; width:12px; height:12px; transform:rotate(45deg); border:2px solid #fff; box-shadow:0 0 3px rgba(0,0,0,0.3);"></div>`, iconSize: [12, 12], iconAnchor: [6, 6] });
                     marker = L.marker([actor.displayLat, actor.displayLng], { icon: icon });
                 } else {
-                    // Cercle pour entretien seul
-                    marker = L.circleMarker([actor.displayLat, actor.displayLng], {
-                        radius: 8, fillColor: color, color: "#fff", weight: 2, fillOpacity: 1
-                    });
+                    marker = L.circleMarker([actor.displayLat, actor.displayLng], { radius: 8, fillColor: color, color: "#fff", weight: 2, fillOpacity: 1 });
                 }
-
-                marker.bindPopup(`
-                    <div class="custom-popup">
-                        <span class="source-tag">${actor.source}</span>
-                        <h3 style="color:${color}">${actor.name}</h3>
-                        <p><strong>Commune :</strong> ${actor.village}</p>
-                        <p>${actor.desc}</p>
-                    </div>
-                `, { closeButton: false, offset: L.point(0, -5) });
-                
+                marker.bindPopup(`<div class="custom-popup"><span class="source-tag">${actor.source}</span><h3 style="color:${color}">${actor.name}</h3><p><strong>Commune :</strong> ${actor.village}</p><p>${actor.desc}</p></div>`, { closeButton: false, offset: L.point(0, -5) });
                 marker.on('mouseover', function () { this.openPopup(); });
                 marker.on('mouseout', function () { this.closePopup(); });
                 markersGroup.addLayer(marker);
                 groups[actor.type].push({ actor: actor, color: color, srcType: isBoth ? 'both' : (isQuest ? 'quest' : 'ent') });
             });
-
             const groupTitles = { "Producteur": "Producteurs", "Acheteur": "Acheteurs / Distributeurs", "Mixte / Hub": "Hubs Logistiques" };
             for (let type in groups) {
                 if (groups[type].length > 0) {
-                    let headerHtml = `<div class="accordion-header" onclick="toggleAccordion('acc-${type.replace(/[\s\/]+/g, '-')}')">
-                        ${groupTitles[type]} (${groups[type].length}) <i class="fa-solid fa-chevron-down"></i></div>`;
+                    let headerHtml = `<div class="accordion-header" onclick="toggleAccordion('acc-${type.replace(/[\s\/]+/g, '-')}')">${groupTitles[type]} (${groups[type].length}) <i class="fa-solid fa-chevron-down"></i></div>`;
                     let contentHtml = `<div class="accordion-content" id="acc-${type.replace(/[\s\/]+/g, '-')}">`;
                     groups[type].forEach(item => {
                         let badgeClass = item.srcType === 'both' ? 'badge-both' : (item.srcType === 'quest' ? 'badge-questionnaire' : 'badge-entretien');
-                        contentHtml += `
-                            <div class="actor-item" onclick="zoomToMarker(${item.actor.displayLat}, ${item.actor.displayLng})">
-                                <div class="actor-badge ${badgeClass}" style="background-color: ${item.color};"></div>
-                                <div class="actor-details"><span class="actor-name">${item.actor.name}</span>
-                                <span class="actor-meta">${item.actor.village} • ${item.actor.source}</span></div>
-                            </div>`;
+                        contentHtml += `<div class="actor-item" onclick="zoomToMarker(${item.actor.displayLat}, ${item.actor.displayLng})"><div class="actor-badge ${badgeClass}" style="background-color: ${item.color};"></div><div class="actor-details"><span class="actor-name">${item.actor.name}</span><span class="actor-meta">${item.actor.village} • ${item.actor.source}</span></div></div>`;
                     });
                     contentHtml += `</div>`;
                     listContainer.insertAdjacentHTML('beforeend', headerHtml + contentHtml);
@@ -723,15 +864,11 @@
             else map.removeLayer(routeNapoleonLayer);
         };
 
-        // --- 6. ROUTE NAPOLÉON ---
-        var routeNapoleon = L.polyline([[43.660, 6.926], [43.698, 6.848], [43.731, 6.783], [43.774, 6.706]], {
-            color: "#f29900", weight: 8, opacity: 0.7, dashArray: '10, 15', lineJoin: 'round'
-        }).addTo(routeNapoleonLayer);
+        var routeNapoleon = L.polyline([[43.660, 6.926], [43.698, 6.848], [43.731, 6.783], [43.774, 6.706]], { color: "#f29900", weight: 8, opacity: 0.7, dashArray: '10, 15', lineJoin: 'round' }).addTo(routeNapoleonLayer);
         routeNapoleon.bindPopup(`<div class="custom-popup" style="border-top-color:#f29900"><h3>Axe Route Napoléon</h3><p>Artère logistique vitale.</p></div>`, { closeButton: false });
         routeNapoleon.on('mouseover', function(e) { this.setStyle({ weight: 12, opacity: 1 }); this.openPopup(e.latlng); });
         routeNapoleon.on('mouseout', function() { this.setStyle({ weight: 8, opacity: 0.7 }); this.closePopup(); });
 
-        // --- LÉGENDE ---
         var legend = L.control({position: 'bottomright'});
         legend.onAdd = function () {
             var div = L.DomUtil.create('div', 'legend');
@@ -753,16 +890,15 @@
         };
         legend.addTo(map);
 
-        // Initialisation
         try {
             calculateOffsets();
             setupAnalysisLayer();
             renderActors();
+            renderTourFilters();
             toggleAnalysisLayer();
             toggleToursLayer();
             toggleRouteLayer();
         } catch (e) { console.error(e); }
-
     </script>
 </body>
 </html>
