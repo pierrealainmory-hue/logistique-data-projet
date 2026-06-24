@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulateur Navettes 10T - PNR</title>
+    <title>Modélisateur Logistique & Matrice - PNR</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin></script>
@@ -13,61 +13,83 @@
     <style>
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Georgia', serif; background-color: #f3f3f3; color: #405F59; overflow: hidden; display: flex; flex-direction: column; }
 
+        /* Loading Overlay */
         #loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; font-family: 'Oswald', sans-serif; font-size: 24px; color: #549e39; }
         .spinner { border: 6px solid #f3f3f3; border-top: 6px solid #549e39; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+        /* Header & Tabs */
         #header { background-color: #405F59; color: white; padding: 15px 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative; z-index: 1000; display: flex; justify-content: space-between; align-items: center; }
         #header h1 { font-family: 'Oswald', sans-serif; margin: 0; font-size: 22px; text-transform: uppercase; }
         #header .subtitle { font-size: 14px; color: #e2e8f0; margin-top: 4px; }
+        
+        .tabs { display: flex; gap: 10px; }
+        .tab-btn { background-color: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 4px; font-family: 'Oswald', sans-serif; font-size: 14px; cursor: pointer; transition: 0.2s; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+        .tab-btn:hover { background-color: rgba(255,255,255,0.2); }
+        .tab-btn.active { background-color: white; color: #405F59; border-color: white; }
 
-        #main-container { display: flex; flex-grow: 1; width: 100%; min-height: 0; }
+        /* Tab Content Wrappers */
+        .tab-content { flex-grow: 1; width: 100%; min-height: 0; display: none; }
+        #tab-map.active { display: flex; }
+        #tab-matrix.active { display: block; overflow-y: auto; background-color: #f8fafc; padding: 30px 20px; }
+
+        /* --- MAP VIEW STYLES --- */
         #sidebar { width: 480px; background-color: #ffffff; border-right: 1px solid #d1d5db; display: flex; flex-direction: column; box-shadow: 2px 0 10px rgba(0,0,0,0.05); z-index: 500; overflow-y: auto; }
-
         .section-header { background-color: #f9fafb; padding: 15px 25px; border-bottom: 1px solid #e5e7eb; font-family: 'Oswald', sans-serif; font-size: 18px; color: #405F59; text-transform: uppercase; display: flex; align-items: center; gap: 10px; }
         .section-content { padding: 20px 25px; border-bottom: 1px solid #e5e7eb; }
-
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; font-family: 'Oswald', sans-serif; font-size: 14px; margin-bottom: 5px; color: #1e293b; }
         .form-group select, .form-group input { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: 'Georgia', serif; font-size: 14px; }
-        
         .btn-calc { width: 100%; background-color: #549e39; color: white; border: none; padding: 12px; border-radius: 4px; font-family: 'Oswald', sans-serif; font-size: 16px; cursor: pointer; transition: 0.2s; text-transform: uppercase; margin-top: 10px; }
         .btn-calc:hover { background-color: #43822d; }
-
         .calc-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px; }
         .calc-input { width: 80px; padding: 4px; border: 1px solid #d1d5db; border-radius: 4px; text-align: right; }
-
-        /* Bilan Box */
+        
         #result-box { display: none; margin-top: 20px; }
         .breakdown-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 15px; margin-bottom: 15px; }
         .breakdown-box h4 { margin: 0 0 10px 0; font-family: 'Oswald', sans-serif; color: #334155; font-size: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; }
         .breakdown-row { display: flex; justify-content: space-between; font-size: 13px; color: #475569; margin-bottom: 6px; }
         .breakdown-sum { font-weight: bold; font-size: 16px; color: #0f172a; border-top: 1px dashed #cbd5e1; padding-top: 8px; margin-top: 8px; display: flex; justify-content: space-between; align-items: center;}
-        
         .kpi-block { background: #fff; border-left: 4px solid #549e39; padding: 10px 15px; margin-top: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .kpi-title { font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: bold; }
         .kpi-val { font-size: 20px; font-family: 'Oswald', sans-serif; color: #1e293b; margin-top: 2px; }
         .kpi-status { font-size: 12px; margin-top: 4px; }
-
-        #map { flex-grow: 1; height: 100%; background-color: #e2e8f0; }
         
+        #map { flex-grow: 1; height: 100%; background-color: #e2e8f0; }
         .custom-popup .leaflet-popup-content-wrapper { border-radius: 4px; }
         .custom-popup h3 { font-family: 'Oswald', sans-serif; margin: 0 0 5px 0; font-size: 15px; text-transform: uppercase; color: #405F59; }
         .role-tag { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; color: white; margin-top: 5px; }
-
-        .route-path { stroke-dasharray: 8, 8; animation: dash 20s linear infinite; }
-        @keyframes dash { to { stroke-dashoffset: -1000; } }
-
         .route-label { background: rgba(255,255,255,0.95); border: 2px solid #549e39; border-radius: 4px; font-weight: bold; color: #1e293b; font-size: 13px; font-family: 'Oswald', sans-serif; box-shadow: 0 2px 4px rgba(0,0,0,0.1); padding: 4px 8px; }
-        
         .legend { background: white; padding: 15px; box-shadow: 0 0 15px rgba(0,0,0,0.1); border-radius: 8px; font-size: 12px; }
         .legend-item { display: flex; align-items: center; margin-bottom: 6px; }
         .legend-color { width: 14px; height: 14px; border-radius: 50%; margin-right: 8px; }
 
+        /* --- MATRIX VIEW STYLES --- */
+        .matrix-container { max-width: 1200px; margin: 0 auto; width: 100%; }
+        .controls-panel { background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 20px; margin-bottom: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; flex-wrap: wrap; gap: 20px; align-items: center; justify-content: space-between; }
+        .control-group { display: flex; align-items: center; gap: 10px; }
+        .control-group label { font-family: 'Oswald', sans-serif; font-size: 14px; color: #475569; text-transform: uppercase; }
+        .control-group input { width: 70px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; text-align: right; font-family: 'Georgia', serif; }
+        .matrix-wrapper { overflow-x: auto; background: white; border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .matrix-table { width: 100%; border-collapse: collapse; text-align: center; }
+        .matrix-table th, .matrix-table td { border: 1px solid #e2e8f0; padding: 15px; vertical-align: middle; }
+        .matrix-table th { background-color: #f1f5f9; font-family: 'Oswald', sans-serif; color: #1e293b; font-size: 14px; text-transform: uppercase; }
+        .matrix-table th.row-header { text-align: left; background-color: #f8fafc; color: #334155; width: 200px; }
+        .matrix-table th.col-header { width: 22%; }
+        .avg-cell { background-color: #f8fafc; border-left: 2px solid #cbd5e1 !important; }
+        .avg-row td { background-color: #f8fafc; border-top: 2px solid #cbd5e1 !important; }
+        .avg-row th { background-color: #f1f5f9; border-top: 2px solid #cbd5e1 !important; text-align: right; font-size: 13px; color: #64748b;}
+        .avg-header { background-color: #f1f5f9; border-left: 2px solid #cbd5e1 !important; color: #64748b; }
+        .cell-content { display: flex; flex-direction: column; gap: 5px; }
+        .cost-main { font-family: 'Oswald', sans-serif; font-size: 22px; color: #1e293b; font-weight: 600; }
+        .cost-tonne { font-size: 14px; color: #549e39; font-weight: bold; }
+        .dist-time { font-size: 12px; color: #64748b; }
+        .loading-cell { color: #94a3b8; font-style: italic; font-size: 13px; }
+
         /* Footer */
         #footer { background-color: #ffffff; border-top: 1px solid #cbd5e1; color: #475569; padding: 10px 25px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; z-index: 1000; position: relative; }
-        #footer .footer-s { display: flex; gap: 20px; align-items: center; }
-        #footer .footer-s img { height: 40px; object-fit: contain; }
+        #footer .footer-logos { display: flex; gap: 20px; align-items: center; }
+        #footer .footer-logos img { height: 40px; object-fit: contain; }
         #footer .footer-text { text-align: right; line-height: 1.4; }
         #footer a { color: #549e39; text-decoration: none; font-weight: bold; }
         #footer a:hover { text-decoration: underline; }
@@ -77,20 +99,23 @@
 
     <div id="loading-overlay">
         <div class="spinner"></div>
-        <div>Calcul de l'itinéraire en cours...</div>
+        <div>Calcul des itinéraires en cours...</div>
     </div>
 
     <div id="header">
         <div>
             <h1><i class="fa-solid fa-truck-ramp-box"></i> Modélisateur : Navettes Directes 10 Tonnes</h1>
-            <div class="subtitle">Outil de calcul du coût de revient logistique (Base de discussion Transporteur)</div>
+            <div class="subtitle">Outil de calcul du coût de revient logistique (Base de discussion)</div>
+        </div>
+        <div class="tabs">
+            <button class="tab-btn active" id="btn-matrix" onclick="switchTab('matrix')"><i class="fa-solid fa-table-cells"></i> Matrice Globale</button>
+            <button class="tab-btn" id="btn-map" onclick="switchTab('map')"><i class="fa-solid fa-map-location-dot"></i> Vue Carte</button>
         </div>
     </div>
 
-    <div id="main-container">
+    <div id="tab-map" class="tab-content">
         <div id="sidebar">
-            
-            <div class="section-header"><i class="fa-solid fa-route"></i> Définir la Navette</div>
+            <div class="section-header"><i class="fa-solid fa-route"></i> Définir la Navette 10T</div>
             <div class="section-content">
                 <div class="form-group">
                     <label>Origine : Gisement (Offre)</label>
@@ -115,44 +140,79 @@
 
             <div class="section-header"><i class="fa-solid fa-sliders"></i> Variables d'Estimation</div>
             <div class="section-content">
-                <p style="font-size:11px; color:#64748b; margin-bottom:10px;">Hypothèses pour l'évaluation du coût de revient théorique du transport :</p>
-                <div class="calc-row"><span>Coût de revient véhicule lourd :</span> <div><input type="number" class="calc-input" id="inp-km" value="1.20" step="0.10" onchange="updateFinancials()"> €/km</div></div>
-                <div class="calc-row"><span>Taux horaire Chauffeur :</span> <div><input type="number" class="calc-input" id="inp-hr" value="25" step="1" onchange="updateFinancials()"> €/h</div></div>
-                <div class="calc-row"><span>Temps de Manut. (Chrg + Déch.) :</span> <div><input type="number" class="calc-input" id="inp-manut" value="1.5" step="0.25" onchange="updateFinancials()"> h</div></div>
+                <p style="font-size:11px; color:#64748b; margin-bottom:10px;">Hypothèses pour l'évaluation du coût de revient théorique :</p>
+                <div class="calc-row"><span>Indemnité véhicule lourd :</span> <div><input type="number" class="calc-input" id="inp-km" value="1.20" step="0.10" onchange="syncInputs('map')"> €/km</div></div>
+                <div class="calc-row"><span>Taux horaire Chauffeur :</span> <div><input type="number" class="calc-input" id="inp-hr" value="25" step="1" onchange="syncInputs('map')"> €/h</div></div>
+                <div class="calc-row"><span>Temps Manut. (Chrg+Déch/Arrêt) :</span> <div><input type="number" class="calc-input" id="inp-manut" value="0.75" step="0.25" onchange="syncInputs('map')"> h</div></div>
             </div>
 
             <div id="result-box" class="section-content" style="background-color: #f8fafc; border-top: 1px solid #cbd5e1; flex-grow: 1;">
-                <h3 style="font-family: 'Oswald', sans-serif; color: #1e293b; margin-top: 0;"><i class="fa-solid fa-calculator"></i> Bilan Logistique (Pour 10 Tonnes)</h3>
+                <h3 style="font-family: 'Oswald', sans-serif; color: #1e293b; margin-top: 0;"><i class="fa-solid fa-calculator"></i> Bilan de la Navette Directe</h3>
                 
                 <div class="breakdown-box">
                     <h4>Coût de revient estimatif (A/R)</h4>
                     <div class="breakdown-row"><span>Distance routière (Aller-Retour) :</span> <span id="res-dist">- km</span></div>
                     <div class="breakdown-row"><span>Temps de conduite (Aller-Retour) :</span> <span id="res-time">- h</span></div>
                     <div class="breakdown-row"><span>Frais véhicule (Dist × Indémnité) :</span> <span id="res-cost-veh">- €</span></div>
-                    <div class="breakdown-row"><span>Frais Chauffeur (Cond. + Manut.) :</span> <span id="res-cost-hr">- €</span></div>
-                    <div class="breakdown-sum"><span>COÛT LOGISTIQUE GLOBAL :</span> <span id="res-cost-total">- €</span></div>
+                    <div class="breakdown-row"><span>Frais Humain (Conduite + Manut.) :</span> <span id="res-cost-hr">- €</span></div>
+                    <div class="breakdown-sum"><span>COÛT DE REVIENT TOTAL :</span> <span id="res-cost-total">- €</span></div>
                 </div>
 
-                <div class="kpi-block" style="border-left-color: #3b82f6;">
+                <div class="kpi-block">
                     <div class="kpi-title">Coût Logistique Ramené à la Tonne</div>
                     <div class="kpi-val"><span id="res-tonne">- €</span> / Tonne</div>
-                    <div class="kpi-status" style="color: #475569; font-weight: normal;">*Uniquement le transport. N'inclut pas le prix d'achat de la matière.</div>
-                </div>
-
-                <div class="kpi-block" style="border-left-color: #8b5cf6;">
-                    <div class="kpi-title">Base de Discussion Transporteur</div>
-                    <div class="kpi-status" style="color: #475569; font-weight: normal; margin-top: 6px;">Ce montant représente le coût de revient théorique basé sur le temps et l'usure. Il sert de base neutre pour co-construire un tarif de prestation équitable avec le transporteur partenaire.</div>
+                    <div class="kpi-status" style="color: #475569; font-weight: normal;">*Basé sur une navette de 10 Tonnes. N'inclut pas le prix de la matière.</div>
                 </div>
             </div>
         </div>
-
         <div id="map"></div>
     </div>
 
+    <div id="tab-matrix" class="tab-content active">
+        <div class="matrix-container">
+            <h2 style="font-family:'Oswald', sans-serif; color:#405F59; text-transform:uppercase; margin-top:0;">Matrice des Navettes (Ferme à Ferme)</h2>
+            <p style="margin-bottom:20px; color:#475569;">Croisement exhaustif des coûts logistiques entre les Gisements et les Maraîchers. (UNIVALOM exclu de cette vue pour se concentrer sur les flux internes au PNR).</p>
+
+            <div class="controls-panel">
+                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                    <div class="control-group">
+                        <label>Véhicule (€/km) :</label>
+                        <input type="number" id="inp-km-mat" value="1.20" step="0.10" onchange="syncInputs('matrix')">
+                    </div>
+                    <div class="control-group">
+                        <label>Taux Horaire (€/h) :</label>
+                        <input type="number" id="inp-hr-mat" value="25" step="1" onchange="syncInputs('matrix')">
+                    </div>
+                    <div class="control-group">
+                        <label>Manutention (h/Arrêt) :</label>
+                        <input type="number" id="inp-manut-mat" value="0.75" step="0.25" onchange="syncInputs('matrix')">
+                    </div>
+                </div>
+                <button class="btn-calc" id="btn-generate" onclick="generateMatrix()" style="margin-top:0; width:auto;">
+                    <i class="fa-solid fa-rotate"></i> Recalculer la Matrice
+                </button>
+            </div>
+
+            <div class="matrix-wrapper">
+                <table class="matrix-table" id="matrix-table">
+                    <thead>
+                        <tr id="matrix-head">
+                            <th class="row-header" style="background-color: #e2e8f0;"><i class="fa-solid fa-arrow-down"></i> Maraîchers \ Gisements <i class="fa-solid fa-arrow-right"></i></th>
+                            <!-- Colonnes injectées via JS -->
+                        </tr>
+                    </thead>
+                    <tbody id="matrix-body">
+                        <!-- Lignes injectées via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <div id="footer">
-        <div class="footer-s">
-            <img src="https://www.parcs-naturels-regionaux.fr/sites/federationpnr/files/styles/contenu/public/image/parc/sans_titre.png?itok=z_7I7Msh" alt=" PNR">
-            <img src="LogoEpurvertpetit.png" alt="Logo DIX" onerror="this.src='https://placehold.co/100x40/ffffff/405F59?text=DIX'">
+        <div class="footer-logos">
+            <img src="https://www.parcs-naturels-regionaux.fr/sites/federationpnr/files/styles/contenu/public/image/parc/sans_titre.png?itok=z_7I7Msh" alt="Logo PNR">
+            <img src="logo.png" alt="Logo DIX" onerror="this.src='https://placehold.co/100x40/ffffff/405F59?text=DIX'">
         </div>
         <div class="footer-text">
             <strong>DIX - LA COOPÉRATIVE DES TRANSITIONS AGRICOLES ET ALIMENTAIRES DES TERRITOIRES</strong><br>
@@ -162,26 +222,47 @@
     </div>
 
     <script>
+        // Tab switching logic
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById('tab-' + tabId).classList.add('active');
+            document.getElementById('btn-' + tabId).classList.add('active');
+
+            if (tabId === 'map' && map) {
+                setTimeout(() => map.invalidateSize(), 10); // Fix Leaflet rendering bug on hidden containers
+            }
+        }
+
+        // Actors data
         const actors = {
             "JAL": { role: "Gisement", name: "La Ferme de Jal", type: "Fumier Volaille", lat: 43.783, lng: 6.955 },
             "GRE": { role: "Gisement", name: "Les Grêles", type: "Fumier Caprin", lat: 43.795, lng: 6.943 },
             "BIQ": { role: "Gisement", name: "La Biquetterie des Bois", type: "Fumier Caprin", lat: 43.722, lng: 7.111 },
             "UNI": { role: "Gisement", name: "UNIVALOM", type: "Broyat de déchets verts", lat: 43.623, lng: 7.045 },
             "ZEAM": { role: "Besoin", name: "ZEAM (Aurélien)", type: "Maraîchage", lat: 43.790, lng: 6.940 },
-            "PRA": { role: "Besoin", name: "Pra de Mondin (Florian)", type: "Maraîchage / Tampon", lat: 43.742, lng: 7.008 },
+            "PRA": { role: "Besoin", name: "Pra de Mondin (Florian)", type: "Maraîchage / Stockage Illimité", lat: 43.742, lng: 7.008 },
             "MEL": { role: "Besoin", name: "Mélanie Castel", type: "Maraîchage", lat: 43.874, lng: 6.868 },
             "LOU": { role: "Besoin", name: "Les Petits Loups", type: "Maraîchage", lat: 43.701, lng: 6.988 }
         };
 
+        // Arrays for Matrix (Excluding UNIVALOM)
+        const matrixGisements = ["JAL", "GRE", "BIQ"].map(id => ({ id, ...actors[id] }));
+        const matrixBesoins = ["ZEAM", "PRA", "MEL", "LOU"].map(id => ({ id, ...actors[id] }));
+
+        // Shared routing cache
+        const routesCache = {};
+        let currentRouteData = null;
+
+        // Map setup
         const map = L.map('map').setView([43.76, 6.98], 11);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
         const markersLayer = L.layerGroup().addTo(map);
         const routeLayer = L.layerGroup().addTo(map);
-        
-        let currentRouteData = null;
 
-        // Draw initial markers
+        // Draw Map Markers
         Object.keys(actors).forEach(key => {
             let actor = actors[key];
             let color = actor.role === "Gisement" ? "#8b5cf6" : "#3b82f6";
@@ -203,7 +284,7 @@
         legend.onAdd = function () {
             const div = L.DomUtil.create('div', 'legend');
             div.innerHTML = `
-                <div style="font-family:'Oswald',sans-serif; margin-bottom:10px; font-weight:bold;">LÉGENDE ACTEURS</div>
+                <div style="font-family:'Oswald',sans-serif; margin-bottom:10px; font-weight:bold;">LÉGENDE</div>
                 <div class="legend-item"><div class="legend-color" style="background:#8b5cf6;"></div> Gisement (Offre)</div>
                 <div class="legend-item"><div class="legend-color" style="background:#3b82f6;"></div> Maraîcher (Besoin)</div>
             `;
@@ -212,19 +293,25 @@
         legend.addTo(map);
 
         async function fetchRouteOSRM(lat1, lng1, lat2, lng2) {
+            const cacheKey = `${lat1},${lng1}-${lat2},${lng2}`;
+            if (routesCache[cacheKey]) return routesCache[cacheKey];
+
             let url = `https://router.project-osrm.org/route/v1/driving/${lng1},${lat1};${lng2},${lat2}?overview=full&geometries=geojson`;
             try {
                 let response = await fetch(url);
                 let data = await response.json();
-                if(data.routes && data.routes.length > 0) return data.routes[0];
+                if(data.routes && data.routes.length > 0) {
+                    routesCache[cacheKey] = data.routes[0];
+                    return data.routes[0];
+                }
             } catch (e) { console.error("OSRM Error", e); }
             return null;
         }
 
+        // Function for the Map Tab
         async function calculateRoute() {
             const idGis = document.getElementById('sel-gisement').value;
             const idBes = document.getElementById('sel-besoin').value;
-            
             const gis = actors[idGis];
             const bes = actors[idBes];
 
@@ -232,31 +319,24 @@
             routeLayer.clearLayers();
 
             let route = await fetchRouteOSRM(gis.lat, gis.lng, bes.lat, bes.lng);
-            
             document.getElementById('loading-overlay').style.display = 'none';
 
             if(route) {
-                // Draw route on map
-                L.geoJSON(route.geometry, { style: { color: '#549e39', weight: 6, opacity: 0.9, className: 'route-path' } }).addTo(routeLayer);
+                // Static route to avoid animation crash
+                L.geoJSON(route.geometry, { style: { color: '#549e39', weight: 6, opacity: 0.9 } }).addTo(routeLayer);
                 
-                // Add Distance Label
                 let midIdx = Math.floor(route.geometry.coordinates.length / 2);
                 let midPt = route.geometry.coordinates[midIdx];
                 let distAler = route.distance / 1000;
+                
                 L.tooltip({ permanent: true, direction: 'center', className: 'route-label' })
                     .setContent(`${(distAler * 2).toFixed(1)} km (Aller-Retour)`)
                     .setLatLng([midPt[1], midPt[0]])
                     .addTo(routeLayer);
 
-                // Fit map
                 map.fitBounds(L.geoJSON(route.geometry).getBounds(), { padding: [50, 50] });
 
-                // Store data and update financials
-                currentRouteData = {
-                    dist: distAler * 2, // A/R
-                    time: (route.duration / 3600) * 2 // A/R
-                };
-
+                currentRouteData = { dist: distAler * 2, time: (route.duration / 3600) * 2 };
                 document.getElementById('result-box').style.display = 'block';
                 updateFinancials();
             } else {
@@ -264,32 +344,234 @@
             }
         }
 
+        // Synchro des inputs entre les deux onglets
+        function syncInputs(source) {
+            let km = document.getElementById(source === 'map' ? 'inp-km' : 'inp-km-mat').value;
+            let hr = document.getElementById(source === 'map' ? 'inp-hr' : 'inp-hr-mat').value;
+            let manut = document.getElementById(source === 'map' ? 'inp-manut' : 'inp-manut-mat').value;
+            
+            document.getElementById(source === 'map' ? 'inp-km-mat' : 'inp-km').value = km;
+            document.getElementById(source === 'map' ? 'inp-hr-mat' : 'inp-hr').value = hr;
+            document.getElementById(source === 'map' ? 'inp-manut-mat' : 'inp-manut').value = manut;
+
+            if (currentRouteData) updateFinancials();
+        }
+
         function updateFinancials() {
             if(!currentRouteData) return;
-            
             const pKm = parseFloat(document.getElementById('inp-km').value) || 0;
             const pHr = parseFloat(document.getElementById('inp-hr').value) || 0;
             const pManut = parseFloat(document.getElementById('inp-manut').value) || 0;
 
             const costVeh = currentRouteData.dist * pKm;
-            const timeTotal = currentRouteData.time + pManut;
+            // Temps total = Conduite A/R + (2 arrêts x temps manutention)
+            const timeTotal = currentRouteData.time + (2 * pManut);
             const costHr = timeTotal * pHr;
             const costTheo = costVeh + costHr;
 
-            // Update Breakdown
             document.getElementById('res-dist').innerText = currentRouteData.dist.toFixed(1) + " km";
             document.getElementById('res-time').innerText = currentRouteData.time.toFixed(1) + " h";
             document.getElementById('res-cost-veh').innerText = costVeh.toFixed(0) + " €";
             document.getElementById('res-cost-hr').innerText = costHr.toFixed(0) + " €";
-            
-            // Total Logistique
             document.getElementById('res-cost-total').innerText = costTheo.toFixed(0) + " €";
-
-            // Update Logistique Cost per Tonne (Base 10T)
-            const coutTonneLogistique = costTheo / 10;
-            document.getElementById('res-tonne').innerText = coutTonneLogistique.toFixed(1) + " €";
+            document.getElementById('res-tonne').innerText = (costTheo / 10).toFixed(1) + " €";
         }
-    </script>
 
+        function initTableStructure() {
+            const head = document.getElementById('matrix-head');
+            const body = document.getElementById('matrix-body');
+            
+            while (head.children.length > 1) head.removeChild(head.lastChild);
+            body.innerHTML = '';
+
+            // Colonnes des gisements
+            matrixGisements.forEach(g => {
+                let th = document.createElement('th');
+                th.className = 'col-header';
+                th.innerHTML = `<i class="fa-solid fa-tractor" style="color:#8b5cf6;"></i><br>${g.name}`;
+                head.appendChild(th);
+            });
+
+            // Colonne Moyenne (Droite)
+            let thAvg = document.createElement('th');
+            thAvg.className = 'col-header avg-header';
+            thAvg.innerHTML = `<i class="fa-solid fa-calculator" style="color:#64748b;"></i><br>Moyenne`;
+            head.appendChild(thAvg);
+
+            matrixBesoins.forEach(b => {
+                let tr = document.createElement('tr');
+                let th = document.createElement('th');
+                th.className = 'row-header';
+                th.innerHTML = `<i class="fa-solid fa-leaf" style="color:#3b82f6;"></i> ${b.name}`;
+                tr.appendChild(th);
+
+                // Cellules de données
+                matrixGisements.forEach(g => {
+                    let td = document.createElement('td');
+                    td.id = `cell-${b.id}-${g.id}`;
+                    td.innerHTML = `<span class="loading-cell">En attente...</span>`;
+                    tr.appendChild(td);
+                });
+                
+                // Cellule Moyenne de la Ligne
+                let tdAvg = document.createElement('td');
+                tdAvg.id = `cell-avg-row-${b.id}`;
+                tdAvg.className = 'avg-cell';
+                tdAvg.innerHTML = `<span class="loading-cell">-</span>`;
+                tr.appendChild(tdAvg);
+
+                body.appendChild(tr);
+            });
+
+            // Ligne Moyenne (Bas)
+            let trBottom = document.createElement('tr');
+            trBottom.className = 'avg-row';
+            let thBottom = document.createElement('th');
+            thBottom.className = 'row-header';
+            thBottom.innerHTML = `MOYENNE / ÉLEVEUR`;
+            trBottom.appendChild(thBottom);
+
+            matrixGisements.forEach(g => {
+                let tdAvg = document.createElement('td');
+                tdAvg.id = `cell-avg-col-${g.id}`;
+                tdAvg.innerHTML = `<span class="loading-cell">-</span>`;
+                trBottom.appendChild(tdAvg);
+            });
+
+            // Cellule Moyenne Globale
+            let tdGrandAvg = document.createElement('td');
+            tdGrandAvg.id = `cell-avg-grand`;
+            tdGrandAvg.className = 'avg-cell';
+            tdGrandAvg.innerHTML = `<span class="loading-cell">-</span>`;
+            trBottom.appendChild(tdGrandAvg);
+            body.appendChild(trBottom);
+        }
+
+        function calculateMatrixCellCost(route) {
+            const pKm = parseFloat(document.getElementById('inp-km-mat').value) || 0;
+            const pHr = parseFloat(document.getElementById('inp-hr-mat').value) || 0;
+            const pManut = parseFloat(document.getElementById('inp-manut-mat').value) || 0;
+
+            const distAR = (route.distance / 1000) * 2;
+            const timeRouteAR = (route.duration / 3600) * 2;
+            const timeTotal = timeRouteAR + (2 * pManut);
+
+            const costTotal = (distAR * pKm) + (timeTotal * pHr);
+
+            return {
+                distAR: distAR,
+                timeRoute: timeRouteAR,
+                costTotal: costTotal,
+                costTonne: costTotal / 10
+            };
+        }
+
+        async function generateMatrix() {
+            const btn = document.getElementById('btn-generate');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Calcul en cours...`;
+
+            // Initialisation des compteurs de moyenne
+            let rowStats = {};
+            let colStats = {};
+            let grandStats = { sumTotal: 0, sumTonne: 0, count: 0 };
+
+            matrixBesoins.forEach(b => {
+                rowStats[b.id] = { sumTotal: 0, sumTonne: 0, count: 0 };
+                document.getElementById(`cell-avg-row-${b.id}`).innerHTML = `<span class="loading-cell">...</span>`;
+            });
+            matrixGisements.forEach(g => {
+                colStats[g.id] = { sumTotal: 0, sumTonne: 0, count: 0 };
+                document.getElementById(`cell-avg-col-${g.id}`).innerHTML = `<span class="loading-cell">...</span>`;
+            });
+            document.getElementById(`cell-avg-grand`).innerHTML = `<span class="loading-cell">...</span>`;
+
+            matrixBesoins.forEach(b => {
+                matrixGisements.forEach(g => {
+                    document.getElementById(`cell-${b.id}-${g.id}`).innerHTML = `<span class="loading-cell"><i class="fa-solid fa-spinner fa-spin"></i> Chargement...</span>`;
+                });
+            });
+
+            for (let b of matrixBesoins) {
+                for (let g of matrixGisements) {
+                    const cell = document.getElementById(`cell-${b.id}-${g.id}`);
+                    const route = await fetchRouteOSRM(g.lat, g.lng, b.lat, b.lng);
+                    
+                    if (route) {
+                        const res = calculateMatrixCellCost(route);
+                        
+                        // Addition pour les moyennes
+                        rowStats[b.id].sumTotal += res.costTotal;
+                        rowStats[b.id].sumTonne += res.costTonne;
+                        rowStats[b.id].count++;
+
+                        colStats[g.id].sumTotal += res.costTotal;
+                        colStats[g.id].sumTonne += res.costTonne;
+                        colStats[g.id].count++;
+
+                        grandStats.sumTotal += res.costTotal;
+                        grandStats.sumTonne += res.costTonne;
+                        grandStats.count++;
+
+                        cell.innerHTML = `
+                            <div class="cell-content">
+                                <span class="cost-main">${res.costTotal.toFixed(0)} €</span>
+                                <span class="cost-tonne">${res.costTonne.toFixed(1)} € / T</span>
+                                <span class="dist-time">${res.distAR.toFixed(1)} km | ${res.timeRoute.toFixed(1)} h (route)</span>
+                            </div>
+                        `;
+                    } else {
+                        cell.innerHTML = `<span style="color:red; font-size:12px;">Erreur itinéraire</span>`;
+                    }
+                }
+            }
+
+            // Affichage des moyennes horizontales (par Maraîcher)
+            matrixBesoins.forEach(b => {
+                let st = rowStats[b.id];
+                if(st.count > 0) {
+                    document.getElementById(`cell-avg-row-${b.id}`).innerHTML = `
+                        <div class="cell-content">
+                            <span class="cost-main">${(st.sumTotal / st.count).toFixed(0)} €</span>
+                            <span class="cost-tonne" style="color:#64748b;">${(st.sumTonne / st.count).toFixed(1)} € / T</span>
+                        </div>
+                    `;
+                }
+            });
+
+            // Affichage des moyennes verticales (par Éleveur)
+            matrixGisements.forEach(g => {
+                let st = colStats[g.id];
+                if(st.count > 0) {
+                    document.getElementById(`cell-avg-col-${g.id}`).innerHTML = `
+                        <div class="cell-content">
+                            <span class="cost-main">${(st.sumTotal / st.count).toFixed(0)} €</span>
+                            <span class="cost-tonne" style="color:#64748b;">${(st.sumTonne / st.count).toFixed(1)} € / T</span>
+                        </div>
+                    `;
+                }
+            });
+
+            // Affichage de la moyenne globale
+            if (grandStats.count > 0) {
+                document.getElementById(`cell-avg-grand`).innerHTML = `
+                    <div class="cell-content">
+                        <span class="cost-main">${(grandStats.sumTotal / grandStats.count).toFixed(0)} €</span>
+                        <span class="cost-tonne" style="color:#64748b;">${(grandStats.sumTonne / grandStats.count).toFixed(1)} € / T</span>
+                    </div>
+                `;
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fa-solid fa-rotate"></i> Recalculer la Matrice`;
+        }
+
+        // Initialize on load
+        window.onload = () => {
+            initTableStructure();
+            // Automatically calculate matrix once in the background
+            generateMatrix();
+        };
+    </script>
 </body>
 </html>
