@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulateur Navettes 10T - PNR</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin></script>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600&family=Georgia&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Georgia', serif; background-color: #f3f3f3; color: #405F59; overflow: hidden; display: flex; flex-direction: column; }
+
+        #loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; font-family: 'Oswald', sans-serif; font-size: 24px; color: #549e39; }
+        .spinner { border: 6px solid #f3f3f3; border-top: 6px solid #549e39; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        #header { background-color: #405F59; color: white; padding: 15px 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative; z-index: 1000; display: flex; justify-content: space-between; align-items: center; }
+        #header h1 { font-family: 'Oswald', sans-serif; margin: 0; font-size: 22px; text-transform: uppercase; }
+        #header .subtitle { font-size: 14px; color: #e2e8f0; margin-top: 4px; }
+
+        #main-container { display: flex; flex-grow: 1; width: 100%; min-height: 0; }
+        #sidebar { width: 480px; background-color: #ffffff; border-right: 1px solid #d1d5db; display: flex; flex-direction: column; box-shadow: 2px 0 10px rgba(0,0,0,0.05); z-index: 500; overflow-y: auto; }
+
+        .section-header { background-color: #f9fafb; padding: 15px 25px; border-bottom: 1px solid #e5e7eb; font-family: 'Oswald', sans-serif; font-size: 18px; color: #405F59; text-transform: uppercase; display: flex; align-items: center; gap: 10px; }
+        .section-content { padding: 20px 25px; border-bottom: 1px solid #e5e7eb; }
+
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-family: 'Oswald', sans-serif; font-size: 14px; margin-bottom: 5px; color: #1e293b; }
+        .form-group select, .form-group input { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: 'Georgia', serif; font-size: 14px; }
+        
+        .btn-calc { width: 100%; background-color: #549e39; color: white; border: none; padding: 12px; border-radius: 4px; font-family: 'Oswald', sans-serif; font-size: 16px; cursor: pointer; transition: 0.2s; text-transform: uppercase; margin-top: 10px; }
+        .btn-calc:hover { background-color: #43822d; }
+
+        .calc-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px; }
+        .calc-input { width: 80px; padding: 4px; border: 1px solid #d1d5db; border-radius: 4px; text-align: right; }
+
+        /* Bilan Box */
+        #result-box { display: none; margin-top: 20px; }
+        .breakdown-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 15px; margin-bottom: 15px; }
+        .breakdown-box h4 { margin: 0 0 10px 0; font-family: 'Oswald', sans-serif; color: #334155; font-size: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; }
+        .breakdown-row { display: flex; justify-content: space-between; font-size: 13px; color: #475569; margin-bottom: 6px; }
+        .breakdown-sum { font-weight: bold; font-size: 16px; color: #0f172a; border-top: 1px dashed #cbd5e1; padding-top: 8px; margin-top: 8px; display: flex; justify-content: space-between; align-items: center;}
+        
+        .kpi-block { background: #fff; border-left: 4px solid #549e39; padding: 10px 15px; margin-top: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .kpi-title { font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: bold; }
+        .kpi-val { font-size: 20px; font-family: 'Oswald', sans-serif; color: #1e293b; margin-top: 2px; }
+        .kpi-status { font-size: 12px; margin-top: 4px; }
+
+        #map { flex-grow: 1; height: 100%; background-color: #e2e8f0; }
+        
+        .custom-popup .leaflet-popup-content-wrapper { border-radius: 4px; }
+        .custom-popup h3 { font-family: 'Oswald', sans-serif; margin: 0 0 5px 0; font-size: 15px; text-transform: uppercase; color: #405F59; }
+        .role-tag { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; color: white; margin-top: 5px; }
+
+        .route-path { stroke-dasharray: 8, 8; animation: dash 20s linear infinite; }
+        @keyframes dash { to { stroke-dashoffset: -1000; } }
+
+        .route-label { background: rgba(255,255,255,0.95); border: 2px solid #549e39; border-radius: 4px; font-weight: bold; color: #1e293b; font-size: 13px; font-family: 'Oswald', sans-serif; box-shadow: 0 2px 4px rgba(0,0,0,0.1); padding: 4px 8px; }
+        
+        .legend { background: white; padding: 15px; box-shadow: 0 0 15px rgba(0,0,0,0.1); border-radius: 8px; font-size: 12px; }
+        .legend-item { display: flex; align-items: center; margin-bottom: 6px; }
+        .legend-color { width: 14px; height: 14px; border-radius: 50%; margin-right: 8px; }
+
+        /* Footer */
+        #footer { background-color: #ffffff; border-top: 1px solid #cbd5e1; color: #475569; padding: 10px 25px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; z-index: 1000; position: relative; }
+        #footer .footer-logos { display: flex; gap: 20px; align-items: center; }
+        #footer .footer-logos img { height: 40px; object-fit: contain; }
+        #footer .footer-text { text-align: right; line-height: 1.4; }
+        #footer a { color: #549e39; text-decoration: none; font-weight: bold; }
+        #footer a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <div>Calcul de l'itinéraire en cours...</div>
+    </div>
+
+    <div id="header">
+        <div>
+            <h1><i class="fa-solid fa-truck-ramp-box"></i> Modélisateur : Navettes Directes 10 Tonnes</h1>
+            <div class="subtitle">Outil de calcul du coût de revient logistique (Base de discussion Transporteur)</div>
+        </div>
+    </div>
+
+    <div id="main-container">
+        <div id="sidebar">
+            
+            <div class="section-header"><i class="fa-solid fa-route"></i> Définir la Navette</div>
+            <div class="section-content">
+                <div class="form-group">
+                    <label>Origine : Gisement (Offre)</label>
+                    <select id="sel-gisement">
+                        <option value="JAL">La Ferme de Jal (Cipières)</option>
+                        <option value="GRE">Les Grêles (Gréolières)</option>
+                        <option value="BIQ">La Biquetterie des Bois (Vence)</option>
+                        <option value="UNI">UNIVALOM - Broyat (Secteur Valbonne)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Destination : Maraîcher (Besoin)</label>
+                    <select id="sel-besoin">
+                        <option value="ZEAM">ZEAM (Gréolières)</option>
+                        <option value="PRA">Pra de Mondin (Courmes)</option>
+                        <option value="MEL">Mélanie Castel (Collongues)</option>
+                        <option value="LOU">Les Petits Loups (Bar-sur-Loup)</option>
+                    </select>
+                </div>
+                <button class="btn-calc" onclick="calculateRoute()"><i class="fa-solid fa-map-location-dot"></i> Tracer & Calculer</button>
+            </div>
+
+            <div class="section-header"><i class="fa-solid fa-sliders"></i> Variables d'Estimation</div>
+            <div class="section-content">
+                <p style="font-size:11px; color:#64748b; margin-bottom:10px;">Hypothèses pour l'évaluation du coût de revient théorique du transport :</p>
+                <div class="calc-row"><span>Coût de revient véhicule lourd :</span> <div><input type="number" class="calc-input" id="inp-km" value="1.20" step="0.10" onchange="updateFinancials()"> €/km</div></div>
+                <div class="calc-row"><span>Taux horaire Chauffeur :</span> <div><input type="number" class="calc-input" id="inp-hr" value="25" step="1" onchange="updateFinancials()"> €/h</div></div>
+                <div class="calc-row"><span>Temps de Manut. (Chrg + Déch.) :</span> <div><input type="number" class="calc-input" id="inp-manut" value="1.5" step="0.25" onchange="updateFinancials()"> h</div></div>
+            </div>
+
+            <div id="result-box" class="section-content" style="background-color: #f8fafc; border-top: 1px solid #cbd5e1; flex-grow: 1;">
+                <h3 style="font-family: 'Oswald', sans-serif; color: #1e293b; margin-top: 0;"><i class="fa-solid fa-calculator"></i> Bilan Logistique (Pour 10 Tonnes)</h3>
+                
+                <div class="breakdown-box">
+                    <h4>Coût de revient estimatif (A/R)</h4>
+                    <div class="breakdown-row"><span>Distance routière (Aller-Retour) :</span> <span id="res-dist">- km</span></div>
+                    <div class="breakdown-row"><span>Temps de conduite (Aller-Retour) :</span> <span id="res-time">- h</span></div>
+                    <div class="breakdown-row"><span>Frais véhicule (Dist × Indémnité) :</span> <span id="res-cost-veh">- €</span></div>
+                    <div class="breakdown-row"><span>Frais Chauffeur (Cond. + Manut.) :</span> <span id="res-cost-hr">- €</span></div>
+                    <div class="breakdown-sum"><span>COÛT LOGISTIQUE GLOBAL :</span> <span id="res-cost-total">- €</span></div>
+                </div>
+
+                <div class="kpi-block" style="border-left-color: #3b82f6;">
+                    <div class="kpi-title">Coût Logistique Ramené à la Tonne</div>
+                    <div class="kpi-val"><span id="res-tonne">- €</span> / Tonne</div>
+                    <div class="kpi-status" style="color: #475569; font-weight: normal;">*Uniquement le transport. N'inclut pas le prix d'achat de la matière.</div>
+                </div>
+
+                <div class="kpi-block" style="border-left-color: #8b5cf6;">
+                    <div class="kpi-title">Base de Discussion Transporteur</div>
+                    <div class="kpi-status" style="color: #475569; font-weight: normal; margin-top: 6px;">Ce montant représente le coût de revient théorique basé sur le temps et l'usure. Il sert de base neutre pour co-construire un tarif de prestation équitable avec le transporteur partenaire.</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="map"></div>
+    </div>
+
+    <div id="footer">
+        <div class="footer-logos">
+            <img src="https://www.parcs-naturels-regionaux.fr/sites/federationpnr/files/styles/contenu/public/image/parc/sans_titre.png?itok=z_7I7Msh" alt="Logo PNR">
+            <img src="logo.png" alt="Logo DIX" onerror="this.src='https://placehold.co/100x40/ffffff/405F59?text=DIX'">
+        </div>
+        <div class="footer-text">
+            <strong>DIX - LA COOPÉRATIVE DES TRANSITIONS AGRICOLES ET ALIMENTAIRES DES TERRITOIRES</strong><br>
+            SCOP SAS à capital variable | Siège social : 6 Grande Rue, 77320 Chartronges 830 937 710 R.C.S. Meaux <br>
+            N° TVA Intracommunautaire : FR 54 830 937 710 | <a href="mailto:contact@dix.coop">contact@dix.coop</a> | <a href="http://www.dix.coop" target="_blank">www.dix.coop</a>
+        </div>
+    </div>
+
+    <script>
+        const actors = {
+            "JAL": { role: "Gisement", name: "La Ferme de Jal", type: "Fumier Volaille", lat: 43.783, lng: 6.955 },
+            "GRE": { role: "Gisement", name: "Les Grêles", type: "Fumier Caprin", lat: 43.795, lng: 6.943 },
+            "BIQ": { role: "Gisement", name: "La Biquetterie des Bois", type: "Fumier Caprin", lat: 43.722, lng: 7.111 },
+            "UNI": { role: "Gisement", name: "UNIVALOM", type: "Broyat de déchets verts", lat: 43.623, lng: 7.045 },
+            "ZEAM": { role: "Besoin", name: "ZEAM (Aurélien)", type: "Maraîchage", lat: 43.790, lng: 6.940 },
+            "PRA": { role: "Besoin", name: "Pra de Mondin (Florian)", type: "Maraîchage / Tampon", lat: 43.742, lng: 7.008 },
+            "MEL": { role: "Besoin", name: "Mélanie Castel", type: "Maraîchage", lat: 43.874, lng: 6.868 },
+            "LOU": { role: "Besoin", name: "Les Petits Loups", type: "Maraîchage", lat: 43.701, lng: 6.988 }
+        };
+
+        const map = L.map('map').setView([43.76, 6.98], 11);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+        const markersLayer = L.layerGroup().addTo(map);
+        const routeLayer = L.layerGroup().addTo(map);
+        
+        let currentRouteData = null;
+
+        // Draw initial markers
+        Object.keys(actors).forEach(key => {
+            let actor = actors[key];
+            let color = actor.role === "Gisement" ? "#8b5cf6" : "#3b82f6";
+            let markerHtml = `<div style="background-color:${color}; width:20px; height:20px; border-radius:50%; border:3px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.5);"></div>`;
+            let customIcon = L.divIcon({ className: 'custom-pin', html: markerHtml, iconSize: [20, 20], iconAnchor: [10, 10] });
+            
+            L.marker([actor.lat, actor.lng], { icon: customIcon })
+             .bindPopup(`
+                <div class="custom-popup">
+                    <h3>${actor.name}</h3>
+                    <p style="margin:0; font-size:12px; color:#6b7280;">Activité : ${actor.type}</p>
+                    <span class="role-tag" style="background-color:${color};">${actor.role}</span>
+                </div>
+            `).addTo(markersLayer);
+        });
+
+        // Add Legend
+        const legend = L.control({position: 'bottomright'});
+        legend.onAdd = function () {
+            const div = L.DomUtil.create('div', 'legend');
+            div.innerHTML = `
+                <div style="font-family:'Oswald',sans-serif; margin-bottom:10px; font-weight:bold;">LÉGENDE ACTEURS</div>
+                <div class="legend-item"><div class="legend-color" style="background:#8b5cf6;"></div> Gisement (Offre)</div>
+                <div class="legend-item"><div class="legend-color" style="background:#3b82f6;"></div> Maraîcher (Besoin)</div>
+            `;
+            return div;
+        };
+        legend.addTo(map);
+
+        async function fetchRouteOSRM(lat1, lng1, lat2, lng2) {
+            let url = `https://router.project-osrm.org/route/v1/driving/${lng1},${lat1};${lng2},${lat2}?overview=full&geometries=geojson`;
+            try {
+                let response = await fetch(url);
+                let data = await response.json();
+                if(data.routes && data.routes.length > 0) return data.routes[0];
+            } catch (e) { console.error("OSRM Error", e); }
+            return null;
+        }
+
+        async function calculateRoute() {
+            const idGis = document.getElementById('sel-gisement').value;
+            const idBes = document.getElementById('sel-besoin').value;
+            
+            const gis = actors[idGis];
+            const bes = actors[idBes];
+
+            document.getElementById('loading-overlay').style.display = 'flex';
+            routeLayer.clearLayers();
+
+            let route = await fetchRouteOSRM(gis.lat, gis.lng, bes.lat, bes.lng);
+            
+            document.getElementById('loading-overlay').style.display = 'none';
+
+            if(route) {
+                // Draw route on map
+                L.geoJSON(route.geometry, { style: { color: '#549e39', weight: 6, opacity: 0.9, className: 'route-path' } }).addTo(routeLayer);
+                
+                // Add Distance Label
+                let midIdx = Math.floor(route.geometry.coordinates.length / 2);
+                let midPt = route.geometry.coordinates[midIdx];
+                let distAler = route.distance / 1000;
+                L.tooltip({ permanent: true, direction: 'center', className: 'route-label' })
+                    .setContent(`${(distAler * 2).toFixed(1)} km (Aller-Retour)`)
+                    .setLatLng([midPt[1], midPt[0]])
+                    .addTo(routeLayer);
+
+                // Fit map
+                map.fitBounds(L.geoJSON(route.geometry).getBounds(), { padding: [50, 50] });
+
+                // Store data and update financials
+                currentRouteData = {
+                    dist: distAler * 2, // A/R
+                    time: (route.duration / 3600) * 2 // A/R
+                };
+
+                document.getElementById('result-box').style.display = 'block';
+                updateFinancials();
+            } else {
+                alert("Erreur lors du calcul de l'itinéraire.");
+            }
+        }
+
+        function updateFinancials() {
+            if(!currentRouteData) return;
+            
+            const pKm = parseFloat(document.getElementById('inp-km').value) || 0;
+            const pHr = parseFloat(document.getElementById('inp-hr').value) || 0;
+            const pManut = parseFloat(document.getElementById('inp-manut').value) || 0;
+
+            const costVeh = currentRouteData.dist * pKm;
+            const timeTotal = currentRouteData.time + pManut;
+            const costHr = timeTotal * pHr;
+            const costTheo = costVeh + costHr;
+
+            // Update Breakdown
+            document.getElementById('res-dist').innerText = currentRouteData.dist.toFixed(1) + " km";
+            document.getElementById('res-time').innerText = currentRouteData.time.toFixed(1) + " h";
+            document.getElementById('res-cost-veh').innerText = costVeh.toFixed(0) + " €";
+            document.getElementById('res-cost-hr').innerText = costHr.toFixed(0) + " €";
+            
+            // Total Logistique
+            document.getElementById('res-cost-total').innerText = costTheo.toFixed(0) + " €";
+
+            // Update Logistique Cost per Tonne (Base 10T)
+            const coutTonneLogistique = costTheo / 10;
+            document.getElementById('res-tonne').innerText = coutTonneLogistique.toFixed(1) + " €";
+        }
+    </script>
+
+</body>
+</html>
