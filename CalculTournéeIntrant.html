@@ -123,7 +123,7 @@
                         <option value="JAL">La Ferme de Jal (Cipières)</option>
                         <option value="GRE">Les Grêles (Gréolières)</option>
                         <option value="BIQ">La Biquetterie des Bois (Vence)</option>
-                        <option value="UNI">UNIVALOM - Broyat (Secteur Valbonne)</option>
+                       
                     </select>
                 </div>
                 <div class="form-group">
@@ -142,7 +142,7 @@
             <div class="section-content">
                 <p style="font-size:11px; color:#64748b; margin-bottom:10px;">Hypothèses pour l'évaluation du coût de revient théorique :</p>
                 <div class="calc-row"><span>Indemnité véhicule lourd :</span> <div><input type="number" class="calc-input" id="inp-km" value="1.20" step="0.10" onchange="syncInputs('map')"> €/km</div></div>
-                <div class="calc-row"><span>Taux horaire Chauffeur :</span> <div><input type="number" class="calc-input" id="inp-hr" value="25" step="1" onchange="syncInputs('map')"> €/h</div></div>
+                <div class="calc-row"><span>Taux horaire Chauffeur :</span> <div><input type="number" class="calc-input" id="inp-hr" value="30" step="1" onchange="syncInputs('map')"> €/h</div></div>
                 <div class="calc-row"><span>Temps Manut. (Chrg+Déch/Arrêt) :</span> <div><input type="number" class="calc-input" id="inp-manut" value="0.75" step="0.25" onchange="syncInputs('map')"> h</div></div>
             </div>
 
@@ -171,17 +171,17 @@
     <div id="tab-matrix" class="tab-content active">
         <div class="matrix-container">
             <h2 style="font-family:'Oswald', sans-serif; color:#405F59; text-transform:uppercase; margin-top:0;">Matrice des Navettes (Ferme à Ferme)</h2>
-            <p style="margin-bottom:20px; color:#475569;">Croisement exhaustif des coûts logistiques entre les Gisements et les Maraîchers. (UNIVALOM exclu de cette vue pour se concentrer sur les flux internes au PNR).</p>
+            <p style="margin-bottom:20px; color:#475569;">Croisement exhaustif des coûts logistiques entre les Gisements et les Maraîchers. </p>
 
             <div class="controls-panel">
                 <div style="display: flex; gap: 20px; flex-wrap: wrap;">
                     <div class="control-group">
                         <label>Véhicule (€/km) :</label>
-                        <input type="number" id="inp-km-mat" value="1.20" step="0.10" onchange="syncInputs('matrix')">
+                        <input type="number" id="inp-km-mat" value="1.30" step="0.10" onchange="syncInputs('matrix')">
                     </div>
                     <div class="control-group">
                         <label>Taux Horaire (€/h) :</label>
-                        <input type="number" id="inp-hr-mat" value="25" step="1" onchange="syncInputs('matrix')">
+                        <input type="number" id="inp-hr-mat" value="30" step="1" onchange="syncInputs('matrix')">
                     </div>
                     <div class="control-group">
                         <label>Manutention (h/Arrêt) :</label>
