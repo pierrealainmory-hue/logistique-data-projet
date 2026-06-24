@@ -66,8 +66,8 @@
 
         /* Footer */
         #footer { background-color: #ffffff; border-top: 1px solid #cbd5e1; color: #475569; padding: 10px 25px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; z-index: 1000; position: relative; }
-        #footer .footer-logos { display: flex; gap: 20px; align-items: center; }
-        #footer .footer-logos img { height: 40px; object-fit: contain; }
+        #footer .footer-s { display: flex; gap: 20px; align-items: center; }
+        #footer .footer-s img { height: 40px; object-fit: contain; }
         #footer .footer-text { text-align: right; line-height: 1.4; }
         #footer a { color: #549e39; text-decoration: none; font-weight: bold; }
         #footer a:hover { text-decoration: underline; }
@@ -150,9 +150,9 @@
     </div>
 
     <div id="footer">
-        <div class="footer-logos">
-            <img src="https://www.parcs-naturels-regionaux.fr/sites/federationpnr/files/styles/contenu/public/image/parc/sans_titre.png?itok=z_7I7Msh" alt="Logo PNR">
-            <img src="logo.png" alt="Logo DIX" onerror="this.src='https://placehold.co/100x40/ffffff/405F59?text=DIX'">
+        <div class="footer-s">
+            <img src="https://www.parcs-naturels-regionaux.fr/sites/federationpnr/files/styles/contenu/public/image/parc/sans_titre.png?itok=z_7I7Msh" alt=" PNR">
+            <img src="LogoEpurvertpetit.png" alt="Logo DIX" onerror="this.src='https://placehold.co/100x40/ffffff/405F59?text=DIX'">
         </div>
         <div class="footer-text">
             <strong>DIX - LA COOPÉRATIVE DES TRANSITIONS AGRICOLES ET ALIMENTAIRES DES TERRITOIRES</strong><br>
