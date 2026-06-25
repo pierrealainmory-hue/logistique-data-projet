@@ -79,12 +79,20 @@
             </div>
             
             <div id="user-menu" class="flex items-center gap-4 hidden">
+                <button onclick="app.renderAnnuaire()" class="hidden sm:flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-full text-sm font-bold transition shadow-inner">
+                    <i class="fa-solid fa-address-book text-dixgreen"></i> Annuaire
+                </button>
+                <div class="w-px h-8 bg-slate-600 hidden sm:block mx-1"></div>
                 <div class="text-right">
                     <p id="header-user-name" class="font-bold text-sm leading-tight">Chargement...</p>
                     <p id="header-user-role" class="text-xs text-dixgreen uppercase font-heading">...</p>
                 </div>
+                <!-- Bouton Retour Admin (Masqué par défaut) -->
+                <button id="btn-retour-admin" onclick="app.switchRole('ADMIN')" class="hidden bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded text-xs font-bold transition shadow-sm items-center gap-2 mr-2">
+                    <i class="fa-solid fa-shield-halved"></i> Retour Admin
+                </button>
                 <!-- Bouton de Déconnexion -->
-                <button onclick="app.logout()" class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-white hover:bg-slate-600 transition shadow-inner">
+                <button onclick="app.logout()" class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-white hover:bg-slate-600 transition shadow-inner" title="Se déconnecter">
                     <i class="fa-solid fa-right-from-bracket"></i>
                 </button>
             </div>
@@ -102,6 +110,23 @@
                 <!-- Rempli par JS -->
             </div>
         </div>
+
+        <!-- ================= VUE ANNUAIRE ================= -->
+        <section id="view-annuaire" class="view-section">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="font-heading text-3xl text-dixdark">Annuaire du Réseau</h2>
+                    <p class="text-slate-500">Contactez directement les autres membres du territoire.</p>
+                </div>
+                <button onclick="app.switchRole(app.currentUser.id)" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded font-medium transition text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-left"></i> <span class="hidden sm:inline">Mon Espace</span>
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" id="annuaire-list">
+                <!-- Rempli par JS -->
+            </div>
+        </section>
 
         <!-- ================= VUE ADMIN PNR ================= -->
         <section id="view-admin" class="view-section">
@@ -137,6 +162,15 @@
                             <!-- Rempli par JS -->
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- BLOC SIMULATION ADMIN -->
+            <div class="bg-white rounded-xl shadow-md border border-slate-200 p-5 mt-6">
+                <h3 class="font-bold text-slate-700 mb-4 uppercase text-sm tracking-wider"><i class="fa-solid fa-users-viewfinder text-blue-600"></i> Accès rapide aux comptes (Simulation)</h3>
+                <p class="text-xs text-slate-500 mb-4">Cliquez sur un acteur pour naviguer sur le portail en son nom sans utiliser son mot de passe. Un bouton "Retour Admin" apparaîtra en haut.</p>
+                <div class="flex flex-wrap gap-2" id="admin-simulation-list">
+                    <!-- Rempli par JS -->
                 </div>
             </div>
         </section>
@@ -355,6 +389,19 @@
                     <label class="block text-xs font-bold text-slate-600 mb-1">Commune</label>
                     <input type="text" id="ins-ville" required class="w-full border rounded p-2 text-sm" placeholder="Ex: Coursegoules">
                 </div>
+                
+                <!-- NOUVEAUX CHAMPS ANNUAIRE -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Téléphone</label>
+                        <input type="tel" id="ins-tel" class="w-full border rounded p-2 text-sm" placeholder="Ex: 06 12 34...">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Email</label>
+                        <input type="email" id="ins-email" class="w-full border rounded p-2 text-sm" placeholder="Ex: contact@...">
+                    </div>
+                </div>
+
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">Rôle Principal</label>
                     <select id="ins-role" required class="w-full border rounded p-2 text-sm">
@@ -421,17 +468,17 @@
         // Remplacez cette adresse par l'URL "Déploiement Web" de votre Apps Script
         const API_URL = "URL_DE_VOTRE_SCRIPT_DEPLOYE_ICI";
 
-        // --- BASE DE DONNÉES LOCALE (Secours + Identifiants mis à jour) ---
+        // --- BASE DE DONNÉES LOCALE (Secours + Identifiants mis à jour + Annuaire) ---
         let db = {
             acteurs: [
-                { id: "A001", nom: "La Chèvrerie des Grêles", role: "Éleveur", ville: "Gréolières", lat: 43.796, lng: 6.943, statut: "Validé", mdp: "PNR2026" },
-                { id: "A002", nom: "La Ferme de Jal", role: "Éleveur", ville: "Cipières", lat: 43.784, lng: 6.955, statut: "Validé", mdp: "PNR2026" },
-                { id: "A003", nom: "Biquetterie des Bois", role: "Éleveur", ville: "Vence", lat: 43.722, lng: 7.111, statut: "Validé", mdp: "PNR2026" },
-                { id: "A004", nom: "Pra de Mondin", role: "Maraîcher", ville: "Courmes", lat: 43.742, lng: 7.008, statut: "Validé", mdp: "PNR2026" },
-                { id: "A005", nom: "ZEAM", role: "Maraîcher", ville: "Gréolières", lat: 43.796, lng: 6.943, statut: "Validé", mdp: "PNR2026" },
-                { id: "A006", nom: "Mélanie Castel", role: "Maraîcher", ville: "Collongues", lat: 43.874, lng: 6.868, statut: "Validé", mdp: "PNR2026" },
-                { id: "A007", nom: "Les Petits Loups", role: "Maraîcher", ville: "Le Bar-sur-Loup", lat: 43.701, lng: 6.988, statut: "Validé", mdp: "PNR2026" },
-                { id: "A008", nom: "Jérôme Destaure", role: "Transporteur", ville: "Aiglun", lat: 43.860, lng: 6.915, statut: "Validé", mdp: "PNR2026" }
+                { id: "A001", nom: "La Chèvrerie des Grêles", role: "Éleveur", ville: "Gréolières", lat: 43.796, lng: 6.943, statut: "Validé", mdp: "PNR2026", tel: "06 12 34 56 78", email: "contact@greles.fr" },
+                { id: "A002", nom: "La Ferme de Jal", role: "Éleveur", ville: "Cipières", lat: 43.784, lng: 6.955, statut: "Validé", mdp: "PNR2026", tel: "06 23 45 67 89", email: "ferme.jal@mail.com" },
+                { id: "A003", nom: "Biquetterie des Bois", role: "Éleveur", ville: "Vence", lat: 43.722, lng: 7.111, statut: "Validé", mdp: "PNR2026", tel: "06 34 56 78 90", email: "biquetterie@bois.fr" },
+                { id: "A004", nom: "Pra de Mondin", role: "Maraîcher", ville: "Courmes", lat: 43.742, lng: 7.008, statut: "Validé", mdp: "PNR2026", tel: "06 45 67 89 01", email: "florian@prademondin.com" },
+                { id: "A005", nom: "ZEAM", role: "Maraîcher", ville: "Gréolières", lat: 43.796, lng: 6.943, statut: "Validé", mdp: "PNR2026", tel: "06 56 78 90 12", email: "aurelien@zeam.fr" },
+                { id: "A006", nom: "Mélanie Castel", role: "Maraîcher", ville: "Collongues", lat: 43.874, lng: 6.868, statut: "Validé", mdp: "PNR2026", tel: "06 67 89 01 23", email: "melanie.castel@mail.fr" },
+                { id: "A007", nom: "Les Petits Loups", role: "Maraîcher", ville: "Le Bar-sur-Loup", lat: 43.701, lng: 6.988, statut: "Validé", mdp: "PNR2026", tel: "06 78 90 12 34", email: "lespetitsloups@agri.fr" },
+                { id: "A008", nom: "Jérôme Destaure", role: "Transporteur", ville: "Aiglun", lat: 43.860, lng: 6.915, statut: "Validé", mdp: "PNR2026", tel: "06 89 01 23 45", email: "jerome.transport@pro.fr" }
             ],
             offres: [],
             tournees: [],
@@ -442,6 +489,7 @@
 
         const app = {
             currentUser: null,
+            isAdmin: false,
             map: null,
             routingControl: null,
 
@@ -488,7 +536,7 @@
                 }
             },
 
-            // --- NOUVEAU : GESTION DE LA CONNEXION ---
+            // --- GESTION DE LA CONNEXION ---
             handleLogin: function(e) {
                 e.preventDefault();
                 const idInput = document.getElementById('login-id').value.trim().toUpperCase();
@@ -499,19 +547,21 @@
                 // Compte Super-Admin codé en dur pour l'accès aux validations
                 if (idInput === 'ADMIN' && mdpInput === 'PNR2026') {
                     user = { id: 'ADMIN', nom: 'Coordination PNR', role: 'Super-Admin' };
+                    this.isAdmin = true; // On mémorise que l'on est l'Admin
                 } else {
                     // Recherche dans la base de données des acteurs
                     user = db.acteurs.find(a => a.id === idInput && a.mdp === mdpInput && a.statut === 'Validé');
+                    this.isAdmin = false;
                 }
 
                 if (user) {
                     this.currentUser = user;
                     document.getElementById('modal-login').classList.add('hidden');
-                    document.getElementById('user-menu').classList.remove('hidden'); // Affiche le bouton déconnexion
+                    document.getElementById('user-menu').classList.remove('hidden'); // Affiche le menu header
                     this.switchRole(user.id);
                     this.showToast(`Connexion réussie. Bienvenue ${user.nom} !`);
                     
-                    // Vider le formulaire pour des raisons de sécurité
+                    // Vider le formulaire
                     document.getElementById('login-id').value = '';
                     document.getElementById('login-mdp').value = '';
                 } else {
@@ -521,11 +571,12 @@
                 }
             },
 
-            // --- NOUVEAU : GESTION DE LA DÉCONNEXION ---
+            // --- GESTION DE LA DÉCONNEXION ---
             logout: function() {
                 this.currentUser = null;
+                this.isAdmin = false; // Reset sécurité
                 
-                // Cacher les vues et la barre d'utilisateur
+                // Cacher les vues et le menu header
                 document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
                 document.getElementById('place-publique').classList.add('hidden');
                 document.getElementById('user-menu').classList.add('hidden');
@@ -533,7 +584,6 @@
                 // Réafficher l'écran de login
                 document.getElementById('modal-login').classList.remove('hidden');
                 
-                // Réinitialiser les messages d'erreur du login
                 const msg = document.getElementById('login-status-msg');
                 msg.innerHTML = "<span class='text-blue-600 font-bold'><i class='fa-solid fa-circle-info'></i> Vous avez été déconnecté.</span>";
                 msg.classList.remove('hidden');
@@ -565,18 +615,31 @@
                 }
             },
 
-            // --- NAVIGATION MODIFIÉE ---
+            // --- NAVIGATION ---
             switchRole: function(acteurId) {
-                // this.currentUser est déjà assigné dans handleLogin
+                if(acteurId === 'ADMIN') {
+                    this.currentUser = { id: 'ADMIN', nom: 'Coordination PNR', role: 'Super-Admin', statut: 'Validé' };
+                } else {
+                    this.currentUser = db.acteurs.find(a => a.id === acteurId);
+                }
                 
                 document.getElementById('header-user-name').textContent = this.currentUser.nom;
                 document.getElementById('header-user-role').textContent = this.currentUser.role;
                 
-                // Suppression de la logique liée à la barre de simulation (.role-btn)
+                // Gestion de l'affichage du bouton "Retour Admin"
+                const btnRetourAdmin = document.getElementById('btn-retour-admin');
+                if(this.isAdmin && acteurId !== 'ADMIN') {
+                    btnRetourAdmin.classList.remove('hidden');
+                    btnRetourAdmin.classList.add('flex');
+                } else {
+                    btnRetourAdmin.classList.add('hidden');
+                    btnRetourAdmin.classList.remove('flex');
+                }
+                
                 document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
                 
                 const placePublique = document.getElementById('place-publique');
-                if(acteurId !== 'ADMIN' && this.currentUser.statut === 'Validé') {
+                if((acteurId === 'ADMIN' || this.currentUser.statut === 'Validé')) {
                     placePublique.classList.remove('hidden');
                     this.renderTimeline();
                 } else {
@@ -688,6 +751,36 @@
                 });
             },
 
+            // ================= VUE ANNUAIRE =================
+            renderAnnuaire: function() {
+                document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+                document.getElementById('place-publique').classList.add('hidden');
+                document.getElementById('view-annuaire').classList.add('active');
+
+                const container = document.getElementById('annuaire-list');
+                const validatedUsers = db.acteurs.filter(a => a.statut === "Validé" && a.id !== "ADMIN");
+
+                container.innerHTML = validatedUsers.map(a => {
+                    let roleColor = a.role === 'Éleveur' ? 'text-purple-600 bg-purple-100 border-purple-200' : (a.role === 'Maraîcher' ? 'text-blue-600 bg-blue-100 border-blue-200' : 'text-amber-600 bg-amber-100 border-amber-200');
+                    let icon = a.role === 'Éleveur' ? 'fa-cow' : (a.role === 'Maraîcher' ? 'fa-leaf' : 'fa-truck');
+                    
+                    return `
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col h-full hover:shadow-md transition">
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="font-bold text-slate-800 text-lg leading-tight pr-2">${a.nom}</h3>
+                            <span class="${roleColor} border w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-sm text-lg"><i class="fa-solid ${icon}"></i></span>
+                        </div>
+                        <div class="text-sm text-slate-600 mb-2 flex items-center gap-2"><i class="fa-solid fa-location-dot w-4 text-slate-400"></i> <span>${a.ville}</span></div>
+                        <div class="text-sm text-slate-600 mb-2 flex items-center gap-2"><i class="fa-solid fa-phone w-4 text-slate-400"></i> <a href="tel:${a.tel}" class="hover:text-dixgreen">${a.tel || '<span class="italic opacity-50">Non renseigné</span>'}</a></div>
+                        <div class="text-sm text-slate-600 mb-5 flex items-center gap-2"><i class="fa-solid fa-envelope w-4 text-slate-400"></i> <a href="mailto:${a.email}" class="hover:text-dixgreen break-all">${a.email || '<span class="italic opacity-50">Non renseigné</span>'}</a></div>
+                        
+                        <div class="mt-auto pt-3 border-t border-slate-100">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">${a.role}</span>
+                        </div>
+                    </div>`;
+                }).join('');
+            },
+
             // ================= VUE ADMIN =================
             renderAdmin: function() {
                 let totalT = db.offres.filter(o => o.statut === "🔵 Planifié").length * 10;
@@ -713,6 +806,18 @@
                         </tr>
                     `).join('');
                 }
+
+                // Génération de la boite de simulation pour l'admin
+                const simContainer = document.getElementById('admin-simulation-list');
+                const valides = db.acteurs.filter(a => a.statut === "Validé" && a.id !== "ADMIN");
+                simContainer.innerHTML = valides.map(a => {
+                    let icon = a.role === 'Éleveur' ? 'fa-cow' : (a.role === 'Maraîcher' ? 'fa-leaf' : 'fa-truck');
+                    let color = a.role === 'Éleveur' ? 'text-purple-700 bg-purple-50 border-purple-200 hover:bg-purple-100' : (a.role === 'Maraîcher' ? 'text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100' : 'text-amber-700 bg-amber-50 border-amber-200 hover:bg-amber-100');
+                    return `<button onclick="app.switchRole('${a.id}')" class="border px-3 py-2 rounded shadow-sm text-sm font-medium transition flex items-center gap-2 ${color}">
+                        <i class="fa-solid ${icon}"></i> ${a.nom}
+                    </button>`;
+                }).join('');
+
                 document.getElementById('view-admin').classList.add('active');
             },
 
@@ -724,9 +829,11 @@
                     nom: document.getElementById('ins-nom').value,
                     ville: document.getElementById('ins-ville').value,
                     role: document.getElementById('ins-role').value,
+                    tel: document.getElementById('ins-tel').value,
+                    email: document.getElementById('ins-email').value,
                     statut: "En attente",
                     lat: 43.7, lng: 6.9,
-                    mdp: "PNR2026" // Ajout du mot de passe par défaut
+                    mdp: "PNR2026"
                 };
                 db.acteurs.push(newActeur);
                 this.apiSync('upsertActeur', newActeur);
@@ -739,7 +846,7 @@
             apiValiderActeur: function(id) {
                 const acteur = db.acteurs.find(a => a.id === id);
                 acteur.statut = "Validé";
-                if (!acteur.mdp) acteur.mdp = "PNR2026"; // Sécurité
+                if (!acteur.mdp) acteur.mdp = "PNR2026";
                 
                 this.apiSync('upsertActeur', acteur);
                 
@@ -1081,11 +1188,11 @@
                             <strong class="text-slate-800 text-sm block mb-2">${o.matiere}</strong>
                             <div class="flex items-center gap-2 text-xs text-slate-600 mt-1">
                                 <div class="w-2 h-2 rounded-full bg-purple-500"></div>
-                                <span><strong class="text-slate-700">De :</strong> ${e ? e.ville : '?'}</span>
+                                <span><strong class="text-slate-700">De :</strong> ${e.ville}</span>
                             </div>
                             <div class="flex items-center gap-2 text-xs text-slate-600 mt-1">
                                 <div class="w-2 h-2 rounded-full bg-blue-500"></div>
-                                <span><strong class="text-slate-700">Vers :</strong> ${m ? m.ville : '?'}</span>
+                                <span><strong class="text-slate-700">Vers :</strong> ${m.ville}</span>
                             </div>
                             ${btn}
                         </div>`;
