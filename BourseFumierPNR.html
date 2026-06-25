@@ -31,10 +31,6 @@
         body { background-color: #f8fafc; }
         .view-section { display: none; opacity: 0; transition: opacity 0.3s ease-in-out; }
         .view-section.active { display: block; opacity: 1; }
-        
-        .role-btn { border: 1px solid #cbd5e1; background: white; color: #475569; padding: 6px 16px; border-radius: 999px; font-weight: 500; transition: all 0.2s; font-size: 13px;}
-        .role-btn:hover { background: #f1f5f9; }
-        .role-btn.active { background: #549e39; color: white; border-color: #549e39; }
 
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
@@ -82,30 +78,18 @@
                 </div>
             </div>
             
-            <div id="user-menu" class="flex items-center gap-4">
+            <div id="user-menu" class="flex items-center gap-4 hidden">
                 <div class="text-right">
                     <p id="header-user-name" class="font-bold text-sm leading-tight">Chargement...</p>
                     <p id="header-user-role" class="text-xs text-dixgreen uppercase font-heading">...</p>
                 </div>
-                <div class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center cursor-pointer hover:bg-slate-600 transition" onclick="app.showLoginModal()">
+                <!-- Bouton de Déconnexion -->
+                <button onclick="app.logout()" class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-white hover:bg-slate-600 transition shadow-inner">
                     <i class="fa-solid fa-right-from-bracket"></i>
-                </div>
+                </button>
             </div>
         </div>
     </header>
-
-    <!-- Barre de Simulation (Pour démo) -->
-    <div class="bg-slate-200 border-b border-slate-300 py-2 sticky top-0 z-40 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 flex flex-wrap gap-2 justify-center items-center">
-            <span class="font-bold text-slate-600 mr-2 uppercase text-[10px] tracking-wider"><i class="fa-solid fa-eye"></i> Simuler la vue :</span>
-            <button onclick="app.switchRole('A001')" id="btn-role-A001" class="role-btn">🐄 Éleveur</button>
-            <button onclick="app.switchRole('A004')" id="btn-role-A004" class="role-btn">🥬 Maraîcher</button>
-            <button onclick="app.switchRole('A008')" id="btn-role-A008" class="role-btn">🚚 Transporteur</button>
-            <div class="w-px h-6 bg-slate-400 mx-1"></div>
-            <button onclick="app.switchRole('ADMIN')" id="btn-role-ADMIN" class="role-btn font-bold text-purple-700 border-purple-300 hover:bg-purple-50"><i class="fa-solid fa-shield-halved"></i> Super-Admin PNR</button>
-            <button onclick="app.showInscriptionModal()" class="role-btn bg-slate-50 border-dashed border-slate-400"><i class="fa-solid fa-user-plus"></i> S'inscrire</button>
-        </div>
-    </div>
 
     <div id="toast-container" class="fixed top-24 right-4 z-[9999] flex flex-col gap-2"></div>
 
@@ -355,14 +339,14 @@
     </div>
 
     <!-- Modale Inscription -->
-    <div id="modal-inscription" class="fixed inset-0 bg-slate-900/60 modal-overlay hidden flex items-center justify-center p-4">
+    <div id="modal-inscription" class="fixed inset-0 bg-slate-900/60 modal-overlay hidden flex items-center justify-center p-4 z-[9999]">
         <div class="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
             <div class="bg-slate-800 text-white px-6 py-4 flex justify-between items-center">
                 <h3 class="font-heading text-lg">Rejoindre le Réseau</h3>
-                <button onclick="app.toggleModal('modal-inscription')" class="text-slate-300 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="app.toggleModal('modal-inscription'); document.getElementById('modal-login').classList.remove('hidden');" class="text-slate-300 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <form onsubmit="app.apiInscrireActeur(event)" class="p-6 space-y-4">
-                <p class="text-xs text-slate-500 mb-4">Votre inscription sera soumise à la validation du PNR.</p>
+                <p class="text-xs text-slate-500 mb-4">Votre inscription sera soumise à la validation du PNR. Un mot de passe vous sera attribué.</p>
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">Nom de la Structure</label>
                     <input type="text" id="ins-nom" required class="w-full border rounded p-2 text-sm" placeholder="Ex: Ferme des Oliviers">
@@ -380,23 +364,40 @@
                     </select>
                 </div>
                 <div class="pt-4 border-t flex justify-end gap-2">
-                    <button type="button" onclick="app.toggleModal('modal-inscription')" class="px-4 py-2 rounded text-slate-600 text-sm">Annuler</button>
+                    <button type="button" onclick="app.toggleModal('modal-inscription'); document.getElementById('modal-login').classList.remove('hidden');" class="px-4 py-2 rounded text-slate-600 text-sm">Annuler</button>
                     <button type="submit" class="bg-slate-800 text-white px-4 py-2 rounded text-sm font-bold shadow">Soumettre</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modale Connexion / Statut -->
-    <div id="modal-login" class="fixed inset-0 bg-slate-900/90 z-[200] flex items-center justify-center p-4 hidden">
+    <!-- Modale Connexion SÉCURISÉE -->
+    <div id="modal-login" class="fixed inset-0 bg-slate-900/90 z-[200] flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl p-8 max-w-sm w-full text-center">
             <i class="fa-solid fa-leaf text-5xl text-dixgreen mb-4"></i>
             <h2 class="font-heading text-2xl text-dixdark mb-2">Connexion Portail</h2>
             <p class="text-sm text-slate-500 mb-6">Bourse aux fumiers PNR Préalpes d'Azur</p>
-            <div class="bg-slate-100 rounded p-3 text-xs text-slate-600 mb-4" id="login-status-msg">
-                Mode Démonstration Actif<br>Utilisez la barre de simulation pour entrer.
+            
+            <div class="bg-slate-100 rounded p-3 text-xs text-slate-600 mb-4 hidden" id="login-status-msg">
+                <!-- Messages de statut (Erreur, Connexion API, Mode Démo) -->
             </div>
-            <button onclick="document.getElementById('modal-login').classList.add('hidden')" class="w-full bg-dixgreen hover:bg-green-600 transition text-white py-2 rounded font-bold" id="btn-enter-app">Accéder au Portail</button>
+
+            <!-- Formulaire de connexion -->
+            <form onsubmit="app.handleLogin(event)" class="space-y-4 text-left">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Identifiant (ex: A004)</label>
+                    <input type="text" id="login-id" required class="w-full border border-slate-300 rounded p-2 text-sm uppercase focus:outline-none focus:border-dixgreen" placeholder="Votre identifiant">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Mot de passe</label>
+                    <input type="password" id="login-mdp" required class="w-full border border-slate-300 rounded p-2 text-sm focus:outline-none focus:border-dixgreen" placeholder="Votre mot de passe">
+                </div>
+                <button type="submit" class="w-full bg-dixgreen hover:bg-green-600 transition text-white py-2.5 rounded font-bold shadow mt-2">Se connecter</button>
+            </form>
+
+            <div class="mt-6 pt-4 border-t border-slate-100 text-xs text-slate-500">
+                Pas encore de compte ? <a href="#" onclick="app.showInscriptionModal(); document.getElementById('modal-login').classList.add('hidden');" class="text-dixgreen font-bold hover:underline">Demander une inscription</a>
+            </div>
         </div>
     </div>
 
@@ -418,14 +419,19 @@
         // CONNEXION API GOOGLE SHEETS
         // ==========================================
         // Remplacez cette adresse par l'URL "Déploiement Web" de votre Apps Script
-         const API_URL = "https://script.google.com/macros/s/AKfycbz2_HMYxBnuevs9eiO5SfmFfM3emZC5TD7SURcPTFmohmzwwgfxwsQCw3wt6kbpdWN6LA/exec";
+        const API_URL = "URL_DE_VOTRE_SCRIPT_DEPLOYE_ICI";
 
-        // --- BASE DE DONNÉES LOCALE (Servira de secours si API_URL est vide) ---
+        // --- BASE DE DONNÉES LOCALE (Secours + Identifiants mis à jour) ---
         let db = {
             acteurs: [
-                { id: "A001", nom: "La Chèvrerie des Grêles", role: "Éleveur", ville: "Gréolières", lat: 43.796, lng: 6.943, statut: "Validé" },
-                { id: "A004", nom: "Pra de Mondin", role: "Maraîcher", ville: "Courmes", lat: 43.742, lng: 7.008, statut: "Validé" },
-                { id: "A008", nom: "Jérôme Destaure", role: "Transporteur", ville: "Aiglun", lat: 43.860, lng: 6.915, statut: "Validé" }
+                { id: "A001", nom: "La Chèvrerie des Grêles", role: "Éleveur", ville: "Gréolières", lat: 43.796, lng: 6.943, statut: "Validé", mdp: "PNR2026" },
+                { id: "A002", nom: "La Ferme de Jal", role: "Éleveur", ville: "Cipières", lat: 43.784, lng: 6.955, statut: "Validé", mdp: "PNR2026" },
+                { id: "A003", nom: "Biquetterie des Bois", role: "Éleveur", ville: "Vence", lat: 43.722, lng: 7.111, statut: "Validé", mdp: "PNR2026" },
+                { id: "A004", nom: "Pra de Mondin", role: "Maraîcher", ville: "Courmes", lat: 43.742, lng: 7.008, statut: "Validé", mdp: "PNR2026" },
+                { id: "A005", nom: "ZEAM", role: "Maraîcher", ville: "Gréolières", lat: 43.796, lng: 6.943, statut: "Validé", mdp: "PNR2026" },
+                { id: "A006", nom: "Mélanie Castel", role: "Maraîcher", ville: "Collongues", lat: 43.874, lng: 6.868, statut: "Validé", mdp: "PNR2026" },
+                { id: "A007", nom: "Les Petits Loups", role: "Maraîcher", ville: "Le Bar-sur-Loup", lat: 43.701, lng: 6.988, statut: "Validé", mdp: "PNR2026" },
+                { id: "A008", nom: "Jérôme Destaure", role: "Transporteur", ville: "Aiglun", lat: 43.860, lng: 6.915, statut: "Validé", mdp: "PNR2026" }
             ],
             offres: [],
             tournees: [],
@@ -460,27 +466,77 @@
                         if(data.tournees) db.tournees = data.tournees;
                         
                         document.getElementById('api-loader').classList.add('hidden');
-                        document.getElementById('login-status-msg').innerHTML = "<span class='text-green-600 font-bold'>Connecté avec succès à la base de données PNR</span>";
                         
-                        this.switchRole('A004'); // Démarrage sur Maraicher
-                        setTimeout(() => { this.showLoginModal(); }, 500);
+                        const msg = document.getElementById('login-status-msg');
+                        msg.innerHTML = "<span class='text-green-600 font-bold'><i class='fa-solid fa-wifi'></i> Connecté à la base PNR</span>";
+                        msg.classList.remove('hidden');
                     })
                     .catch(err => {
                         console.error("Erreur de connexion API:", err);
                         document.getElementById('api-loader').classList.add('hidden');
-                        document.getElementById('login-status-msg').innerHTML = "<span class='text-amber-600 font-bold'>Serveur injoignable.<br>Lancement du Mode Démonstration (sans sauvegarde).</span>";
+                        const msg = document.getElementById('login-status-msg');
+                        msg.innerHTML = "<span class='text-amber-600 font-bold'><i class='fa-solid fa-triangle-exclamation'></i> Mode hors-ligne (Démo).<br>Id: A004 / Mdp: PNR2026</span>";
+                        msg.classList.remove('hidden');
                         this.showToast("Erreur de connexion Google Sheets. Mode local activé.", "error");
-                        
-                        this.switchRole('A004');
-                        setTimeout(() => { this.showLoginModal(); }, 500);
                     });
 
                 } else {
-                    // Si l'utilisateur n'a pas mis de lien API, on passe en mode démo direct
-                    document.getElementById('login-status-msg').innerHTML = "Mode Démonstration Local (Aucune API configurée).<br>Utilisez la barre de simulation pour entrer.";
-                    this.switchRole('A004');
-                    setTimeout(() => { this.showLoginModal(); }, 500);
+                    // Mode démo (API vide)
+                    const msg = document.getElementById('login-status-msg');
+                    msg.innerHTML = "<span class='text-blue-600 font-bold'><i class='fa-solid fa-circle-info'></i> Mode Démo Local activé.<br>Testez avec Id: A004 / Mdp: PNR2026</span>";
+                    msg.classList.remove('hidden');
                 }
+            },
+
+            // --- NOUVEAU : GESTION DE LA CONNEXION ---
+            handleLogin: function(e) {
+                e.preventDefault();
+                const idInput = document.getElementById('login-id').value.trim().toUpperCase();
+                const mdpInput = document.getElementById('login-mdp').value;
+                
+                let user = null;
+                
+                // Compte Super-Admin codé en dur pour l'accès aux validations
+                if (idInput === 'ADMIN' && mdpInput === 'PNR2026') {
+                    user = { id: 'ADMIN', nom: 'Coordination PNR', role: 'Super-Admin' };
+                } else {
+                    // Recherche dans la base de données des acteurs
+                    user = db.acteurs.find(a => a.id === idInput && a.mdp === mdpInput && a.statut === 'Validé');
+                }
+
+                if (user) {
+                    this.currentUser = user;
+                    document.getElementById('modal-login').classList.add('hidden');
+                    document.getElementById('user-menu').classList.remove('hidden'); // Affiche le bouton déconnexion
+                    this.switchRole(user.id);
+                    this.showToast(`Connexion réussie. Bienvenue ${user.nom} !`);
+                    
+                    // Vider le formulaire pour des raisons de sécurité
+                    document.getElementById('login-id').value = '';
+                    document.getElementById('login-mdp').value = '';
+                } else {
+                    const msg = document.getElementById('login-status-msg');
+                    msg.innerHTML = '<span class="text-red-500 font-bold"><i class="fa-solid fa-circle-xmark"></i> Identifiant ou mot de passe incorrect.</span>';
+                    msg.classList.remove('hidden');
+                }
+            },
+
+            // --- NOUVEAU : GESTION DE LA DÉCONNEXION ---
+            logout: function() {
+                this.currentUser = null;
+                
+                // Cacher les vues et la barre d'utilisateur
+                document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+                document.getElementById('place-publique').classList.add('hidden');
+                document.getElementById('user-menu').classList.add('hidden');
+                
+                // Réafficher l'écran de login
+                document.getElementById('modal-login').classList.remove('hidden');
+                
+                // Réinitialiser les messages d'erreur du login
+                const msg = document.getElementById('login-status-msg');
+                msg.innerHTML = "<span class='text-blue-600 font-bold'><i class='fa-solid fa-circle-info'></i> Vous avez été déconnecté.</span>";
+                msg.classList.remove('hidden');
             },
 
             // MÉTHODE D'UPSERT INVISIBLE (Envoie les données au Sheet en tâche de fond)
@@ -509,19 +565,14 @@
                 }
             },
 
-            // --- NAVIGATION ---
+            // --- NAVIGATION MODIFIÉE ---
             switchRole: function(acteurId) {
-                if(acteurId === 'ADMIN') {
-                    this.currentUser = { id: 'ADMIN', nom: 'Coordination PNR', role: 'Super-Admin' };
-                } else {
-                    this.currentUser = db.acteurs.find(a => a.id === acteurId);
-                }
+                // this.currentUser est déjà assigné dans handleLogin
                 
                 document.getElementById('header-user-name').textContent = this.currentUser.nom;
                 document.getElementById('header-user-role').textContent = this.currentUser.role;
                 
-                document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
-                document.getElementById('btn-role-' + acteurId).classList.add('active');
+                // Suppression de la logique liée à la barre de simulation (.role-btn)
                 document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
                 
                 const placePublique = document.getElementById('place-publique');
@@ -554,7 +605,6 @@
             },
 
             toggleModal: function(modalId) { document.getElementById(modalId).classList.toggle('hidden'); },
-            showLoginModal: function() { document.getElementById('modal-login').classList.remove('hidden'); },
             showInscriptionModal: function() { this.toggleModal('modal-inscription'); },
 
             formatMonthLabel: function(yyyy_mm) {
@@ -608,7 +658,7 @@
                             let off = db.offres.find(o => o.id === int.offreId);
                             let el = db.acteurs.find(a => a.id === off.eleveurId);
                             let ma = db.acteurs.find(a => a.id === int.maraicherId);
-                            return `<span class="bg-blue-100 px-1 rounded text-blue-800 border border-blue-200">${el.ville.substring(0,3).toUpperCase()} <i class="fa-solid fa-arrow-right text-[8px]"></i> ${ma.ville.substring(0,3).toUpperCase()}</span>`;
+                            return `<span class="bg-blue-100 px-1 rounded text-blue-800 border border-blue-200">${el ? el.ville.substring(0,3).toUpperCase() : '?'} <i class="fa-solid fa-arrow-right text-[8px]"></i> ${ma ? ma.ville.substring(0,3).toUpperCase() : '?'}</span>`;
                         }).join(' ') : '<span class="text-slate-400 italic">Vide</span>';
                         
                         let placesRestantes = t.capMax - t.navettes.length;
@@ -675,25 +725,26 @@
                     ville: document.getElementById('ins-ville').value,
                     role: document.getElementById('ins-role').value,
                     statut: "En attente",
-                    lat: 43.7, lng: 6.9
+                    lat: 43.7, lng: 6.9,
+                    mdp: "PNR2026" // Ajout du mot de passe par défaut
                 };
                 db.acteurs.push(newActeur);
                 this.apiSync('upsertActeur', newActeur);
                 
                 this.toggleModal('modal-inscription');
-                this.showToast("Demande envoyée au PNR ! Connexion bloquée d'ici la validation.");
+                document.getElementById('modal-login').classList.remove('hidden');
+                this.showToast("Demande envoyée au PNR ! Vous pourrez vous connecter avec le mot de passe PNR2026 une fois validé.");
             },
 
             apiValiderActeur: function(id) {
                 const acteur = db.acteurs.find(a => a.id === id);
                 acteur.statut = "Validé";
+                if (!acteur.mdp) acteur.mdp = "PNR2026"; // Sécurité
+                
                 this.apiSync('upsertActeur', acteur);
                 
                 this.showToast(`L'acteur ${acteur.nom} a été validé et intégré au réseau.`);
                 this.renderAdmin();
-                
-                const btnHtml = `<button onclick="app.switchRole('${acteur.id}')" id="btn-role-${acteur.id}" class="role-btn ml-1">Nouveau : ${acteur.nom}</button>`;
-                document.getElementById('btn-role-ADMIN').insertAdjacentHTML('beforebegin', btnHtml);
             },
 
             // ================= VUE ÉLEVEUR =================
@@ -1030,11 +1081,11 @@
                             <strong class="text-slate-800 text-sm block mb-2">${o.matiere}</strong>
                             <div class="flex items-center gap-2 text-xs text-slate-600 mt-1">
                                 <div class="w-2 h-2 rounded-full bg-purple-500"></div>
-                                <span><strong class="text-slate-700">De :</strong> ${e.ville}</span>
+                                <span><strong class="text-slate-700">De :</strong> ${e ? e.ville : '?'}</span>
                             </div>
                             <div class="flex items-center gap-2 text-xs text-slate-600 mt-1">
                                 <div class="w-2 h-2 rounded-full bg-blue-500"></div>
-                                <span><strong class="text-slate-700">Vers :</strong> ${m.ville}</span>
+                                <span><strong class="text-slate-700">Vers :</strong> ${m ? m.ville : '?'}</span>
                             </div>
                             ${btn}
                         </div>`;
