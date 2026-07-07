@@ -636,32 +636,11 @@
         const API_URL = "https://script.google.com/macros/s/AKfycbyzrChIKQ4as4xsUzHnL5CRr4-iX4Vwt_89sYbzbGF4oyZ2EtT_cy-pLowrMQZCCph_/exec"; 
         
         let db = {
-            acteurs: [
-                { id: "COORD_CATHERINE", nom: "La Remise du Cheiron", contact: "Catherine (Coordinatrice)", role: "Coordinateur", dedommagement: 0, adresse: "Coursegoules", tel: "", email: "", metiers: [], mdp: "PNR2026", statut: "Validé" },
-                { id: "CATHERINE", nom: "GAEC du Cheiron", contact: "Catherine Grandin", role: "Producteur", dedommagement: 15, adresse: "Coursegoules", tel: "", email: "", metiers: ["elevage_viande", "elevage_lait"], mdp: "PNR2026", statut: "Validé" },
-                { id: "FLORIAN", nom: "Pra de Mondin", contact: "Florian Bonnet", role: "Producteur", dedommagement: 15, adresse: "Courmes", tel: "", email: "", metiers: ["maraichage"], mdp: "PNR2026", statut: "Validé" },
-                { id: "MARC", nom: "Légumes du moulin", contact: "Marc Rombaut", role: "Producteur", dedommagement: 15, adresse: "Coursegoules", tel: "", email: "", metiers: ["maraichage"], mdp: "PNR2026", statut: "Validé" },
-                { id: "PIERRE", nom: "Pisciculture du Cheiron", contact: "Pierre Philip", role: "Producteur", dedommagement: 15, adresse: "Coursegoules", tel: "", email: "", metiers: [], mdp: "PNR2026", statut: "Validé" },
-                { id: "SOPHIE", nom: "Ruchers de Cipières", contact: "Sophie Coste", role: "Producteur", dedommagement: 15, adresse: "Cipières", tel: "", email: "", metiers: ["apiculture"], mdp: "PNR2026", statut: "Validé" },
-                { id: "PASCALE", nom: "Le Safran de Nans", contact: "Pascale L.", role: "Producteur", dedommagement: 15, adresse: "Saint-Vallier", tel: "", email: "", metiers: [], mdp: "PNR2026", statut: "Validé" },
-                { id: "XAVIER", nom: "Lou Bara di Pais", contact: "Xavier Rouxel", role: "Producteur", dedommagement: 15, adresse: "Coursegoules", tel: "", email: "", metiers: ["cereales"], mdp: "PNR2026", statut: "Validé" },
-                { id: "AMANDINE", nom: "Ferme de Bézaudun", contact: "Amandine", role: "Producteur", dedommagement: 15, adresse: "Bézaudun-les-Alpes", tel: "", email: "", metiers: ["elevage_viande"], mdp: "PNR2026", statut: "Validé" },
-                { id: "CAROLE", nom: "Fromages de Carole", contact: "Carole", role: "Producteur", dedommagement: 15, adresse: "Coursegoules", tel: "", email: "", metiers: ["elevage_lait"], mdp: "PNR2026", statut: "Validé" }
-            ],
-            familles: [
-                { id: "F1", producteurId: "CATHERINE", nom: "Fromages de Chèvre", iconKey: "buche_chevre", tva: 5.5, enLigne: true },
-                { id: "F2", producteurId: "FLORIAN", nom: "Légumes de Saison", iconKey: "tomate", tva: 5.5, enLigne: true },
-                { id: "F3", producteurId: "AMANDINE", nom: "Œufs Fermiers", iconKey: "oeuf", tva: 5.5, enLigne: true },
-                { id: "F4", producteurId: "XAVIER", nom: "Pains au Levain", iconKey: "pain", tva: 5.5, enLigne: true }
-            ],
-            produits: [
-                { id: "P1", familleId: "F1", nom: "Bûche Cendrée", prixTTC: 4.50, stock: 20, enLigne: true },
-                { id: "P2", familleId: "F2", nom: "Tomates Rondes (kg)", prixTTC: 3.50, stock: 15, enLigne: true },
-                { id: "P3", familleId: "F3", nom: "Boite de 6 Œufs", prixTTC: 2.50, stock: 50, enLigne: true },
-                { id: "P4", familleId: "F4", nom: "Pain de Campagne", prixTTC: 3.80, stock: 15, enLigne: true }
-            ],
+            acteurs: [],
+            familles: [],
+            produits: [],
             commandes: [],
-            settings: { dateRetrait: "Vendredi (17h-19h)", dateLimite: "Jeudi 20h00", driveOuvert: true }
+            settings: { dateRetrait: "Non défini", dateLimite: "Non défini", driveOuvert: false }
         };
 
         const app = {
@@ -703,12 +682,13 @@
                     
                     // Remplacer les données locales par celles du Google Sheet si elles existent
                     if(data && Object.keys(data).length > 0) {
-                        if(data.acteurs && data.acteurs.length > 0) db.acteurs = data.acteurs;
-                        if(data.familles && data.familles.length > 0) db.familles = data.familles;
-                        if(data.produits && data.produits.length > 0) db.produits = data.produits;
-                        if(data.commandes && data.commandes.length > 0) db.commandes = data.commandes;
+                        // IMPORTANT : On utilise !== undefined pour écraser les données même si vos onglets sont VIDES !
+                        if(data.acteurs !== undefined) db.acteurs = data.acteurs;
+                        if(data.familles !== undefined) db.familles = data.familles;
+                        if(data.produits !== undefined) db.produits = data.produits;
+                        if(data.commandes !== undefined) db.commandes = data.commandes;
                         
-                        // Fusion robuste des paramètres pour éviter les "undefined" si l'onglet SETTINGS de Google Sheets n'est pas rempli correctement
+                        // Fusion robuste des paramètres pour éviter les "undefined"
                         if(data.settings && Object.keys(data.settings).length > 0) {
                             db.settings.dateRetrait = data.settings.dateRetrait !== undefined ? data.settings.dateRetrait : db.settings.dateRetrait;
                             db.settings.dateLimite = data.settings.dateLimite !== undefined ? data.settings.dateLimite : db.settings.dateLimite;
