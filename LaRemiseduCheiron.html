@@ -1092,3 +1092,702 @@
                                 <div class="font-bold text-slate-800 shrink-0">${item.lineTotal.toFixed(2)} €</div>
                             </div>
                         `;
+                    });
+                }
+                container.innerHTML = html;
+                totalEl.textContent = total.toFixed(2) + " €";
+            },
+
+            submitOrder: function() {
+                if(!db.settings.driveOuvert) return this.showToast("Les commandes sont clôturées.", "error");
+
+                const nom = document.getElementById('client-name').value;
+                const tel = document.getElementById('client-tel').value;
+                
+                if (Object.keys(this.cart).length === 0) return this.showToast("Votre panier est vide.", "error");
+                if (!nom || !tel) return this.showToast("Merci de renseigner votre nom et téléphone.", "error");
+
+                let total = 0;
+                let items = [];
+                let groupedCart = {};
+
+                for (let [pId, qty] of Object.entries(this.cart)) {
+                    const p = db.produits.find(x => x.id === pId);
+                    if(!p) continue;
+                    const f = db.familles.find(x => x.id === p.familleId);
+                    if(!f) continue;
+                    const prod = db.acteurs.find(a => a.id === f.producteurId); 
+                    if(!prod) continue;
+
+                    const lineTotal = qty * p.prixTTC;
+                    total += lineTotal;
+                    items.push({ prodId: pId, qte: qty, prixTTC: p.prixTTC });
+                    p.stock -= qty; 
+                    this.apiSync('upsertProduit', p);
+                    
+                    if (!groupedCart[prod.nom]) groupedCart[prod.nom] = [];
+                    groupedCart[prod.nom].push({ p, qty, lineTotal });
+                }
+
+                let recuText = `VOTRE REÇU - LA REMISE DU CHEIRON\n`;
+                recuText += `===================================\n`;
+                recuText += `Date de retrait : ${db.settings.dateRetrait}\n`;
+                recuText += `Nom : ${nom}\n`;
+                recuText += `Téléphone : ${tel}\n\n`;
+                recuText += `--- DÉTAIL DE LA COMMANDE ---\n`;
+                for (let prodName in groupedCart) {
+                    recuText += `\n>> ${prodName.toUpperCase()}\n`;
+                    groupedCart[prodName].forEach(item => {
+                        recuText += `- ${item.qty}x ${item.p.nom} : ${item.lineTotal.toFixed(2)} €\n`;
+                    });
+                }
+                recuText += `\n===================================\n`;
+                recuText += `TOTAL À RÉGLER SUR PLACE : ${total.toFixed(2)} €\n`;
+                recuText += `(Espèces ou Chèque sans ordre)\n\n`;
+                recuText += `Merci pour votre confiance !`;
+
+                const newCmd = {
+                    id: `CMD-${Math.floor(Math.random()*1000)}`,
+                    date: new Date().toLocaleDateString('fr-FR'),
+                    clientNom: nom,
+                    clientTel: tel,
+                    total: total,
+                    statut: "En attente",
+                    paiement: null,
+                    items: items
+                };
+
+                db.commandes.push(newCmd);
+                this.apiSync('upsertCommande', newCmd);
+
+                const blob = new Blob([recuText], { type: 'text/plain' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Recu_LaRemise_${nom.replace(/\s+/g, '_')}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+                this.cart = {};
+                document.getElementById('client-name').value = '';
+                document.getElementById('client-tel').value = '';
+                
+                this.showToast("Commande enregistrée ! Votre reçu a été téléchargé.");
+                this.renderClientView();
+            },
+
+            // ================= VUE PRODUCTEUR =================
+            updateDedommagement: function(val) {
+                if(this.currentUser) {
+                    this.currentUser.dedommagement = parseFloat(val) || 0;
+                    this.apiSync('upsertActeur', this.currentUser);
+                    this.showToast("Participation mise à jour.");
+                }
+            },
+            toggleFamilleOnline: function(fId) {
+                const f = db.familles.find(x => x.id === fId);
+                f.enLigne = !f.enLigne;
+                this.apiSync('upsertFamille', f);
+                this.renderProdView();
+            },
+            toggleProductOnline: function(pId) {
+                const p = db.produits.find(x => x.id === pId);
+                if(p) {
+                    p.enLigne = !p.enLigne;
+                    this.apiSync('upsertProduit', p);
+                    this.renderProdView();
+                }
+            },
+            openFamilleModal: function(fId = null) {
+                if(fId) {
+                    const f = db.familles.find(x => x.id === fId);
+                    document.getElementById('fam-id').value = f.id;
+                    document.getElementById('fam-nom').value = f.nom;
+                    document.getElementById('fam-tva').value = f.tva;
+                    document.getElementById('fam-icon').value = f.iconKey;
+                    document.getElementById('modal-famille-title').textContent = "Modifier la Famille";
+                } else {
+                    document.getElementById('fam-id').value = "";
+                    document.getElementById('fam-nom').value = '';
+                    document.getElementById('fam-tva').value = '5.5';
+                    document.getElementById('modal-famille-title').textContent = "Nouvelle Famille";
+                }
+                this.openModal('modal-famille');
+            },
+            saveFamille: function(e) {
+                e.preventDefault();
+                const id = document.getElementById('fam-id').value;
+                if(id) {
+                    const f = db.familles.find(x => x.id === id);
+                    f.nom = document.getElementById('fam-nom').value;
+                    f.iconKey = document.getElementById('fam-icon').value;
+                    f.tva = parseFloat(document.getElementById('fam-tva').value);
+                    this.apiSync('upsertFamille', f);
+                    this.showToast("Famille modifiée avec succès.");
+                } else {
+                    const newF = {
+                        id: `F-${Math.floor(Math.random()*1000)}`,
+                        producteurId: this.currentUser.id,
+                        nom: document.getElementById('fam-nom').value,
+                        iconKey: document.getElementById('fam-icon').value,
+                        tva: parseFloat(document.getElementById('fam-tva').value),
+                        enLigne: true
+                    };
+                    db.familles.push(newF);
+                    this.apiSync('upsertFamille', newF);
+                    this.showToast("Nouvelle famille ajoutée !");
+                }
+                this.closeModal('modal-famille');
+                this.renderProdView();
+            },
+            addProduit: function(familleId) {
+                const newP = {
+                    id: `P-${Math.floor(Math.random()*1000)}`,
+                    familleId: familleId,
+                    nom: "Nouveau produit",
+                    prixTTC: 0,
+                    stock: 0,
+                    enLigne: true
+                };
+                db.produits.push(newP);
+                this.apiSync('upsertProduit', newP);
+                this.renderProdView();
+            },
+            duplicateProduit: function(pId) {
+                const p = db.produits.find(x => x.id === pId);
+                const newP = {
+                    id: `P-${Math.floor(Math.random()*1000)}`,
+                    familleId: p.familleId,
+                    nom: p.nom + " (Copie)",
+                    prixTTC: p.prixTTC,
+                    stock: p.stock,
+                    enLigne: p.enLigne
+                };
+                db.produits.push(newP);
+                this.apiSync('upsertProduit', newP);
+                this.renderProdView();
+            },
+            deleteProduit: function(pId) {
+                db.produits = db.produits.filter(p => p.id !== pId);
+                delete this.cart[pId]; 
+                this.apiSync('deleteProduit', {id: pId});
+                this.showToast("Produit supprimé.");
+                this.renderProdView();
+            },
+            updateProduct: function(pId, field, value) {
+                const p = db.produits.find(x => x.id === pId);
+                if(field === 'nom') p.nom = value;
+                else p[field] = parseFloat(value) || 0;
+                this.apiSync('upsertProduit', p);
+            },
+            openCatalogueModal: function() {
+                const container = document.getElementById('catalogue-lists-container');
+                let html = '';
+                let metiers = this.currentUser.metiers || [];
+                if(metiers.length === 0) metiers = ['maraichage']; 
+                
+                metiers.forEach(m => {
+                    if(!catalogueType[m]) return;
+                    html += `<h4 class="font-heading text-xl text-dixdark mb-4 mt-6 first:mt-0 border-b pb-2"><i class="fa-solid fa-list text-dixgreen"></i> Suggestions : ${this.metierLabels[m]}</h4>`;
+                    
+                    catalogueType[m].forEach((fam, fIndex) => {
+                        html += `
+                        <div class="bg-white border border-slate-200 rounded p-4 mb-4 shadow-sm">
+                            <div class="flex items-center gap-2 mb-3">
+                                <input type="checkbox" id="cat-f-${m}-${fIndex}" class="accent-dixgreen w-5 h-5 cursor-pointer" onchange="app.toggleCatalogueFamily('${m}', ${fIndex}, this.checked)">
+                                <label for="cat-f-${m}-${fIndex}" class="font-bold text-lg cursor-pointer">${fam.f}</label>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-6">
+                                ${fam.p.map((prod, pIndex) => `
+                                    <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer hover:bg-slate-50 p-1 rounded">
+                                        <input type="checkbox" class="accent-dixgreen cb-cat-prod-${m}-${fIndex}" value="${m}|${fIndex}|${pIndex}">
+                                        ${prod.n} <span class="text-slate-400">(${prod.p.toFixed(2)}€)</span>
+                                    </label>
+                                `).join('')}
+                            </div>
+                        </div>`;
+                    });
+                });
+                if(html === '') html = '<p class="text-slate-500 italic">Aucune liste type trouvée pour vos métiers. Ajoutez vos produits manuellement via "Nouvelle Famille".</p>';
+                container.innerHTML = html;
+                this.openModal('modal-catalogue');
+            },
+            toggleCatalogueFamily: function(m, fIndex, isChecked) {
+                document.querySelectorAll(`.cb-cat-prod-${m}-${fIndex}`).forEach(cb => cb.checked = isChecked);
+            },
+            importCatalogueSelection: function() {
+                const checkedBoxes = document.querySelectorAll('#catalogue-lists-container input[type="checkbox"]:not([id^="cat-f-"]):checked');
+                if(checkedBoxes.length === 0) return this.showToast('Aucun produit sélectionné.', 'error');
+
+                let familiesToAdd = {};
+                checkedBoxes.forEach(cb => {
+                    const [m, fIdx, pIdx] = cb.value.split('|');
+                    const fam = catalogueType[m][parseInt(fIdx)];
+                    const prod = fam.p[parseInt(pIdx)];
+                    
+                    if(!familiesToAdd[fam.f]) {
+                        familiesToAdd[fam.f] = { icon: fam.icon, prods: [] };
+                    }
+                    familiesToAdd[fam.f].prods.push(prod);
+                });
+
+                for(let fName in familiesToAdd) {
+                    const fData = familiesToAdd[fName];
+                    const fId = `F-${Math.floor(Math.random()*10000)}`;
+                    const newF = { id: fId, producteurId: this.currentUser.id, nom: fName, iconKey: fData.icon, tva: 5.5, enLigne: true };
+                    db.familles.push(newF);
+                    this.apiSync('upsertFamille', newF);
+                    
+                    fData.prods.forEach(p => {
+                        const newP = { id: `P-${Math.floor(Math.random()*10000)}`, familleId: fId, nom: p.n, prixTTC: p.p, stock: 0, enLigne: true };
+                        db.produits.push(newP);
+                        this.apiSync('upsertProduit', newP);
+                    });
+                }
+
+                this.closeModal('modal-catalogue');
+                this.showToast('Catalogue importé avec succès !');
+                this.renderProdView();
+            },
+
+            renderProdView: function() {
+                const catContainer = document.getElementById('prod-catalogue-list');
+                const mesFamilles = db.familles.filter(f => f.producteurId === this.currentUser.id);
+                
+                if(mesFamilles.length === 0) {
+                    catContainer.innerHTML = '<div class="text-sm text-slate-400 italic p-6 text-center bg-slate-50 rounded border border-dashed">Aucun produit. Créez une famille ou générez une liste type.</div>';
+                } else {
+                    catContainer.innerHTML = mesFamilles.map(f => {
+                        const prods = db.produits.filter(p => p.familleId === f.id);
+                        const prodsHtml = prods.map(p => {
+                            const isAlert = p.enLigne && p.stock <= 0;
+                            const bgClass = isAlert ? 'bg-red-50 border-red-300' : 'bg-slate-50 border-slate-200';
+                            const alertText = isAlert ? `<div class="text-[10px] text-red-600 font-bold w-full sm:w-auto mt-1"><i class="fa-solid fa-triangle-exclamation"></i> En ligne avec stock à 0 !</div>` : '';
+                            return `
+                            <div class="flex flex-col sm:flex-row gap-2 items-start sm:items-center p-2 rounded border mt-2 transition ${bgClass} ${p.enLigne ? '' : 'opacity-60 grayscale'}">
+                                <!-- Toggle -->
+                                <label class="flex items-center cursor-pointer shrink-0 ml-1" title="${p.enLigne ? 'Mettre hors ligne' : 'Mettre en ligne'}">
+                                    <div class="relative">
+                                        <input type="checkbox" class="sr-only toggle-checkbox" ${p.enLigne ? 'checked' : ''} onchange="app.toggleProductOnline('${p.id}')">
+                                        <div class="block toggle-label w-10 h-6 rounded-full"></div>
+                                        <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition transform ${p.enLigne ? 'translate-x-4' : ''}"></div>
+                                    </div>
+                                </label>
+                                <!-- Nom -->
+                                <div class="flex-grow w-full sm:w-auto ml-2">
+                                    <input type="text" value="${p.nom}" onchange="app.updateProduct('${p.id}', 'nom', this.value)" class="w-full border-none bg-transparent font-bold text-sm focus:ring-1 focus:ring-dixgreen rounded px-1" placeholder="Nom du produit">
+                                    ${alertText}
+                                </div>
+                                <!-- Prix, Stock & Actions -->
+                                <div class="flex items-center gap-2 w-full sm:w-auto shrink-0 justify-between sm:justify-end">
+                                    <div class="flex flex-col gap-1 w-24 sm:w-32">
+                                        <div class="relative">
+                                            <input type="number" step="0.1" value="${p.prixTTC.toFixed(2)}" onchange="app.updateProduct('${p.id}', 'prixTTC', this.value); this.parentElement.nextElementSibling.value = this.value;" class="w-full border rounded p-1 text-sm font-bold text-right pr-6" placeholder="Prix">
+                                            <span class="absolute right-2 top-1.5 text-slate-500 text-sm">€</span>
+                                        </div>
+                                        <input type="range" min="0" max="50" step="0.1" value="${p.prixTTC}" oninput="this.previousElementSibling.firstElementChild.value = parseFloat(this.value).toFixed(2); app.updateProduct('${p.id}', 'prixTTC', this.value)">
+                                    </div>
+                                    <div class="flex flex-col gap-1 w-24 sm:w-32">
+                                        <div class="relative">
+                                            <span class="absolute left-2 top-1.5 text-slate-400 text-[10px] uppercase">Stock</span>
+                                            <input type="number" value="${p.stock}" onchange="app.updateProduct('${p.id}', 'stock', this.value); this.parentElement.nextElementSibling.value = this.value;" class="w-full border rounded p-1 text-sm font-bold text-right bg-white text-blue-800" min="0">
+                                        </div>
+                                        <input type="range" min="0" max="100" step="1" value="${p.stock}" oninput="this.previousElementSibling.lastElementChild.value = this.value; app.updateProduct('${p.id}', 'stock', this.value)">
+                                    </div>
+                                    <button onclick="app.duplicateProduit('${p.id}')" class="text-slate-400 hover:text-dixgreen px-2" title="Dupliquer"><i class="fa-solid fa-copy"></i></button>
+                                    <button onclick="app.deleteProduit('${p.id}')" class="text-slate-400 hover:text-red-500 px-2" title="Supprimer"><i class="fa-solid fa-trash"></i></button>
+                                </div>
+                            </div>
+                        `;
+                        }).join('');
+                        
+                        return `
+                        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm transition ${f.enLigne ? 'border-l-4 border-l-dixgreen' : 'opacity-60 bg-slate-50'}">
+                            <div class="flex justify-between items-center border-b border-slate-100 pb-3 mb-2">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 svg-icon-wrapper shrink-0 p-1 bg-slate-100 rounded-full">${getIcon(f.iconKey)}</div>
+                                    <div>
+                                        <div class="font-bold text-lg text-slate-800 leading-tight flex items-center gap-2">
+                                            ${f.nom} 
+                                            <button onclick="app.openFamilleModal('${f.id}')" class="text-slate-400 hover:text-blue-500 text-sm"><i class="fa-solid fa-pen"></i></button>
+                                        </div>
+                                        <div class="text-[10px] text-slate-500 uppercase">TVA : ${f.tva}%</div>
+                                    </div>
+                                </div>
+                                <label class="flex items-center cursor-pointer">
+                                    <span class="mr-2 text-xs font-bold hidden sm:inline ${f.enLigne ? 'text-dixgreen' : 'text-slate-400'}">${f.enLigne ? 'En Ligne' : 'Caché'}</span>
+                                    <div class="relative">
+                                        <input type="checkbox" class="sr-only toggle-checkbox" ${f.enLigne ? 'checked' : ''} onchange="app.toggleFamilleOnline('${f.id}')">
+                                        <div class="block toggle-label w-10 h-6 rounded-full"></div>
+                                        <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition transform ${f.enLigne ? 'translate-x-4' : ''}"></div>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="space-y-1">
+                                ${prodsHtml}
+                            </div>
+                            <button onclick="app.addProduit('${f.id}')" class="mt-3 text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded transition w-full text-left"><i class="fa-solid fa-plus"></i> Ajouter une déclinaison/variété</button>
+                        </div>`;
+                    }).join('');
+                }
+
+                // Préparation
+                let prepMap = {}; 
+                db.commandes.forEach(c => {
+                    const alertAbandon = app.hasAbandoned(c.clientTel) ? `<i class="fa-solid fa-triangle-exclamation text-red-500 ml-1" title="Ce client a déjà abandonné une commande"></i>` : '';
+                    
+                    c.items.forEach(item => {
+                        const p = db.produits.find(x => x.id === item.prodId);
+                        if(p) {
+                            const f = db.familles.find(x => x.id === p.familleId);
+                            if(f && f.producteurId === this.currentUser.id) {
+                                if(!prepMap[f.id]) prepMap[f.id] = { nom: f.nom, icon: f.iconKey, prods: {} };
+                                if(!prepMap[f.id].prods[p.id]) prepMap[f.id].prods[p.id] = { nom: p.nom, qteTotale: 0, details: [] };
+                                
+                                prepMap[f.id].prods[p.id].qteTotale += item.qte;
+                                prepMap[f.id].prods[p.id].details.push(`<span class="bg-white border border-slate-200 px-2 py-0.5 rounded text-xs text-slate-700 shadow-sm">${c.clientNom} <strong class="text-blue-700 ml-1">x${item.qte}</strong>${alertAbandon}</span>`);
+                            }
+                        }
+                    });
+                });
+
+                let prepHtml = '';
+                for(let fId in prepMap) {
+                    const fam = prepMap[fId];
+                    let prodHtml = '';
+                    for(let pId in fam.prods) {
+                        const p = fam.prods[pId];
+                        prodHtml += `
+                            <div class="bg-slate-50 border border-slate-200 rounded p-3 mb-2">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="font-bold text-slate-700 text-sm">${p.nom}</span>
+                                    <span class="font-heading text-lg text-dixgreen bg-green-100 px-2 py-0.5 rounded">Total : ${p.qteTotale}</span>
+                                </div>
+                                <div class="flex flex-wrap gap-1.5 border-t border-slate-200 pt-2">
+                                    ${p.details.join(' ')}
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    prepHtml += `
+                        <div class="border-l-4 border-dixgreen bg-white shadow-sm rounded-r-xl p-4">
+                            <div class="flex items-center gap-2 mb-3">
+                                <div class="w-8 h-8 svg-icon-wrapper">${getIcon(fam.icon)}</div>
+                                <h3 class="font-bold text-lg text-slate-800 uppercase">${fam.nom}</h3>
+                            </div>
+                            ${prodHtml}
+                        </div>
+                    `;
+                }
+                document.getElementById('prod-preparation-list').innerHTML = prepHtml || '<div class="text-sm text-slate-400 italic p-4 text-center">Aucune commande pour vos produits cette semaine.</div>';
+            },
+
+            // ================= VUE COORDINATEUR =================
+            openActionModal: function(cmdId) {
+                this.cmdToAction = cmdId;
+                this.openModal('modal-action-cmd');
+            },
+            changerStatutCmd: function(nouveauStatut) {
+                const c = db.commandes.find(x => x.id === this.cmdToAction);
+                c.statut = nouveauStatut;
+                if(nouveauStatut !== 'Mis de côté (Payé)') c.paiement = null;
+                if (nouveauStatut === 'Abandonné / Revendu') c.clientTel = "*** Supprimé (RGPD) ***";
+                
+                this.apiSync('upsertCommande', c);
+                this.closeModal('modal-action-cmd');
+                this.showToast(`Commande passée en : ${nouveauStatut}`);
+                this.renderCoordView();
+                if(this.activeCoordTab === 'matrice') this.renderMatrice();
+            },
+            openPaiementModal: function(targetStatut = 'Payé & Récupéré') {
+                this.closeModal('modal-action-cmd'); 
+                const c = db.commandes.find(x => x.id === this.cmdToAction);
+                this.cmdToPay = c;
+                this.targetPaiementStatut = targetStatut;
+                
+                document.getElementById('modal-paiement-title').textContent = targetStatut === 'Mis de côté (Payé)' ? 'Paiement (Mise de côté)' : 'Encaisser la commande';
+                document.getElementById('pay-client-name').textContent = c.clientNom;
+                document.getElementById('pay-total-amount').textContent = c.total.toFixed(2) + " €";
+                
+                document.getElementById('pay-especes').value = "0";
+                document.getElementById('pay-cheques').value = "0";
+                
+                this.calcRestePaiement();
+                this.openModal('modal-paiement');
+            },
+            allouerReste: function(cible) {
+                if(!this.cmdToPay) return;
+                const total = this.cmdToPay.total;
+                const espInput = document.getElementById('pay-especes');
+                const chqInput = document.getElementById('pay-cheques');
+                let espVal = parseFloat(espInput.value) || 0;
+                let chqVal = parseFloat(chqInput.value) || 0;
+                if (cible === 'especes') {
+                    let newEsp = total - chqVal;
+                    if (newEsp < 0) newEsp = 0;
+                    espInput.value = newEsp.toFixed(2);
+                } else if (cible === 'cheques') {
+                    let newChq = total - espVal;
+                    if (newChq < 0) newChq = 0;
+                    chqInput.value = newChq.toFixed(2);
+                }
+                this.calcRestePaiement();
+            },
+            calcRestePaiement: function() {
+                if(!this.cmdToPay) return;
+                const esp = parseFloat(document.getElementById('pay-especes').value) || 0;
+                const chq = parseFloat(document.getElementById('pay-cheques').value) || 0;
+                const totalSaisi = esp + chq;
+                const diff = this.cmdToPay.total - totalSaisi;
+                
+                const msgEl = document.getElementById('pay-reste-msg');
+                const btn = document.getElementById('btn-valider-pay');
+                
+                if(Math.abs(diff) < 0.01) { 
+                    msgEl.innerHTML = '<span class="text-green-600"><i class="fa-solid fa-check"></i> Le compte est bon.</span>';
+                    btn.disabled = false;
+                    btn.classList.remove('bg-slate-400'); btn.classList.add('bg-dixgreen');
+                } else if(diff > 0) {
+                    msgEl.innerHTML = `Reste à régler : <span class="text-red-500">${diff.toFixed(2)} €</span>`;
+                    btn.disabled = true;
+                    btn.classList.add('bg-slate-400'); btn.classList.remove('bg-dixgreen');
+                } else {
+                    msgEl.innerHTML = `Trop perçu (Rendu monnaie) : <span class="text-amber-500">${Math.abs(diff).toFixed(2)} €</span>`;
+                    btn.disabled = false;
+                    btn.classList.remove('bg-slate-400'); btn.classList.add('bg-dixgreen');
+                }
+            },
+            validerEncaissement: function() {
+                const esp = parseFloat(document.getElementById('pay-especes').value) || 0;
+                const chq = parseFloat(document.getElementById('pay-cheques').value) || 0;
+                
+                const diff = (esp + chq) - this.cmdToPay.total;
+                let espRéel = esp;
+                if(diff > 0) espRéel = esp - diff; 
+
+                this.cmdToPay.statut = this.targetPaiementStatut || "Payé & Récupéré";
+                this.cmdToPay.paiement = { especes: espRéel, cheque: chq };
+                
+                if(this.cmdToPay.statut === "Payé & Récupéré") {
+                    this.cmdToPay.clientTel = "*** Supprimé (RGPD) ***";
+                }
+                
+                this.apiSync('upsertCommande', this.cmdToPay);
+                this.closeModal('modal-paiement');
+                this.showToast('Paiement enregistré dans la caisse ! Numéro supprimé.');
+                this.renderCoordView();
+                if(this.activeCoordTab === 'matrice') this.renderMatrice();
+            },
+            renderCoordView: function() {
+                const container = document.getElementById('coord-clients-list');
+                const searchInput = document.getElementById('coord-search-client');
+                const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+                
+                let commandesActives = db.commandes.filter(c => c.statut !== "Abandonné / Revendu" && c.statut !== "Récupération différée");
+                const commandesIncidents = db.commandes.filter(c => c.statut === "Abandonné / Revendu" || c.statut === "Récupération différée");
+                
+                if (searchTerm) {
+                    commandesActives = commandesActives.filter(c => c.clientNom.toLowerCase().includes(searchTerm));
+                }
+                commandesActives.sort((a, b) => a.clientNom.localeCompare(b.clientNom));
+
+                const retraitsHtml = commandesActives.map(c => {
+                    let groupedItems = {};
+                    c.items.forEach(i => {
+                        const p = db.produits.find(x => x.id === i.prodId);
+                        if(!p) return;
+                        const f = db.familles.find(x => x.id === p.familleId);
+                        if(!f) return;
+                        const prod = db.acteurs.find(a => a.id === f.producteurId);
+                        if(!prod) return;
+                        if (!groupedItems[prod.nom]) groupedItems[prod.nom] = [];
+                        groupedItems[prod.nom].push({ qte: i.qte, fNom: f.nom, pNom: p.nom, prixTotal: i.qte * i.prixTTC });
+                    });
+
+                    let itemsHtml = '';
+                    for (let pNom in groupedItems) {
+                        itemsHtml += `<div class="mt-2 mb-1 text-[10px] font-bold text-slate-500 uppercase border-b border-slate-200 pb-1"><i class="fa-solid fa-tractor mr-1"></i> ${pNom}</div>`;
+                        groupedItems[pNom].forEach(i => {
+                            itemsHtml += `
+                                <div class="flex justify-between text-xs py-1">
+                                    <span class="truncate pr-2"><strong>${i.qte}x</strong> ${i.fNom} <span class="text-[10px] text-slate-500">(${i.pNom})</span></span>
+                                    <span class="font-bold text-slate-600">${i.prixTotal.toFixed(2)}€</span>
+                                </div>
+                            `;
+                        });
+                    }
+                    
+                    let bgClass = 'bg-white border-slate-200';
+                    let statusBadge = `<span class="bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 rounded font-bold">En attente</span>`;
+                    let isTerminated = false;
+                    if(c.statut === "Payé & Récupéré") { 
+                        bgClass = 'bg-green-50 border-green-300 opacity-80'; 
+                        statusBadge = `<span class="bg-green-500 text-white text-[10px] px-2 py-0.5 rounded font-bold"><i class="fa-solid fa-check"></i> Terminé</span>`;
+                        isTerminated = true;
+                    } else if(c.statut === "Mis de côté (Payé)") {
+                        bgClass = 'bg-blue-50 border-blue-300'; 
+                        statusBadge = `<span class="bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded font-bold"><i class="fa-solid fa-snowflake"></i> Payé (Frigo)</span>`;
+                        isTerminated = true;
+                    }
+                    const alertAbandon = app.hasAbandoned(c.clientTel) ? `<span class="bg-red-100 text-red-800 text-[10px] px-2 py-1 rounded font-bold ml-2 border border-red-200" title="Ce client a déjà abandonné une commande"><i class="fa-solid fa-triangle-exclamation"></i> Historique d'abandon</span>` : '';
+                    
+                    return `
+                    <div class="border ${bgClass} rounded-xl p-4 shadow-sm flex flex-col justify-between transition">
+                        <div>
+                            <div class="flex justify-between items-start mb-2 cursor-pointer hover:bg-slate-50 p-1 -m-1 rounded transition" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                                <div>
+                                    <h3 class="font-bold text-lg text-slate-800 leading-tight">${c.clientNom} ${alertAbandon}</h3>
+                                    <span class="text-[10px] text-slate-500 block mb-1">${c.clientTel}</span>
+                                    ${statusBadge}
+                                </div>
+                                <div class="text-right flex flex-col items-end">
+                                    <span class="font-heading text-xl text-slate-800 block leading-none">${c.total.toFixed(2)} €</span>
+                                    ${c.paiement ? `<span class="text-[9px] text-slate-600 mt-1 bg-white border border-slate-200 shadow-sm px-1.5 py-0.5 rounded">Esp: ${c.paiement.especes.toFixed(2)}€ | Chq: ${c.paiement.cheque.toFixed(2)}€</span>` : ''}
+                                    <i class="fa-solid fa-chevron-down text-slate-300 mt-2 text-sm"></i>
+                                </div>
+                            </div>
+                            <div class="hidden bg-slate-50/50 rounded-lg p-3 border border-slate-100 mb-4 mt-2">
+                                ${itemsHtml}
+                            </div>
+                        </div>
+                        <button onclick="app.openActionModal('${c.id}')" class="w-full mt-2 py-2.5 rounded-lg text-sm font-bold shadow-sm transition ${isTerminated ? 'bg-white border border-slate-300 text-slate-600 hover:bg-slate-50' : 'bg-slate-800 hover:bg-slate-700 text-white'}">
+                            ${isTerminated ? 'Modifier le statut' : '<i class="fa-solid fa-bolt text-amber-400 mr-1"></i> Gérer & Encaisser'}
+                        </button>
+                    </div>`;
+                }).join('');
+                
+                container.innerHTML = retraitsHtml || '<div class="col-span-full text-sm text-slate-400 italic">Aucune commande trouvée.</div>';
+
+                const histContainer = document.getElementById('coord-historique-list');
+                if (histContainer) {
+                    const histHtml = commandesIncidents.map(c => `
+                        <tr class="border-b hover:bg-slate-50">
+                            <td class="p-3 text-slate-500">${c.date || '-'}</td>
+                            <td class="p-3 font-bold text-slate-800">${c.clientNom}</td>
+                            <td class="p-3 text-slate-600">${c.clientTel}</td>
+                            <td class="p-3 font-heading text-lg">${c.total.toFixed(2)} €</td>
+                            <td class="p-3"><span class="bg-red-50 text-red-700 text-xs px-2 py-1 rounded font-bold border border-red-200">${c.statut}</span></td>
+                        </tr>
+                    `).join('');
+                    histContainer.innerHTML = histHtml || '<tr><td colspan="5" class="p-4 text-center text-slate-400 italic">Aucun incident enregistré.</td></tr>';
+                }
+            },
+            renderMatrice: function() {
+                let caProducteurs = {};
+                let totalEspeces = 0;
+                let totalCheques = 0;
+                let listeCheques = [];
+
+                db.acteurs.filter(a => a.role === 'Producteur' || a.role === 'Coordinateur').forEach(a => {
+                    caProducteurs[a.id] = 0;
+                });
+
+                db.commandes.forEach(c => {
+                    if(c.paiement) {
+                        totalEspeces += c.paiement.especes;
+                        totalCheques += c.paiement.cheque;
+                        if(c.paiement.cheque > 0) listeCheques.push({ client: c.clientNom, montant: c.paiement.cheque });
+                        
+                        c.items.forEach(item => {
+                            const p = db.produits.find(x => x.id === item.prodId);
+                            if(!p) return;
+                            const f = db.familles.find(x => x.id === p.familleId);
+                            if(f && caProducteurs[f.producteurId] !== undefined) {
+                                caProducteurs[f.producteurId] += (item.qte * item.prixTTC);
+                            }
+                        });
+                    }
+                });
+
+                document.getElementById('caisse-especes').textContent = totalEspeces.toFixed(2) + " €";
+                document.getElementById('caisse-cheques').textContent = totalCheques.toFixed(2) + " €";
+                document.getElementById('caisse-nb-cheques').textContent = listeCheques.length;
+                document.getElementById('caisse-total').textContent = (totalEspeces + totalCheques).toFixed(2) + " €";
+
+                let coordId = this.currentUser.id;
+                let totalDedommagementVersCoord = 0;
+                
+                let reversements = [];
+                db.acteurs.forEach(a => {
+                    if(caProducteurs[a.id] !== undefined) {
+                        const ca = caProducteurs[a.id];
+                        let dedommagement = 0;
+                        
+                        if(a.id !== coordId) {
+                            dedommagement = a.dedommagement || 0;
+                            if(dedommagement > ca) dedommagement = ca;
+                            totalDedommagementVersCoord += dedommagement;
+                        }
+                        let aReverser = ca - dedommagement;
+                        if(a.id === coordId) {
+                            aReverser = ca + totalDedommagementVersCoord;
+                        }
+                        
+                        if(aReverser > 0) {
+                            reversements.push({ id: a.id, nom: a.nom, net: aReverser, estCoord: (a.id === coordId), ca: ca, dedom: dedommagement });
+                        }
+                    }
+                });
+
+                reversements.sort((a,b) => b.net - a.net);
+                listeCheques.sort((a,b) => b.montant - a.montant);
+
+                let allocations = {}; 
+                reversements.forEach(r => allocations[r.id] = { cheques: [], especes: 0, reste: r.net });
+
+                listeCheques.forEach(chq => {
+                    let cible = reversements.find(r => allocations[r.id].reste >= (chq.montant - 0.01));
+                    if(cible) {
+                        allocations[cible.id].cheques.push(chq);
+                        allocations[cible.id].reste -= chq.montant;
+                    } else {
+                        let coord = reversements.find(r => r.estCoord);
+                        if(coord) {
+                            allocations[coord.id].cheques.push(chq);
+                            allocations[coord.id].reste -= chq.montant;
+                        }
+                    }
+                });
+
+                reversements.forEach(r => {
+                    if(allocations[r.id].reste > 0) {
+                        allocations[r.id].especes = allocations[r.id].reste;
+                    }
+                });
+
+                let matriceHtml = '';
+                reversements.forEach(r => {
+                    let alloc = allocations[r.id];
+                    let envChequesHtml = alloc.cheques.map(c => `<span class="bg-blue-100 text-blue-800 border border-blue-200 px-2 py-0.5 rounded text-[10px]"><i class="fa-solid fa-money-check"></i> Chèque ${c.client} (${c.montant.toFixed(2)}€)</span>`).join(' ');
+                    let envEspecesHtml = alloc.especes > 0 ? `<span class="bg-green-100 text-green-800 border border-green-200 px-2 py-0.5 rounded text-[10px]"><i class="fa-solid fa-money-bill"></i> + ${alloc.especes.toFixed(2)}€ Espèces</span>` : '';
+                    
+                    let warningHtml = alloc.reste < -0.01 ? `<div class="text-xs text-red-500 mt-1"><i class="fa-solid fa-triangle-exclamation"></i> Attention : Chèque trop gros. Doit rendre ${Math.abs(alloc.reste).toFixed(2)}€ à la caisse.</div>` : '';
+
+                    matriceHtml += `
+                        <tr class="border-b hover:bg-slate-50/50">
+                            <td class="p-3 font-medium text-slate-800">${r.nom} ${r.estCoord ? '<span class="text-[9px] bg-purple-100 text-purple-700 px-1 rounded ml-1 uppercase">Coord.</span>' : ''}</td>
+                            <td class="p-3 text-right text-slate-500">${r.ca.toFixed(2)} €</td>
+                            <td class="p-3 text-right text-red-400 text-xs">${!r.estCoord ? '- ' + r.dedom.toFixed(2) + ' €' : '<span class="text-green-500">+ ' + totalDedommagementVersCoord.toFixed(2) + ' €</span>'}</td>
+                            <td class="p-3 text-right font-heading text-lg text-slate-800 bg-slate-50/50">${r.net.toFixed(2)} €</td>
+                            <td class="p-3 border-l-2 border-l-slate-200 bg-slate-50">
+                                <div class="flex flex-wrap gap-1 items-center">
+                                    ${envChequesHtml} ${envEspecesHtml}
+                                    ${(alloc.cheques.length === 0 && alloc.especes === 0) ? '<span class="text-xs text-slate-400">Rien à reverser</span>' : ''}
+                                </div>
+                                ${warningHtml}
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                document.getElementById('coord-matrice-list').innerHTML = matriceHtml || '<tr><td colspan="5" class="p-4 text-center text-slate-400 italic">Aucune vente encaissée pour le moment.</td></tr>';
+            }
+        };
+
+        window.onload = () => app.init();
+    </script>
+</body>
+</html>
