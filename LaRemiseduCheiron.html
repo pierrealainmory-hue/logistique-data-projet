@@ -349,6 +349,11 @@
                 <button onclick="app.closeModal('modal-login')" class="text-slate-300 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <form onsubmit="app.handleLogin(event)" class="p-6 space-y-4">
+                
+                <div class="bg-slate-100 rounded p-3 text-xs text-slate-600 mb-4 hidden" id="login-status-msg">
+                    <!-- Messages de statut et erreurs API injectés ici -->
+                </div>
+
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">Identifiant (Votre prénom en majuscules)</label>
                     <input type="text" id="login-id" required class="w-full border rounded p-2 text-sm uppercase focus:border-dixgreen focus:outline-none" placeholder="Ex: FLORIAN, CATHERINE...">
@@ -673,21 +678,28 @@
             init: async function() {
                 populateIconSelect();
                 
-                // Afficher un message de chargement
                 this.showToast("Synchronisation avec la base de données en cours...", "amber");
+                const loader = document.getElementById('api-loader');
+                if(loader) loader.classList.remove('hidden');
                 
                 try {
                     // Ajout d'un horodatage (cache-buster) pour forcer le navigateur à télécharger les nouvelles données
                     const response = await fetch(API_URL + "?action=getData&t=" + new Date().getTime());
-                    const data = await response.json();
+                    const textData = await response.text(); 
+                    
+                    // Vérification si Google a renvoyé une page HTML (Erreur de droits d'accès au lieu du JSON)
+                    if (textData.trim().startsWith("<") || textData.includes("<!DOCTYPE html>")) {
+                        throw new Error("Droits d'accès insuffisants. Le script Google n'est pas réglé sur 'Tout le monde'.");
+                    }
+                    
+                    const data = JSON.parse(textData);
                     
                     if (data && data.error) {
-                        this.showToast("Erreur Google Sheet : " + data.error, "error");
-                        console.error("API Error:", data.error);
+                        throw new Error("Erreur serveur Apps Script : " + data.error);
                     }
                     
                     // Remplacer les données locales par celles du Google Sheet si elles existent
-                    if(data && Object.keys(data).length > 0 && !data.error) {
+                    if(data && Object.keys(data).length > 0) {
                         // IMPORTANT : On utilise !== undefined pour écraser les données même si vos onglets sont VIDES !
                         if(data.acteurs !== undefined) db.acteurs = data.acteurs;
                         if(data.familles !== undefined) db.familles = data.familles;
@@ -696,18 +708,35 @@
                         
                         // Fusion robuste des paramètres pour éviter les "undefined"
                         if(data.settings) {
-                            if(data.settings.dateRetrait) db.settings.dateRetrait = data.settings.dateRetrait;
-                            if(data.settings.dateLimite) db.settings.dateLimite = data.settings.dateLimite;
+                            if(data.settings.dateRetrait !== undefined) db.settings.dateRetrait = data.settings.dateRetrait;
+                            if(data.settings.dateLimite !== undefined) db.settings.dateLimite = data.settings.dateLimite;
                             if(data.settings.hasOwnProperty('driveOuvert')) {
                                 db.settings.driveOuvert = (data.settings.driveOuvert === true || String(data.settings.driveOuvert).toLowerCase() === "true");
                             }
                         }
                         
                         this.showToast("Synchronisation réussie !", "success");
+                        
+                        // Message de validation dans la modale
+                        const msg = document.getElementById('login-status-msg');
+                        if (msg) {
+                            msg.innerHTML = "<span class='text-green-600 font-bold'><i class='fa-solid fa-wifi'></i> Connecté à la base de données.</span>";
+                            msg.classList.remove('hidden');
+                        }
                     }
                 } catch(e) {
-                    console.warn("Erreur de connexion API", e);
-                    this.showToast("Erreur de connexion avec le serveur PNR.", "error");
+                    console.error("Erreur de connexion API:", e);
+                    let messageErreur = e.message;
+                    
+                    const msg = document.getElementById('login-status-msg');
+                    if (msg) {
+                        msg.innerHTML = `<span class='text-red-600 font-bold'><i class='fa-solid fa-triangle-exclamation'></i> ERREUR CRITIQUE : ${messageErreur}<br><br>👉 Avez-vous bien mis "Qui a accès : Tout le monde" lors du déploiement ?</span>`;
+                        msg.classList.remove('hidden');
+                    }
+                    
+                    this.showToast("Échec de la synchronisation.", "error");
+                } finally {
+                    if(loader) loader.classList.add('hidden');
                 }
 
                 this.updateGlobalUI();
