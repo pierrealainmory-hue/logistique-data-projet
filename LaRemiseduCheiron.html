@@ -285,21 +285,14 @@
                     </div>
                 </div>
 
-                <!-- Tab Historique & Incidents -->
+                <!-- Tab Historique -->
                 <div id="coord-tab-historique" class="hidden">
                     <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                         <table class="w-full text-sm text-left">
                             <thead class="bg-slate-50 text-slate-500 uppercase text-xs">
-                                <tr>
-                                    <th class="p-3 border-b">Date</th>
-                                    <th class="p-3 border-b">Client</th>
-                                    <th class="p-3 border-b">Contact</th>
-                                    <th class="p-3 border-b">Total</th>
-                                    <th class="p-3 border-b">Statut / Incident</th>
-                                </tr>
+                                <tr><th class="p-3 border-b">Date</th><th class="p-3 border-b">Client</th><th class="p-3 border-b">Contact</th><th class="p-3 border-b">Total</th><th class="p-3 border-b">Statut</th></tr>
                             </thead>
                             <tbody id="coord-historique-list">
-                                <!-- Généré par JS -->
                             </tbody>
                         </table>
                     </div>
@@ -313,7 +306,7 @@
                         </button>
                     </div>
                 </div>
-
+                
                 <!-- Tab Parametres Drive -->
                 <div id="coord-tab-parametres" class="hidden">
                     <div class="bg-slate-50 border border-slate-200 rounded-lg p-5 max-w-2xl mx-auto">
@@ -714,7 +707,16 @@
                         if(data.familles && data.familles.length > 0) db.familles = data.familles;
                         if(data.produits && data.produits.length > 0) db.produits = data.produits;
                         if(data.commandes && data.commandes.length > 0) db.commandes = data.commandes;
-                        if(data.settings) db.settings = data.settings;
+                        
+                        // Fusion robuste des paramètres pour éviter les "undefined" si l'onglet SETTINGS de Google Sheets n'est pas rempli correctement
+                        if(data.settings && Object.keys(data.settings).length > 0) {
+                            db.settings.dateRetrait = data.settings.dateRetrait !== undefined ? data.settings.dateRetrait : db.settings.dateRetrait;
+                            db.settings.dateLimite = data.settings.dateLimite !== undefined ? data.settings.dateLimite : db.settings.dateLimite;
+                            if (data.settings.hasOwnProperty('driveOuvert')) {
+                                db.settings.driveOuvert = (data.settings.driveOuvert === true || String(data.settings.driveOuvert).toLowerCase() === "true");
+                            }
+                        }
+                        
                         this.showToast("Synchronisation réussie !", "success");
                     }
                 } catch(e) {
@@ -768,18 +770,18 @@
             },
 
             updateGlobalUI: function() {
-                document.getElementById('ui-date-retrait').textContent = db.settings.dateRetrait;
-                document.getElementById('ui-date-limite').textContent = db.settings.dateLimite;
+                document.getElementById('ui-date-retrait').textContent = db.settings.dateRetrait || "...";
+                document.getElementById('ui-date-limite').textContent = db.settings.dateLimite || "...";
                 
                 const adminRetrait = document.getElementById('admin-date-retrait');
-                if(adminRetrait) adminRetrait.value = db.settings.dateRetrait;
+                if(adminRetrait) adminRetrait.value = db.settings.dateRetrait || "";
                 const adminLimite = document.getElementById('admin-date-limite');
-                if(adminLimite) adminLimite.value = db.settings.dateLimite;
+                if(adminLimite) adminLimite.value = db.settings.dateLimite || "";
                 const adminOuvert = document.getElementById('admin-drive-open');
-                if(adminOuvert) adminOuvert.checked = db.settings.driveOuvert;
+                if(adminOuvert) adminOuvert.checked = (db.settings.driveOuvert === true || String(db.settings.driveOuvert).toLowerCase() === "true");
                 
                 const orderBtnContainer = document.getElementById('client-order-btn-container');
-                if(db.settings.driveOuvert) {
+                if(db.settings.driveOuvert === true || String(db.settings.driveOuvert).toLowerCase() === "true") {
                     orderBtnContainer.innerHTML = `<button onclick="app.submitOrder()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 rounded-lg shadow transition text-sm">Valider la réservation</button>`;
                 } else {
                     orderBtnContainer.innerHTML = `<button disabled class="w-full bg-slate-300 text-slate-500 font-bold py-2.5 rounded-lg text-sm cursor-not-allowed border border-slate-400 shadow-inner">Les commandes sont clôturées</button>`;
@@ -1569,7 +1571,11 @@
                 const c = db.commandes.find(x => x.id === this.cmdToAction);
                 c.statut = nouveauStatut;
                 if(nouveauStatut !== 'Mis de côté (Payé)') c.paiement = null;
-                if (nouveauStatut === 'Abandonné / Revendu') c.clientTel = "*** Supprimé (RGPD) ***";
+                
+                // SUPPRESSION RGPD DU NUMÉRO EN CAS D'ABANDON
+                if (nouveauStatut === 'Abandonné / Revendu') {
+                    c.clientTel = "*** Supprimé (RGPD) ***";
+                }
                 
                 this.apiSync('upsertCommande', c);
                 this.closeModal('modal-action-cmd');
@@ -1639,13 +1645,15 @@
                 const esp = parseFloat(document.getElementById('pay-especes').value) || 0;
                 const chq = parseFloat(document.getElementById('pay-cheques').value) || 0;
                 
+                // En cas de rendu monnaie, on ajuste les espèces réellement encaissées
                 const diff = (esp + chq) - this.cmdToPay.total;
                 let espRéel = esp;
-                if(diff > 0) espRéel = esp - diff; 
+                if(diff > 0) espRéel = esp - diff; // On rend la monnaie en espèces
 
                 this.cmdToPay.statut = this.targetPaiementStatut || "Payé & Récupéré";
                 this.cmdToPay.paiement = { especes: espRéel, cheque: chq };
                 
+                // SUPPRESSION RGPD DU NUMÉRO UNE FOIS LA COMMANDE RÉCUPÉRÉE
                 if(this.cmdToPay.statut === "Payé & Récupéré") {
                     this.cmdToPay.clientTel = "*** Supprimé (RGPD) ***";
                 }
