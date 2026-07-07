@@ -285,20 +285,6 @@
                     </div>
                 </div>
 
-                <!-- Tab Historique -->
-                <div id="coord-tab-historique" class="hidden">
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                        <table class="w-full text-sm text-left">
-                            <thead class="bg-slate-50 text-slate-500 uppercase text-xs">
-                                <tr><th class="p-3 border-b">Date</th><th class="p-3 border-b">Client</th><th class="p-3 border-b">Contact</th><th class="p-3 border-b">Total</th><th class="p-3 border-b">Statut</th></tr>
-                            </thead>
-                            <tbody id="coord-historique-list">
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="mt-4 text-right">
-                        <button onclick="app.archiverCommandes()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded shadow transition text-sm">Archiver le cycle complet</button>
-                    </div>
                 <!-- Tab Historique & Incidents -->
                 <div id="coord-tab-historique" class="hidden">
                     <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -325,6 +311,33 @@
                         <button onclick="app.archiverCommandes()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-6 rounded shadow transition text-sm whitespace-nowrap">
                             Tout archiver & Nettoyer
                         </button>
+                    </div>
+                </div>
+
+                <!-- Tab Parametres Drive -->
+                <div id="coord-tab-parametres" class="hidden">
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-5 max-w-2xl mx-auto">
+                        <h3 class="font-bold text-slate-700 mb-4 uppercase text-xs tracking-wider border-b pb-2"><i class="fa-regular fa-calendar-check text-dixgreen"></i> Prochaine Distribution</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 mb-1">Texte Date & Heure de Retrait</label>
+                                <input type="text" id="admin-date-retrait" class="w-full border rounded p-2 text-sm focus:border-dixgreen focus:outline-none" placeholder="Ex: Vendredi 26 Juin (17h-19h)">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 mb-1">Texte Date Limite de Commande</label>
+                                <input type="text" id="admin-date-limite" class="w-full border rounded p-2 text-sm focus:border-dixgreen focus:outline-none" placeholder="Ex: Jeudi 25 Juin à 20h00">
+                            </div>
+                            <div class="flex items-center gap-3 pt-2">
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                  <input type="checkbox" id="admin-drive-open" class="sr-only peer">
+                                  <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-dixgreen"></div>
+                                  <span class="ml-3 text-sm font-bold text-slate-700">Autoriser les clients à commander</span>
+                                </label>
+                            </div>
+                            <button onclick="app.saveAdminSettings()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 rounded shadow transition text-sm mt-2">
+                                Enregistrer la configuration
+                            </button>
+                        </div>
                     </div>
                 </div>
 
