@@ -677,11 +677,17 @@
                 this.showToast("Synchronisation avec la base de données en cours...", "amber");
                 
                 try {
-                    const response = await fetch(API_URL + "?action=getData");
+                    // Ajout d'un horodatage (cache-buster) pour forcer le navigateur à télécharger les nouvelles données
+                    const response = await fetch(API_URL + "?action=getData&t=" + new Date().getTime());
                     const data = await response.json();
                     
+                    if (data && data.error) {
+                        this.showToast("Erreur Google Sheet : " + data.error, "error");
+                        console.error("API Error:", data.error);
+                    }
+                    
                     // Remplacer les données locales par celles du Google Sheet si elles existent
-                    if(data && Object.keys(data).length > 0) {
+                    if(data && Object.keys(data).length > 0 && !data.error) {
                         // IMPORTANT : On utilise !== undefined pour écraser les données même si vos onglets sont VIDES !
                         if(data.acteurs !== undefined) db.acteurs = data.acteurs;
                         if(data.familles !== undefined) db.familles = data.familles;
@@ -689,10 +695,10 @@
                         if(data.commandes !== undefined) db.commandes = data.commandes;
                         
                         // Fusion robuste des paramètres pour éviter les "undefined"
-                        if(data.settings && Object.keys(data.settings).length > 0) {
-                            db.settings.dateRetrait = data.settings.dateRetrait !== undefined ? data.settings.dateRetrait : db.settings.dateRetrait;
-                            db.settings.dateLimite = data.settings.dateLimite !== undefined ? data.settings.dateLimite : db.settings.dateLimite;
-                            if (data.settings.hasOwnProperty('driveOuvert')) {
+                        if(data.settings) {
+                            if(data.settings.dateRetrait) db.settings.dateRetrait = data.settings.dateRetrait;
+                            if(data.settings.dateLimite) db.settings.dateLimite = data.settings.dateLimite;
+                            if(data.settings.hasOwnProperty('driveOuvert')) {
                                 db.settings.driveOuvert = (data.settings.driveOuvert === true || String(data.settings.driveOuvert).toLowerCase() === "true");
                             }
                         }
@@ -754,9 +760,9 @@
                 document.getElementById('ui-date-limite').textContent = db.settings.dateLimite || "...";
                 
                 const adminRetrait = document.getElementById('admin-date-retrait');
-                if(adminRetrait) adminRetrait.value = db.settings.dateRetrait || "";
+                if(adminRetrait) adminRetrait.value = db.settings.dateRetrait !== "Non défini" ? db.settings.dateRetrait : "";
                 const adminLimite = document.getElementById('admin-date-limite');
-                if(adminLimite) adminLimite.value = db.settings.dateLimite || "";
+                if(adminLimite) adminLimite.value = db.settings.dateLimite !== "Non défini" ? db.settings.dateLimite : "";
                 const adminOuvert = document.getElementById('admin-drive-open');
                 if(adminOuvert) adminOuvert.checked = (db.settings.driveOuvert === true || String(db.settings.driveOuvert).toLowerCase() === "true");
                 
