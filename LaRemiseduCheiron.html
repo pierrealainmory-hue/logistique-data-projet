@@ -425,6 +425,15 @@
                         <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" value="apiculture" class="accent-blue-600 prof-metier-cb"> Apiculture</label>
                         <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" value="cereales" class="accent-blue-600 prof-metier-cb"> Céréales / Pain</label>
                     </div>
+
+                    <div class="mt-3 border-t border-blue-200 pt-3">
+                        <label class="block text-[10px] font-bold text-blue-800 mb-1">Autres spécialités (Ajoutez-les librement)</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="prof-metier-autre" class="flex-grow border border-blue-300 rounded p-1.5 text-xs focus:outline-none focus:border-blue-500" placeholder="Ex: Héliciculture, Safran...">
+                            <button type="button" onclick="app.addCustomMetier()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-xs font-bold transition"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                        <div id="prof-metiers-custom-list" class="flex flex-wrap gap-2 mt-2"></div>
+                    </div>
                 </div>
 
                 <div class="space-y-3">
@@ -592,22 +601,29 @@
         // ==========================================
         const catalogueType = {
             'maraichage': [
-                { f: "Légumes de Saison", icon: "tomate", p: [ {n: "Tomates Rondes (kg)", p: 3.5}, {n: "Courgettes Vertes (kg)", p: 2.8} ] },
-                { f: "Verdure & Aromates", icon: "salade", p: [ {n: "Salade Batavia (pièce)", p: 1.2}, {n: "Persil (botte)", p: 1.0} ] }
+                { f: "Légumes d'Été", icon: "tomate", p: [ {n: "Tomates Rondes (kg)", p: 3.5}, {n: "Tomates Cœur de Bœuf (kg)", p: 4.5}, {n: "Tomates Cerises (250g)", p: 2.5}, {n: "Courgettes Vertes (kg)", p: 2.8}, {n: "Aubergines (kg)", p: 3.2}, {n: "Poivrons Rouges (kg)", p: 3.8}, {n: "Concombres (pièce)", p: 1.5}, {n: "Melon (pièce)", p: 3.0} ] },
+                { f: "Légumes d'Hiver", icon: "chou", p: [ {n: "Poireaux (botte)", p: 2.5}, {n: "Carottes (kg)", p: 2.2}, {n: "Pommes de Terre (kg)", p: 1.8}, {n: "Chou Vert (pièce)", p: 2.5}, {n: "Chou-fleur (pièce)", p: 3.0}, {n: "Blettes (botte)", p: 2.0}, {n: "Courge Butternut (kg)", p: 2.5} ] },
+                { f: "Verdure & Aromates", icon: "salade", p: [ {n: "Salade Batavia (pièce)", p: 1.2}, {n: "Salade Laitue (pièce)", p: 1.2}, {n: "Épinards (500g)", p: 3.0}, {n: "Radis (botte)", p: 1.5}, {n: "Persil (botte)", p: 1.0}, {n: "Basilic (botte)", p: 1.5}, {n: "Ail (tête)", p: 0.8}, {n: "Oignons jaunes (kg)", p: 2.0} ] }
             ],
             'elevage_viande': [
-                { f: "Bœuf", icon: "roti_boeuf", p: [ {n: "Steak Haché (x2)", p: 5.0}, {n: "Daube (kg)", p: 15.0} ] },
-                { f: "Volailles", icon: "poulet_entier", p: [ {n: "Poulet Entier (pièce)", p: 15.0}, {n: "Œufs Plein Air (x6)", p: 2.5} ] }
+                { f: "Bœuf - Pièces à griller", icon: "roti_boeuf", p: [ {n: "Steak Haché (x2)", p: 5.0}, {n: "Entrecôte (pièce)", p: 12.0}, {n: "Faux-filet (pièce)", p: 9.0}, {n: "Bavette (pièce)", p: 8.0}, {n: "Tournedos (pièce)", p: 7.5} ] },
+                { f: "Bœuf - Plats mijotés", icon: "pot_au_feu", p: [ {n: "Bourguignon (kg)", p: 14.0}, {n: "Pot-au-feu (kg)", p: 12.0}, {n: "Daube (kg)", p: 15.0}, {n: "Rôti de Bœuf (kg)", p: 22.0} ] },
+                { f: "Veau", icon: "roti_veau", p: [ {n: "Escalope de Veau (x2)", p: 8.0}, {n: "Blanquette de Veau (kg)", p: 16.0}, {n: "Rôti de Veau (kg)", p: 24.0}, {n: "Côtes de Veau (x2)", p: 10.0} ] },
+                { f: "Porc & Charcuterie", icon: "roti_porc", p: [ {n: "Côtes de Porc (x2)", p: 6.0}, {n: "Saucisses de Toulouse (x4)", p: 5.5}, {n: "Rôti de Porc (kg)", p: 14.0}, {n: "Pâté de Campagne (200g)", p: 4.5} ] },
+                { f: "Volailles", icon: "poulet_entier", p: [ {n: "Poulet Entier (pièce)", p: 15.0}, {n: "Filets de Poulet (x2)", p: 7.0}, {n: "Cuisses de Poulet (x2)", p: 6.0}, {n: "Œufs Plein Air (x6)", p: 2.5}, {n: "Œufs Plein Air (x12)", p: 4.5} ] }
             ],
             'elevage_lait': [
-                { f: "Fromages de Chèvre", icon: "buche_chevre", p: [ {n: "Crottin Frais", p: 2.2}, {n: "Bûche Cendrée", p: 4.5} ] },
-                { f: "Produits Laitiers Vache", icon: "meule", p: [ {n: "Tomme de Montagne", p: 5.5}, {n: "Beurre Doux (250g)", p: 3.5} ] }
+                { f: "Fromages de Chèvre", icon: "buche_chevre", p: [ {n: "Crottin Frais", p: 2.2}, {n: "Crottin Demi-Sec", p: 2.5}, {n: "Bûche Cendrée", p: 4.5}, {n: "Bûche Blanche", p: 4.0}, {n: "Tome de Chèvre", p: 6.0} ] },
+                { f: "Produits Laitiers Vache", icon: "meule", p: [ {n: "Tomme de Montagne (portion)", p: 5.5}, {n: "Lait Cru (1L)", p: 1.5}, {n: "Beurre Doux (250g)", p: 3.5}, {n: "Crème Fraîche (pot)", p: 2.8} ] },
+                { f: "Yaourts & Desserts", icon: "yaourt", p: [ {n: "Yaourt Nature (x4)", p: 2.5}, {n: "Yaourt Fruits (x4)", p: 3.0}, {n: "Faisselle", p: 3.5}, {n: "Fromage Blanc (pot)", p: 2.5} ] }
             ],
             'apiculture': [
-                { f: "Miels de Cru", icon: "miel", p: [ {n: "Miel de Lavande (500g)", p: 9.0}, {n: "Miel de Montagne (500g)", p: 8.5} ] }
+                { f: "Miels de Cru", icon: "miel", p: [ {n: "Miel de Lavande (500g)", p: 9.0}, {n: "Miel de Châtaignier (500g)", p: 8.5}, {n: "Miel d'Acacia (500g)", p: 9.0}, {n: "Miel de Garrigue (500g)", p: 8.0}, {n: "Miel de Montagne (500g)", p: 8.5}, {n: "Miel de Romarin (500g)", p: 9.0} ] },
+                { f: "Produits de la Ruche", icon: "bocal", p: [ {n: "Gelée Royale", p: 12.0}, {n: "Pollen (pot)", p: 15.0}, {n: "Propolis", p: 10.0}, {n: "Pain d'épices (pièce)", p: 6.5}, {n: "Nougat au Miel (pièce)", p: 5.5} ] }
             ],
             'cereales': [
-                { f: "Pains au Levain", icon: "pain", p: [ {n: "Pain de Campagne (500g)", p: 3.5}, {n: "Baguette Tradition", p: 1.2} ] }
+                { f: "Pains au Levain", icon: "pain", p: [ {n: "Pain de Campagne (500g)", p: 3.5}, {n: "Pain Complet (500g)", p: 4.0}, {n: "Pain aux Graines (500g)", p: 4.5}, {n: "Pain de Seigle (500g)", p: 4.0}, {n: "Baguette Tradition", p: 1.2} ] },
+                { f: "Farines & Épicerie", icon: "farine", p: [ {n: "Farine de Blé T65 (1kg)", p: 2.0}, {n: "Farine de Blé T80 (1kg)", p: 2.2}, {n: "Farine de Petit Épeautre (1kg)", p: 3.5}, {n: "Pâtes artisanales (500g)", p: 4.0} ] }
             ]
         };
 
@@ -845,6 +861,16 @@
                     cb.checked = metiers.includes(cb.value);
                 });
                 
+                const customMetiers = metiers.filter(m => !this.metierLabels[m]);
+                const customListEl = document.getElementById('prof-metiers-custom-list');
+                if (customListEl) {
+                    customListEl.innerHTML = customMetiers.map(m => `
+                        <span class="bg-blue-100 text-blue-800 text-[10px] px-2 py-1 rounded flex items-center gap-1 custom-metier-tag" data-value="${m}">
+                            ${m} <i class="fa-solid fa-xmark cursor-pointer hover:text-red-500" onclick="this.parentElement.remove()"></i>
+                        </span>
+                    `).join('');
+                }
+                
                 document.getElementById('prof-nom').value = this.currentUser.nom || '';
                 document.getElementById('prof-contact').value = this.currentUser.contact || '';
                 document.getElementById('prof-adresse').value = this.currentUser.adresse || '';
@@ -854,10 +880,27 @@
                 this.openModal('modal-profil');
             },
 
+            addCustomMetier: function() {
+                const input = document.getElementById('prof-metier-autre');
+                const val = input.value.trim();
+                if(!val) return;
+                const customListEl = document.getElementById('prof-metiers-custom-list');
+                const span = document.createElement('span');
+                span.className = "bg-blue-100 text-blue-800 text-[10px] px-2 py-1 rounded flex items-center gap-1 custom-metier-tag";
+                span.dataset.value = val;
+                span.innerHTML = `${val} <i class="fa-solid fa-xmark cursor-pointer hover:text-red-500" onclick="this.parentElement.remove()"></i>`;
+                customListEl.appendChild(span);
+                input.value = '';
+            },
+
             saveProfil: function(e) {
                 e.preventDefault();
                 let selectedMetiers = [];
                 document.querySelectorAll('.prof-metier-cb:checked').forEach(cb => selectedMetiers.push(cb.value));
+                
+                document.querySelectorAll('.custom-metier-tag').forEach(tag => {
+                    selectedMetiers.push(tag.dataset.value);
+                });
                 
                 this.currentUser.nom = document.getElementById('prof-nom').value;
                 this.currentUser.contact = document.getElementById('prof-contact').value;
@@ -938,24 +981,22 @@
                 const catContainer = document.getElementById('client-catalogue-list');
                 const titleCat = document.getElementById('client-catalog-title');
                 
-                const producteursActifs = db.acteurs.filter(a => a.role === 'Producteur' || a.role === 'Coordinateur');
+                // On filtre pour n'afficher QUE les producteurs
+                const producteursActifs = db.acteurs.filter(a => a.role === 'Producteur');
                 
                 // Colonne Gauche
                 prodContainer.innerHTML = producteursActifs.map(a => {
                     const hasActive = db.familles.some(f => f.producteurId === a.id && f.enLigne);
-                    if(!hasActive && a.role !== 'Coordinateur') return ''; // Cache si vide sauf si coordinateur pour tests
+                    if(!hasActive) return ''; // Cache totalement si le producteur n'a aucune famille en ligne
                     
                     const isSelected = this.selectedClientProdId === a.id;
                     let iconHtml = '';
-                    if(a.role === 'Coordinateur') {
-                        iconHtml = '<i class="fa-solid fa-basket-shopping text-amber-500 text-lg"></i>';
+                    
+                    let primaryMetier = (a.metiers || []).find(m => app.metierIcons[m]);
+                    if(primaryMetier) {
+                        iconHtml = `<div class="w-6 h-6 text-dixgreen p-0.5">${getIcon(app.metierIcons[primaryMetier])}</div>`;
                     } else {
-                        let primaryMetier = (a.metiers || []).find(m => app.metierIcons[m]);
-                        if(primaryMetier) {
-                            iconHtml = `<div class="w-6 h-6 text-dixgreen p-0.5">${getIcon(app.metierIcons[primaryMetier])}</div>`;
-                        } else {
-                            iconHtml = '<i class="fa-solid fa-tractor text-dixgreen text-lg"></i>';
-                        }
+                        iconHtml = '<i class="fa-solid fa-tractor text-dixgreen text-lg"></i>';
                     }
                     
                     return `
