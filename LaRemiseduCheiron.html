@@ -714,6 +714,27 @@
             },
             
             // Fonction de synchronisation en arrière-plan vers Google Sheets
+            apiSync: function(actionName, payload) {
+                if(!API_URL || API_URL === "URL_DE_VOTRE_SCRIPT_DEPLOYE_ICI") return;
+                fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: actionName, data: payload })
+                }).catch(err => console.error("Erreur Sync:", err));
+            },
+
+            handleLogin: function(e) {
+                e.preventDefault();
+                const idInput = document.getElementById('login-id').value.trim().toUpperCase();
+                const mdpInput = document.getElementById('login-mdp').value;
+                
+                if (idInput === 'ADMIN' && mdpInput === 'PNR2026') {
+                    this.isAdmin = true;
+                    this.closeModal('modal-login');
+                    this.switchRole('ADMIN');
+                    this.showToast('Connecté en tant que Super-Admin.');
+                    return;
+                }
 
                 const user = db.acteurs.find(a => a.id === idInput && a.mdp === mdpInput && a.statut === 'Validé');
                 if (user) {
