@@ -1929,16 +1929,17 @@
                 reversements.forEach(r => allocations[r.id] = { cheques: [], especes: 0, reste: r.net });
 
                 listeCheques.forEach(chq => {
+                    // On cherche d'abord quelqu'un qui a un reste suffisant pour absorber le chèque
                     let cible = reversements.find(r => allocations[r.id].reste >= (chq.montant - 0.01));
+                    
+                    // Si personne ne peut l'absorber, on force l'attribution à celui qui a le plus gros reste à l'instant T
+                    if(!cible && reversements.length > 0) {
+                        cible = [...reversements].sort((a,b) => allocations[b.id].reste - allocations[a.id].reste)[0];
+                    }
+
                     if(cible) {
                         allocations[cible.id].cheques.push(chq);
                         allocations[cible.id].reste -= chq.montant;
-                    } else {
-                        let coord = reversements.find(r => r.estCoord);
-                        if(coord) {
-                            allocations[coord.id].cheques.push(chq);
-                            allocations[coord.id].reste -= chq.montant;
-                        }
                     }
                 });
 
