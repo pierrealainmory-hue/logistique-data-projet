@@ -26,17 +26,14 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-routing-machine/3.2.12/leaflet-routing-machine.min.js"></script>
-
     <style>
         body { background-color: #f8fafc; }
         .view-section { display: none; opacity: 0; transition: opacity 0.3s ease-in-out; }
         .view-section.active { display: block; opacity: 1; }
-
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
         /* Timeline Frise */
         .timeline-container { display: flex; overflow-x: auto; padding-bottom: 10px; gap: 15px; }
         .timeline-month { min-width: 280px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;}
@@ -45,7 +42,6 @@
         .timeline-item { font-size: 12px; padding: 6px 8px; border-radius: 4px; border-left: 4px solid; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05);}
         .timeline-item.gisement { border-left-color: #549e39; }
         .timeline-item.tournee { border-left-color: #3b82f6; }
-
         #transport-map { height: 350px; width: 100%; border-radius: 8px; z-index: 10; }
         
         /* Cacher la boite de texte OSRM native qui pollue la carte */
@@ -56,6 +52,9 @@
         
         /* Loading Overlay API */
         #api-loader { transition: opacity 0.3s; backdrop-filter: blur(8px); z-index: 10000; }
+        
+        /* Tag de contraintes logistiques */
+        .log-tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; font-weight: 600;}
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col">
@@ -135,6 +134,19 @@
                 <p class="text-slate-500">Validation des inscriptions et indicateurs globaux du territoire.</p>
             </div>
 
+            <!-- Tableau des Alertes (Nouveau) -->
+            <div class="bg-red-50 rounded-xl shadow-md border border-red-200 p-5 mb-6 hidden" id="admin-alert-section">
+                <h3 class="font-bold text-red-800 mb-4 uppercase text-sm tracking-wider"><i class="fa-solid fa-triangle-exclamation"></i> Signalements & Litiges en cours</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-xs text-red-600 uppercase bg-red-100/50">
+                            <tr><th>Date</th><th>Auteur</th><th>Navette (Réf)</th><th>Motif</th><th>Action</th></tr>
+                        </thead>
+                        <tbody id="admin-alerts-list" class="divide-y divide-red-100"></tbody>
+                    </table>
+                </div>
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-4 border-l-4 border-l-purple-500">
                     <div class="text-slate-500 text-xs font-bold uppercase">Volume Total Échangé</div>
@@ -195,7 +207,7 @@
         <!-- ================= VUE MARAÎCHER ================= -->
         <section id="view-maraicher" class="view-section">
             <div class="mb-6">
-                <h2 class="font-heading text-3xl text-dixdark">Gisements disponibles</h2>
+                <h2 class="font-heading text-3xl text-dixdark">Bourse aux Matières</h2>
                 <p class="text-slate-500">Posez vos intentions et validez le prix final "rendu champ".</p>
             </div>
 
@@ -296,7 +308,6 @@
                 </div>
             </div>
         </section>
-
     </main>
 
     <!-- Modale Ajout Gisement (Éleveur) -->
@@ -373,8 +384,8 @@
     </div>
 
     <!-- Modale Inscription -->
-    <div id="modal-inscription" class="fixed inset-0 bg-slate-900/60 modal-overlay hidden flex items-center justify-center p-4 z-[9999]">
-        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
+    <div id="modal-inscription" class="fixed inset-0 bg-slate-900/60 modal-overlay hidden flex items-center justify-center p-4 z-[9999] overflow-y-auto">
+        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden my-auto">
             <div class="bg-slate-800 text-white px-6 py-4 flex justify-between items-center">
                 <h3 class="font-heading text-lg">Rejoindre le Réseau</h3>
                 <button onclick="app.toggleModal('modal-inscription'); document.getElementById('modal-login').classList.remove('hidden');" class="text-slate-300 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
@@ -390,7 +401,6 @@
                     <input type="text" id="ins-ville" required class="w-full border rounded p-2 text-sm" placeholder="Ex: Coursegoules">
                 </div>
                 
-                <!-- NOUVEAUX CHAMPS ANNUAIRE -->
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-600 mb-1">Téléphone</label>
@@ -404,12 +414,39 @@
 
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">Rôle Principal</label>
-                    <select id="ins-role" required class="w-full border rounded p-2 text-sm">
+                    <select id="ins-role" required class="w-full border rounded p-2 text-sm" onchange="app.toggleLogisticsFields('ins')">
+                        <option value="">Sélectionnez un rôle...</option>
                         <option value="Éleveur">Producteur / Éleveur</option>
                         <option value="Maraîcher">Maraîcher / Acheteur</option>
                         <option value="Transporteur">Transporteur Logistique</option>
                     </select>
                 </div>
+
+                <!-- Champs Logistiques Dynamiques -->
+                <div id="ins-logistics-section" class="hidden bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3">
+                    <h4 class="text-xs font-bold text-slate-700 uppercase border-b pb-1">Contraintes Logistiques</h4>
+                    
+                    <div id="ins-acces-field" class="hidden">
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Accès Poids Lourd (Tonnage max)</label>
+                        <select id="ins-acces" class="w-full border rounded p-2 text-sm">
+                            <option value="Sans limite">Sans limite d'accès</option>
+                            <option value="Max 26T">Limité à 26 Tonnes (Camion porteur)</option>
+                            <option value="Max 19T">Limité à 19 Tonnes (Petit porteur)</option>
+                            <option value="Max 3.5T">Limité à 3.5 Tonnes (Utilitaire léger)</option>
+                        </select>
+                    </div>
+
+                    <div id="ins-chargeur-field" class="hidden">
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Matériel de chargement sur place</label>
+                        <select id="ins-chargeur" class="w-full border rounded p-2 text-sm">
+                            <option value="Télescopique (>4m)">Télescopique (Bras > 4m)</option>
+                            <option value="Tracteur chargeur frontal">Tracteur avec chargeur frontal</option>
+                            <option value="Mini-chargeur">Bobcat / Mini-chargeur</option>
+                            <option value="Aucun">Aucun matériel (Prestation requise)</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div class="pt-4 border-t flex justify-end gap-2">
                     <button type="button" onclick="app.toggleModal('modal-inscription'); document.getElementById('modal-login').classList.remove('hidden');" class="px-4 py-2 rounded text-slate-600 text-sm">Annuler</button>
                     <button type="submit" class="bg-slate-800 text-white px-4 py-2 rounded text-sm font-bold shadow">Soumettre</button>
@@ -448,6 +485,96 @@
         </div>
     </div>
 
+    <!-- Modale Edition Acteur -->
+    <div id="modal-edit-acteur" class="fixed inset-0 bg-slate-900/60 modal-overlay hidden flex items-center justify-center p-4 z-[9999] overflow-y-auto">
+        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden my-auto">
+            <div class="bg-dixdark text-white px-6 py-4 flex justify-between items-center">
+                <h3 class="font-heading text-lg">Modifier la fiche annuaire</h3>
+                <button onclick="app.toggleModal('modal-edit-acteur')" class="text-slate-300 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="app.apiSaveActeurEdit(event)" class="p-6 space-y-4">
+                <input type="hidden" id="edit-id">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Nom de la Structure</label>
+                    <input type="text" id="edit-nom" required class="w-full border rounded p-2 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Commune</label>
+                    <input type="text" id="edit-ville" required class="w-full border rounded p-2 text-sm">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Téléphone</label>
+                        <input type="tel" id="edit-tel" class="w-full border rounded p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Email</label>
+                        <input type="email" id="edit-email" class="w-full border rounded p-2 text-sm">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Rôle Principal</label>
+                    <select id="edit-role" required class="w-full border rounded p-2 text-sm" onchange="app.toggleLogisticsFields('edit')">
+                        <option value="Éleveur">Producteur / Éleveur</option>
+                        <option value="Maraîcher">Maraîcher / Acheteur</option>
+                        <option value="Transporteur">Transporteur Logistique</option>
+                    </select>
+                </div>
+                
+                <!-- Champs Logistiques Dynamiques (Edit) -->
+                <div id="edit-logistics-section" class="hidden bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3">
+                    <div id="edit-acces-field" class="hidden">
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Accès Poids Lourd (Tonnage max)</label>
+                        <select id="edit-acces" class="w-full border rounded p-2 text-sm">
+                            <option value="Sans limite">Sans limite d'accès</option>
+                            <option value="Max 26T">Limité à 26 Tonnes</option>
+                            <option value="Max 19T">Limité à 19 Tonnes</option>
+                            <option value="Max 3.5T">Limité à 3.5 Tonnes</option>
+                        </select>
+                    </div>
+                    <div id="edit-chargeur-field" class="hidden">
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Matériel de chargement sur place</label>
+                        <select id="edit-chargeur" class="w-full border rounded p-2 text-sm">
+                            <option value="Télescopique (>4m)">Télescopique (Bras > 4m)</option>
+                            <option value="Tracteur chargeur frontal">Tracteur chargeur frontal</option>
+                            <option value="Mini-chargeur">Bobcat / Mini-chargeur</option>
+                            <option value="Aucun">Aucun matériel (Prestation requise)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t flex justify-between items-center mt-4">
+                    <button type="button" onclick="app.apiDeleteActeur()" class="text-red-500 hover:text-red-700 text-xs font-bold px-2 py-1"><i class="fa-solid fa-trash"></i> Supprimer ce compte</button>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="app.toggleModal('modal-edit-acteur')" class="px-4 py-2 rounded text-slate-600 text-sm">Annuler</button>
+                        <button type="submit" class="bg-dixgreen text-white px-4 py-2 rounded text-sm font-bold shadow">Enregistrer</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modale Signalement Litige -->
+    <div id="modal-litige" class="fixed inset-0 bg-slate-900/60 modal-overlay hidden flex items-center justify-center p-4 z-[9999]">
+        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6">
+            <h3 class="font-heading text-xl text-red-600 mb-2"><i class="fa-solid fa-triangle-exclamation"></i> Signaler un problème</h3>
+            <p class="text-xs text-slate-600 mb-4">L'équipe de coordination du PNR sera alertée et vous contactera pour trouver une solution.</p>
+            <input type="hidden" id="litige-navette-id">
+            <select id="litige-motif" class="w-full border rounded p-2 text-sm mb-4">
+                <option value="Camion non venu">Le transporteur ne s'est pas présenté</option>
+                <option value="Qualité matière">Problème sur la qualité/quantité de la matière</option>
+                <option value="Problème accès/manutention">Difficulté d'accès ou de manutention</option>
+                <option value="Autre">Autre problème (précisé par téléphone)</option>
+            </select>
+            <div class="flex justify-end gap-2">
+                <button onclick="app.toggleModal('modal-litige')" class="px-4 py-2 text-sm text-slate-600">Annuler</button>
+                <button onclick="app.apiSignalerLitige()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm font-bold shadow-sm transition">Envoyer l'alerte</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="bg-white border-t border-slate-200 mt-auto py-3 relative z-40">
         <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
@@ -471,20 +598,20 @@
         // --- BASE DE DONNÉES LOCALE (Secours + Identifiants mis à jour + Annuaire) ---
         let db = {
             acteurs: [
-                { id: "A001", nom: "La Chèvrerie des Grêles", role: "Éleveur", ville: "Gréolières", lat: 43.796, lng: 6.943, statut: "Validé", mdp: "PNR2026", tel: "06 12 34 56 78", email: "contact@greles.fr" },
-                { id: "A002", nom: "La Ferme de Jal", role: "Éleveur", ville: "Cipières", lat: 43.784, lng: 6.955, statut: "Validé", mdp: "PNR2026", tel: "06 23 45 67 89", email: "ferme.jal@mail.com" },
-                { id: "A003", nom: "Biquetterie des Bois", role: "Éleveur", ville: "Vence", lat: 43.722, lng: 7.111, statut: "Validé", mdp: "PNR2026", tel: "06 34 56 78 90", email: "biquetterie@bois.fr" },
-                { id: "A004", nom: "Pra de Mondin", role: "Maraîcher", ville: "Courmes", lat: 43.742, lng: 7.008, statut: "Validé", mdp: "PNR2026", tel: "06 45 67 89 01", email: "florian@prademondin.com" },
-                { id: "A005", nom: "ZEAM", role: "Maraîcher", ville: "Gréolières", lat: 43.796, lng: 6.943, statut: "Validé", mdp: "PNR2026", tel: "06 56 78 90 12", email: "aurelien@zeam.fr" },
-                { id: "A006", nom: "Mélanie Castel", role: "Maraîcher", ville: "Collongues", lat: 43.874, lng: 6.868, statut: "Validé", mdp: "PNR2026", tel: "06 67 89 01 23", email: "melanie.castel@mail.fr" },
-                { id: "A007", nom: "Les Petits Loups", role: "Maraîcher", ville: "Le Bar-sur-Loup", lat: 43.701, lng: 6.988, statut: "Validé", mdp: "PNR2026", tel: "06 78 90 12 34", email: "lespetitsloups@agri.fr" },
-                { id: "A008", nom: "Jérôme Destaure", role: "Transporteur", ville: "Aiglun", lat: 43.860, lng: 6.915, statut: "Validé", mdp: "PNR2026", tel: "06 89 01 23 45", email: "jerome.transport@pro.fr" }
+                { id: "A001", nom: "La Chèvrerie des Grêles", role: "Éleveur", ville: "Gréolières", lat: 43.796, lng: 6.943, statut: "Validé", mdp: "PNR2026", tel: "06 12 34 56 78", email: "contact@greles.fr", acces: "Max 19T", chargeur: "Tracteur chargeur frontal" },
+                { id: "A002", nom: "La Ferme de Jal", role: "Éleveur", ville: "Cipières", lat: 43.784, lng: 6.955, statut: "Validé", mdp: "PNR2026", tel: "06 23 45 67 89", email: "ferme.jal@mail.com", acces: "Sans limite", chargeur: "Télescopique (>4m)" },
+                { id: "A003", nom: "Biquetterie des Bois", role: "Éleveur", ville: "Vence", lat: 43.722, lng: 7.111, statut: "Validé", mdp: "PNR2026", tel: "06 34 56 78 90", email: "biquetterie@bois.fr", acces: "Max 3.5T", chargeur: "Aucun" },
+                { id: "A004", nom: "Pra de Mondin", role: "Maraîcher", ville: "Courmes", lat: 43.742, lng: 7.008, statut: "Validé", mdp: "PNR2026", tel: "06 45 67 89 01", email: "florian@prademondin.com", acces: "Max 26T" },
+                { id: "A005", nom: "ZEAM", role: "Maraîcher", ville: "Gréolières", lat: 43.796, lng: 6.943, statut: "Validé", mdp: "PNR2026", tel: "06 56 78 90 12", email: "aurelien@zeam.fr", acces: "Sans limite" },
+                { id: "A006", nom: "Mélanie Castel", role: "Maraîcher", ville: "Collongues", lat: 43.874, lng: 6.868, statut: "Validé", mdp: "PNR2026", tel: "06 67 89 01 23", email: "melanie.castel@mail.fr", acces: "Max 19T" },
+                { id: "A007", nom: "Les Petits Loups", role: "Maraîcher", ville: "Le Bar-sur-Loup", lat: 43.701, lng: 6.988, statut: "Validé", mdp: "PNR2026", tel: "06 78 90 12 34", email: "lespetitsloups@agri.fr", acces: "Max 19T" },
+                { id: "A008", nom: "Jérôme Destaure", role: "Transporteur", ville: "Aiglun", lat: 43.860, lng: 6.915, statut: "Validé", mdp: "PNR2026", tel: "06 89 01 23 45", email: "jerome.transport@pro.fr", acces: "Max 26T" } // Pour un trsp, acces sert de "capacité max"
             ],
             offres: [],
             tournees: [],
             intentions: [],
-            builderTournee: [],
-            activeTourneeId: null
+            alertes: [],
+            activeTourneeId: null,
         };
 
         const app = {
@@ -512,6 +639,7 @@
                         if(data.offres) db.offres = data.offres;
                         if(data.intentions) db.intentions = data.intentions;
                         if(data.tournees) db.tournees = data.tournees;
+                        if(data.alertes) db.alertes = data.alertes;
                         
                         document.getElementById('api-loader').classList.add('hidden');
                         
@@ -591,8 +719,8 @@
 
             // MÉTHODE D'UPSERT INVISIBLE (Envoie les données au Sheet en tâche de fond)
             apiSync: function(actionName, dataObject) {
-                if (!API_URL || API_URL.trim() === "" || API_URL === "URL_DE_VOTRE_SCRIPT_DEPLOYE_ICI") return; 
-                
+                if (!API_URL || API_URL.trim() === "" || API_URL === "URL_DE_VOTRE_SCRIPT_DEPLOYE_ICI") return;
+                 
                 fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Bypass CORS
@@ -612,6 +740,33 @@
                     let yyyy_mm = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
                     let label = `${months[d.getMonth()]} ${d.getFullYear()}`;
                     select.innerHTML += `<option value="${yyyy_mm}">${label}</option>`;
+                }
+            },
+
+            // GESTION UI DES CHAMPS LOGISTIQUES (ANNUAIRE)
+            toggleLogisticsFields: function(prefix) {
+                const role = document.getElementById(`${prefix}-role`).value;
+                const section = document.getElementById(`${prefix}-logistics-section`);
+                const fAcces = document.getElementById(`${prefix}-acces-field`);
+                const fCharg = document.getElementById(`${prefix}-chargeur-field`);
+                
+                if (!role) {
+                    section.classList.add('hidden');
+                    return;
+                }
+                
+                section.classList.remove('hidden');
+                fAcces.classList.remove('hidden');
+                
+                if (role === 'Éleveur') {
+                    fCharg.classList.remove('hidden');
+                    document.querySelector(`#${prefix}-acces-field label`).textContent = "Accès Poids Lourd (Tonnage max de la route)";
+                } else if (role === 'Maraîcher') {
+                    fCharg.classList.add('hidden');
+                    document.querySelector(`#${prefix}-acces-field label`).textContent = "Accès Poids Lourd (Tonnage max de la route)";
+                } else if (role === 'Transporteur') {
+                    fCharg.classList.add('hidden');
+                    document.querySelector(`#${prefix}-acces-field label`).textContent = "Capacité du camion (Tonnes)";
                 }
             },
 
@@ -696,7 +851,6 @@
                 });
 
                 const sortedMonths = Object.keys(monthsData).sort();
-
                 if(sortedMonths.length === 0) {
                     container.innerHTML = '<div class="text-sm text-slate-400 italic py-4">Aucune activité pour le moment.</div>';
                     return;
@@ -764,9 +918,23 @@
                     let roleColor = a.role === 'Éleveur' ? 'text-purple-600 bg-purple-100 border-purple-200' : (a.role === 'Maraîcher' ? 'text-blue-600 bg-blue-100 border-blue-200' : 'text-amber-600 bg-amber-100 border-amber-200');
                     let icon = a.role === 'Éleveur' ? 'fa-cow' : (a.role === 'Maraîcher' ? 'fa-leaf' : 'fa-truck');
                     
+                    let editBtn = '';
+                    if (this.isAdmin) {
+                        editBtn = `<button onclick="app.openEditActeurModal('${a.id}')" class="absolute top-2 right-2 bg-slate-100 hover:bg-slate-200 text-slate-600 p-1.5 rounded-full text-xs shadow-sm transition"><i class="fa-solid fa-pen"></i></button>`;
+                    }
+
+                    // Tags logistiques
+                    let tagsHtml = '';
+                    if(a.acces && a.acces !== "Sans limite") tagsHtml += `<span class="log-tag bg-slate-100 text-slate-600 border border-slate-200" title="Accès/Capacité"><i class="fa-solid fa-road-barrier"></i> ${a.acces}</span>`;
+                    if(a.role === 'Éleveur') {
+                        if(a.chargeur === "Aucun") tagsHtml += `<span class="log-tag bg-red-100 text-red-700 border border-red-200" title="Matériel de chargement"><i class="fa-solid fa-ban"></i> Pas de chargeur</span>`;
+                        else if(a.chargeur) tagsHtml += `<span class="log-tag bg-green-100 text-green-700 border border-green-200" title="Matériel de chargement"><i class="fa-solid fa-tractor"></i> ${a.chargeur}</span>`;
+                    }
+
                     return `
-                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col h-full hover:shadow-md transition">
-                        <div class="flex justify-between items-start mb-4">
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col h-full hover:shadow-md transition relative">
+                        ${editBtn}
+                        <div class="flex justify-between items-start mb-4 pr-6">
                             <h3 class="font-bold text-slate-800 text-lg leading-tight pr-2">${a.nom}</h3>
                             <span class="${roleColor} border w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-sm text-lg"><i class="fa-solid ${icon}"></i></span>
                         </div>
@@ -776,9 +944,76 @@
                         
                         <div class="mt-auto pt-3 border-t border-slate-100">
                             <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">${a.role}</span>
+                            <div class="mt-2 flex flex-wrap gap-1">${tagsHtml}</div>
                         </div>
                     </div>`;
                 }).join('');
+            },
+
+            // MÉTHODES D'ÉDITION DE L'ANNUAIRE
+            openEditActeurModal: function(id) {
+                const acteur = db.acteurs.find(a => a.id === id);
+                if (!acteur) return;
+                
+                document.getElementById('edit-id').value = acteur.id;
+                document.getElementById('edit-nom').value = acteur.nom || '';
+                document.getElementById('edit-ville').value = acteur.ville || '';
+                document.getElementById('edit-tel').value = acteur.tel || '';
+                document.getElementById('edit-email').value = acteur.email || '';
+                document.getElementById('edit-role').value = acteur.role || 'Éleveur';
+                
+                this.toggleLogisticsFields('edit');
+                
+                if(acteur.acces) document.getElementById('edit-acces').value = acteur.acces;
+                if(acteur.chargeur) document.getElementById('edit-chargeur').value = acteur.chargeur;
+                
+                this.toggleModal('modal-edit-acteur');
+            },
+
+            apiSaveActeurEdit: function(e) {
+                e.preventDefault();
+                const id = document.getElementById('edit-id').value;
+                const acteur = db.acteurs.find(a => a.id === id);
+                if (!acteur) return;
+
+                acteur.nom = document.getElementById('edit-nom').value;
+                acteur.ville = document.getElementById('edit-ville').value;
+                acteur.tel = document.getElementById('edit-tel').value;
+                acteur.email = document.getElementById('edit-email').value;
+                acteur.role = document.getElementById('edit-role').value;
+                acteur.acces = document.getElementById('edit-acces').value;
+                if (acteur.role === 'Éleveur') acteur.chargeur = document.getElementById('edit-chargeur').value;
+
+                this.apiSync('upsertActeur', acteur);
+                
+                this.toggleModal('modal-edit-acteur');
+                this.showToast('La fiche annuaire a été mise à jour avec succès.');
+                this.renderAnnuaire();
+                
+                // Mettre à jour l'affichage de l'admin si on y est
+                if (this.currentUser.role === 'Super-Admin') {
+                    this.renderAdmin();
+                }
+            },
+
+            apiDeleteActeur: function() {
+                const id = document.getElementById('edit-id').value;
+                if (!confirm('Êtes-vous sûr de vouloir supprimer définitivement cet acteur du réseau ? Cette action est irréversible.')) return;
+                
+                // Supprimer localement
+                db.acteurs = db.acteurs.filter(a => a.id !== id);
+                
+                // Envoi de l'instruction au serveur
+                const dummyActeur = { id: id, statut: 'Supprimé' };
+                this.apiSync('upsertActeur', dummyActeur);
+                
+                this.toggleModal('modal-edit-acteur');
+                this.showToast('Le compte a été retiré du réseau.', 'error');
+                this.renderAnnuaire();
+                
+                if (this.currentUser.role === 'Super-Admin') {
+                    this.renderAdmin();
+                }
             },
 
             // ================= VUE ADMIN =================
@@ -787,6 +1022,26 @@
                 document.getElementById('kpi-volume').textContent = totalT + " T";
                 document.getElementById('kpi-souffrance').textContent = db.intentions.filter(i => i.statut === "En attente transport").length;
                 document.getElementById('kpi-tournees').textContent = db.tournees.filter(t => t.statut === "Validée").length;
+
+                // Section Alertes (Affichée uniquement si alertes actives)
+                const alertList = document.getElementById('admin-alerts-list');
+                const alertSection = document.getElementById('admin-alert-section');
+                if (db.alertes && db.alertes.length > 0) {
+                    alertSection.classList.remove('hidden');
+                    alertList.innerHTML = db.alertes.map(al => {
+                        const auteur = db.acteurs.find(a => a.id === al.auteurId);
+                        return `
+                        <tr class="hover:bg-red-50">
+                            <td class="py-2 px-2 text-xs whitespace-nowrap">${al.date}</td>
+                            <td class="py-2 px-2 font-bold">${auteur ? auteur.nom : 'Inconnu'}</td>
+                            <td class="py-2 px-2 text-xs">${al.navetteId}</td>
+                            <td class="py-2 px-2">${al.motif}</td>
+                            <td class="py-2 px-2"><button onclick="app.showToast('Fonction de résolution à venir')" class="bg-red-200 text-red-800 px-2 py-1 rounded text-[10px] font-bold">Traiter</button></td>
+                        </tr>`;
+                    }).join('');
+                } else {
+                    alertSection.classList.add('hidden');
+                }
 
                 const tbody = document.getElementById('admin-validation-list');
                 const enAttente = db.acteurs.filter(a => a.statut === "En attente");
@@ -832,6 +1087,8 @@
                     tel: document.getElementById('ins-tel').value,
                     email: document.getElementById('ins-email').value,
                     statut: "En attente",
+                    acces: document.getElementById('ins-acces').value,
+                    chargeur: document.getElementById('ins-role').value === 'Éleveur' ? document.getElementById('ins-chargeur').value : null,
                     lat: 43.7, lng: 6.9,
                     mdp: "PNR2026"
                 };
@@ -950,9 +1207,10 @@
                         const offre = db.offres.find(o => o.id === i.offreId);
                         if(!offre) return '';
                         
+                        // Si le transporteur a proposé un prix et qu'on attend la validation
                         if (i.tourneeId && i.validationMaraicher === 'pending') {
                             const tournee = db.tournees.find(t => t.id === i.tourneeId);
-                            const partTransportStr = (tournee.prixTotal / tournee.navettes.length).toFixed(2);
+                            const partTransportStr = (i.prixPropose || (tournee.prixTotal / tournee.navettes.length)).toFixed(2);
                             const partTransportNum = parseFloat(partTransportStr);
                             const prixMatiereTotale = parseFloat(offre.prix) * 10;
                             const coutTotal = prixMatiereTotale + partTransportNum;
@@ -985,19 +1243,20 @@
                         
                         if (i.tourneeId && i.validationMaraicher !== 'pending') {
                             const tournee = db.tournees.find(t => t.id === i.tourneeId);
+                            // On affiche le prix validé (soit maxAccepte, soit propose, soit calcul en dur)
+                            const prixFinal = i.prixMaxAccepte || i.prixPropose || (tournee.prixTotal / tournee.navettes.length);
                             if (tournee && tournee.prixTotal) {
-                                const partTransport = (tournee.prixTotal / tournee.navettes.length);
                                 const prixMatiere = parseFloat(offre.prix) * 10;
-                                const prixTonneLivre = ((prixMatiere + partTransport) / 10).toFixed(2);
+                                const prixTonneLivre = ((prixMatiere + prixFinal) / 10).toFixed(2);
                                 detailsPrix = `<div class="text-[10px] text-slate-600 mt-2 bg-slate-50 p-1.5 rounded border border-slate-100">Coût Rendu Champ : <strong class="text-blue-600">${prixTonneLivre} €/T</strong> <span class="text-slate-400">(${tournee.date})</span></div>`;
                             }
                         }
 
                         if(i.statut === 'Planifié') badgeHtml = `<span class="bg-blue-100 text-blue-800 text-[10px] px-2 py-1 rounded font-bold"><i class="fa-solid fa-truck-fast"></i> Validé</span>`;
-                        else if(i.statut === 'Acceptée par maraîcher') badgeHtml = `<span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-1 rounded font-bold"><i class="fa-solid fa-check"></i> Accepté (Attente Trsp)</span>`;
+                        else if(i.statut.includes('Acceptée par maraîcher')) badgeHtml = `<span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-1 rounded font-bold"><i class="fa-solid fa-check"></i> ${i.statut.includes('Auto') ? 'Auto-Accepté (Prix ↓)' : 'Accepté'} (Attente Trsp)</span>`;
                         else badgeHtml = `<span class="bg-amber-50 text-amber-700 text-[10px] px-2 py-1 rounded border border-amber-200">Recherche camion</span>`;
 
-                        let alertBtn = (i.statut === 'Planifié' || i.statut === 'Acceptée par maraîcher') ? `<button onclick="app.showToast('Signalement envoyé au PNR.', 'error')" class="mt-2 w-full text-[10px] text-red-500 border border-red-200 rounded py-1 hover:bg-red-50 transition">Signaler un problème au PNR</button>` : '';
+                        let alertBtn = (i.statut === 'Planifié' || i.statut.includes('Acceptée')) ? `<button onclick="app.preparerLitige('${i.id}')" class="mt-2 w-full text-[10px] text-red-500 border border-red-200 rounded py-1 hover:bg-red-50 transition"><i class="fa-solid fa-triangle-exclamation"></i> Signaler un problème (PNR)</button>` : '';
 
                         return `
                         <div class="bg-white border border-slate-200 rounded p-3 shadow-sm">
@@ -1013,11 +1272,21 @@
                         </div>`;
                     }).join('');
                 }
+
                 document.getElementById('view-maraicher').classList.add('active');
             },
 
             apiCreateIntention: function(offreId) {
-                const newInt = { id: `INT-${Math.floor(Math.random() * 900)+100}`, offreId: offreId, maraicherId: this.currentUser.id, statut: "En attente transport", tourneeId: null, validationMaraicher: null };
+                const newInt = { 
+                    id: `INT-${Math.floor(Math.random() * 900)+100}`, 
+                    offreId: offreId, 
+                    maraicherId: this.currentUser.id, 
+                    statut: "En attente transport", 
+                    tourneeId: null, 
+                    validationMaraicher: null,
+                    prixMaxAccepte: null, // Plafond d'acceptation automatique
+                    prixPropose: null 
+                };
                 db.intentions.push(newInt);
                 
                 const off = db.offres.find(o => o.id === offreId);
@@ -1033,8 +1302,9 @@
             apiRepondreProposition: function(intId, rep) {
                 const i = db.intentions.find(x => x.id === intId);
                 i.validationMaraicher = rep;
+
                 if(rep === 'rejected') {
-                    i.statut = "En attente transport"; i.tourneeId = null; i.validationMaraicher = null;
+                    i.statut = "En attente transport"; i.tourneeId = null; i.validationMaraicher = null; i.prixPropose = null; i.prixMaxAccepte = null;
                     const tournee = db.tournees.find(t=> t.navettes.includes(intId));
                     if(tournee) {
                         tournee.navettes = tournee.navettes.filter(id => id !== intId);
@@ -1043,10 +1313,37 @@
                     this.showToast('Refus transmis au transporteur.', 'error');
                 } else {
                     i.statut = "Acceptée par maraîcher";
+                    i.prixMaxAccepte = i.prixPropose; // On enregistre ce prix comme le plafond maximum toléré
                     this.showToast('Prix accepté ! En attente validation finale du chauffeur.');
                 }
                 this.apiSync('upsertIntention', i);
                 this.renderMaraicher();
+            },
+
+            // ================= GESTION DES LITIGES =================
+            preparerLitige: function(navetteId) {
+                document.getElementById('litige-navette-id').value = navetteId;
+                this.toggleModal('modal-litige');
+            },
+
+            apiSignalerLitige: function() {
+                const navetteId = document.getElementById('litige-navette-id').value;
+                const motif = document.getElementById('litige-motif').value;
+                
+                const nouvelleAlerte = {
+                    id: `ALRT-${Math.floor(Math.random()*1000)}`,
+                    navetteId: navetteId,
+                    auteurId: this.currentUser.id,
+                    motif: motif,
+                    date: new Date().toLocaleDateString('fr-FR')
+                };
+                
+                if(!db.alertes) db.alertes = [];
+                db.alertes.push(nouvelleAlerte);
+                this.apiSync('upsertAlerte', nouvelleAlerte); // Requiert d'adapter le backend si réel
+                
+                this.toggleModal('modal-litige');
+                this.showToast('Votre signalement a bien été transmis à la coordination du PNR.', 'amber');
             },
 
             // ================= VUE TRANSPORTEUR AVEC CARTE =================
@@ -1104,6 +1401,7 @@
                             btnProposer.innerText = "Proposer ce prix";
                             btnProposer.className = "w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded font-bold shadow-sm transition text-sm";
                             btnProposer.onclick = () => app.apiProposeTournee();
+
                             buildContainer.innerHTML = activeT.navettes.map(nid => {
                                 const i = db.intentions.find(x => x.id === nid);
                                 const o = db.offres.find(x => x.id === i.offreId);
@@ -1151,6 +1449,7 @@
                         btnProposer.className = "w-full bg-green-100 text-green-800 py-2.5 rounded font-bold shadow-sm text-sm border border-green-300";
                         btnProposer.innerText = "Tournée Organisée";
                         btnProposer.onclick = null;
+
                         buildContainer.innerHTML = activeT.navettes.map(nid => {
                             const i = db.intentions.find(x => x.id === nid);
                             const o = db.offres.find(x => x.id === i.offreId);
@@ -1175,6 +1474,8 @@
                         const activeT = this.activeTourneeId ? db.tournees.find(t=>t.id===this.activeTourneeId) : null;
                         const canAdd = activeT && activeT.navettes.length < activeT.capMax;
                         
+                        const warnHtml = e.chargeur === "Aucun" ? `<span class="bg-red-100 text-red-700 text-[9px] px-1 rounded block mt-1"><i class="fa-solid fa-ban"></i> Pas de chargeur sur place</span>` : '';
+                        
                         const btn = canAdd 
                             ? `<button onclick="app.addToTournee('${i.id}')" class="mt-3 w-full border border-dixgreen text-dixgreen hover:bg-green-50 py-1.5 rounded text-xs font-bold transition">+ Ajouter à la tournée</button>`
                             : `<button disabled class="mt-3 w-full bg-slate-100 border text-slate-400 py-1.5 rounded font-bold text-[10px]">Tournée pleine ou non sélectionnée</button>`;
@@ -1189,6 +1490,7 @@
                             <div class="flex items-center gap-2 text-xs text-slate-600 mt-1">
                                 <div class="w-2 h-2 rounded-full bg-purple-500"></div>
                                 <span><strong class="text-slate-700">De :</strong> ${e.ville}</span>
+                                ${warnHtml}
                             </div>
                             <div class="flex items-center gap-2 text-xs text-slate-600 mt-1">
                                 <div class="w-2 h-2 rounded-full bg-blue-500"></div>
@@ -1224,6 +1526,7 @@
             apiCreerTourneeOuverte: function() {
                 const date = document.getElementById('new-tournee-date').value;
                 const cap = parseInt(document.getElementById('new-tournee-cap').value);
+
                 if(!date || isNaN(cap)) return this.showToast('Informations invalides', 'error');
                 
                 const newT = { id: `T-${Math.floor(Math.random()*1000)}`, date: date, capMax: cap, navettes: [], transporteurId: this.currentUser.id, statut: "Ouverte", prixTotal: "" };
@@ -1241,11 +1544,12 @@
                 if(t.navettes.length >= t.capMax) return this.showToast('Capacité maximale atteinte.', 'error');
                 
                 if (t.statut === "Validée" || t.statut === "Soumise") {
-                    t.statut = "Ouverte"; // Re-open
-                    this.showToast("Tournée rouverte. Les prix seront recalculés.", "amber");
+                    t.statut = "Ouverte"; // Re-open the tour
+                    this.showToast("Tournée rouverte suite à un ajout.", "amber");
                     t.navettes.forEach(nid => {
                         let innerI = db.intentions.find(x => x.id === nid);
-                        innerI.validationMaraicher = null;
+                        // Ne reset pas validationMaraicher ni prixMaxAccepte ici !
+                        // On les garde en mémoire pour tenter l'auto-validation au prochain devis
                         innerI.statut = "En construction";
                         this.apiSync('upsertIntention', innerI);
                     });
@@ -1253,6 +1557,7 @@
                 
                 let iToUpdate = db.intentions.find(i => i.id === intId);
                 iToUpdate.statut = "En construction";
+
                 t.navettes.push(intId);
                 
                 this.apiSync('upsertTournee', t);
@@ -1268,11 +1573,11 @@
                     this.showToast("Tournée rouverte suite à un retrait.", "amber");
                     t.navettes.forEach(nid => {
                         let innerI = db.intentions.find(x => x.id === nid);
-                        innerI.validationMaraicher = null;
                         innerI.statut = "En construction";
                         this.apiSync('upsertIntention', innerI);
                     });
                 }
+
                 t.navettes = t.navettes.filter(id => id !== intId);
                 
                 let iToUpdate = db.intentions.find(i => i.id === intId);
@@ -1299,32 +1604,40 @@
                 document.getElementById('map-cost').textContent = "0 €";
 
                 if(!this.activeTourneeId) return;
+
                 const activeT = db.tournees.find(t => t.id === this.activeTourneeId);
                 if(activeT.navettes.length === 0) return;
 
-                // Construire les waypoints (Départ Transporteur -> A1 -> B1 -> A2 -> B2 -> Retour Transporteur)
+                // Construire les waypoints de manière optimisée (La Boucle)
                 let waypoints = [L.latLng(this.currentUser.lat, this.currentUser.lng)];
+                let pickUps = [];
+                let dropOffs = [];
                 
                 activeT.navettes.forEach(nid => {
                     const i = db.intentions.find(x => x.id === nid);
                     const o = db.offres.find(x => x.id === i.offreId);
                     const e = db.acteurs.find(a => a.id === o.eleveurId);
                     const m = db.acteurs.find(a => a.id === i.maraicherId);
-                    waypoints.push(L.latLng(e.lat, e.lng));
-                    waypoints.push(L.latLng(m.lat, m.lng));
+
+                    pickUps.push(L.latLng(e.lat, e.lng));
+                    dropOffs.push(L.latLng(m.lat, m.lng));
                 });
                 
+                waypoints = waypoints.concat(pickUps).concat(dropOffs);
                 waypoints.push(L.latLng(this.currentUser.lat, this.currentUser.lng));
+                const numNavettes = activeT.navettes.length;
 
-                // Custom Icon function for start/stop/waypoint
+                // Custom Icon function
                 const createCustomMarker = (i, wp, nWps) => {
                     let color = "#3b82f6"; // Blue par défaut (Transporteur)
                     let iconHtml = '<i class="fa-solid fa-truck"></i>';
                     
-                    if (i > 0 && i < nWps - 1) {
-                        // pairs = enlèvement (éleveur), impairs = livraison (maraîcher)
-                        if (i % 2 !== 0) { color = "#8b5cf6"; iconHtml = '<i class="fa-solid fa-cow"></i>'; } 
-                        else { color = "#10b981"; iconHtml = '<i class="fa-solid fa-leaf"></i>'; } 
+                    if (i > 0 && i <= numNavettes) {
+                        // Collecte (Eleveurs)
+                        color = "#8b5cf6"; iconHtml = '<i class="fa-solid fa-cow"></i>'; 
+                    } else if (i > numNavettes && i < nWps - 1) {
+                        // Livraison (Maraichers)
+                        color = "#10b981"; iconHtml = '<i class="fa-solid fa-leaf"></i>'; 
                     }
 
                     const markerIcon = L.divIcon({
@@ -1356,8 +1669,10 @@
                 this.routingControl.on('routesfound', (e) => {
                     const routes = e.routes;
                     const summary = routes[0].summary;
+                    
                     const distKm = (summary.totalDistance / 1000).toFixed(1);
-                    const timeMin = Math.round(summary.totalTime / 60);
+                    // On ajoute un temps forfaitaire au temps de route pour simuler les opérations (manutention) dans la métrique globale
+                    const timeRoute = Math.round(summary.totalTime / 60); 
                     
                     // Récupérer les variables du form
                     const pKm = parseFloat(document.getElementById('osrm-km').value) || 1.20;
@@ -1365,13 +1680,14 @@
                     const pManut = parseFloat(document.getElementById('osrm-manut').value) || 1.0;
                     
                     const costDist = distKm * pKm;
-                    const costTime = (timeMin / 60) * pHr;
+                    const costTime = (timeRoute / 60) * pHr;
                     const costManut = activeT.navettes.length * (pHr * pManut); 
                     
                     const totalCost = Math.round(costDist + costTime + costManut);
+                    const timeMinTotal = timeRoute + (activeT.navettes.length * pManut * 60);
 
                     document.getElementById('map-dist').textContent = distKm + " km";
-                    document.getElementById('map-time').textContent = timeMin + " min";
+                    document.getElementById('map-time').textContent = timeMinTotal + " min";
                     document.getElementById('map-cost').textContent = totalCost + " €";
                     
                     // Pré-remplir le prix si vide et que la tournée est ouverte
@@ -1390,16 +1706,32 @@
                 t.prixTotal = prix;
                 t.statut = "Soumise";
                 this.apiSync('upsertTournee', t);
+                
+                const partTransport = prix / t.navettes.length;
+                let autoValidatedCount = 0;
 
                 t.navettes.forEach(nid => {
                     const int = db.intentions.find(x => x.id === nid);
                     int.tourneeId = t.id; 
-                    int.statut = "Proposée par transporteur"; 
-                    int.validationMaraicher = "pending";
+                    int.prixPropose = partTransport;
+                    
+                    // Règle d'Auto-Validation
+                    if (int.prixMaxAccepte !== null && partTransport <= int.prixMaxAccepte) {
+                        int.validationMaraicher = "accepted";
+                        int.statut = "Acceptée par maraîcher (Auto)";
+                        autoValidatedCount++;
+                    } else {
+                        int.validationMaraicher = "pending";
+                        int.statut = "Proposée par transporteur"; 
+                    }
                     this.apiSync('upsertIntention', int);
                 });
                 
-                this.showToast('Devis envoyé aux maraîchers concernés !');
+                if(autoValidatedCount > 0 && autoValidatedCount === t.navettes.length) {
+                    this.showToast('Devis mis à jour. Tous les prix ont baissé, la tournée est automatiquement re-validée !');
+                } else {
+                    this.showToast(`Devis mis à jour. (${autoValidatedCount} validation(s) automatique(s) grâce à la massification).`);
+                }
                 this.renderTransporteur();
             },
 
@@ -1416,6 +1748,7 @@
                     o.statut = "🔵 Planifié";
                     this.apiSync('upsertOffre', o);
                 });
+
                 this.showToast('Tournée validée et visible sur la Place Publique !');
                 this.renderTransporteur();
             }
