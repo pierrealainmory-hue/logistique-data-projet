@@ -897,7 +897,8 @@
             adminCreateAccount: function(e) {
                 e.preventDefault();
                 const newIdInput = document.getElementById('admin-new-id').value.trim().toUpperCase();
-                const newId = newIdInput || `A${Math.floor(Math.random()*900)+100}`;
+                // FIX ID : Utilisation de Date.now() pour garantir l'unicité
+                const newId = newIdInput || `A-${Date.now()}`;
                 
                 const newActeur = {
                     id: newId,
@@ -1333,7 +1334,8 @@
                 recuText += `Merci pour votre confiance !`;
 
                 const newCmd = {
-                    id: `CMD-${Math.floor(Math.random()*1000)}`,
+                    // FIX ID : Horodatage à la milliseconde pour empêcher l'écrasement des commandes clients
+                    id: `CMD-${Date.now()}`,
                     date: new Date().toLocaleDateString('fr-FR'),
                     clientNom: nom,
                     clientTel: tel,
@@ -1414,7 +1416,8 @@
                     this.showToast("Famille modifiée avec succès.");
                 } else {
                     const newF = {
-                        id: `F-${Math.floor(Math.random()*1000)}`,
+                        // FIX ID Famille
+                        id: `F-${Date.now()}`,
                         producteurId: this.currentUser.id,
                         nom: document.getElementById('fam-nom').value,
                         iconKey: document.getElementById('fam-icon').value,
@@ -1430,7 +1433,8 @@
             },
             addProduit: function(familleId) {
                 const newP = {
-                    id: `P-${Math.floor(Math.random()*1000)}`,
+                    // FIX ID Produit
+                    id: `P-${Date.now()}`,
                     familleId: familleId,
                     nom: "Nouveau produit",
                     prixTTC: 0,
@@ -1444,7 +1448,8 @@
             duplicateProduit: function(pId) {
                 const p = db.produits.find(x => x.id === pId);
                 const newP = {
-                    id: `P-${Math.floor(Math.random()*1000)}`,
+                    // FIX ID Duplication Produit
+                    id: `P-${Date.now()}`,
                     familleId: p.familleId,
                     nom: p.nom + " (Copie)",
                     prixTTC: p.prixTTC,
@@ -1521,13 +1526,15 @@
 
                 for(let fName in familiesToAdd) {
                     const fData = familiesToAdd[fName];
-                    const fId = `F-${Math.floor(Math.random()*10000)}`;
+                    // FIX ID : Ajout d'un random en plus du timestamp car la boucle est trop rapide (même milliseconde)
+                    const fId = `F-${Date.now()}-${Math.floor(Math.random()*10000)}`;
                     const newF = { id: fId, producteurId: this.currentUser.id, nom: fName, iconKey: fData.icon, tva: 5.5, enLigne: true };
                     db.familles.push(newF);
                     this.apiSync('upsertFamille', newF);
                     
                     fData.prods.forEach(p => {
-                        const newP = { id: `P-${Math.floor(Math.random()*10000)}`, familleId: fId, nom: p.n, prixTTC: p.p, stock: 0, enLigne: true };
+                        // FIX ID Produit dans la boucle
+                        const newP = { id: `P-${Date.now()}-${Math.floor(Math.random()*10000)}`, familleId: fId, nom: p.n, prixTTC: p.p, stock: 0, enLigne: true };
                         db.produits.push(newP);
                         this.apiSync('upsertProduit', newP);
                     });
