@@ -69,6 +69,7 @@
             </button>
             <div id="user-menu" class="hidden items-center gap-3 bg-slate-800/90 backdrop-blur-sm px-3 py-1.5 rounded-full border border-slate-600 shadow-lg">
                 <span id="header-user-name" class="text-xs font-bold text-slate-200 hidden sm:inline"></span>
+                <!-- Le bouton retour admin géré par JS -->
                 <button id="btn-retour-admin" onclick="app.switchRole('ADMIN')" class="hidden bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 rounded text-[10px] font-bold transition shadow-sm items-center gap-1"><i class="fa-solid fa-shield-halved"></i> Admin</button>
                 <button onclick="app.logout()" class="text-red-400 hover:text-red-300 transition" title="Déconnexion"><i class="fa-solid fa-power-off"></i></button>
             </div>
@@ -348,7 +349,6 @@
     </main>
 
     <!-- ================= MODALES ================= -->
-
     <!-- Modale Connexion -->
     <div id="modal-login" class="fixed inset-0 bg-slate-900/80 modal-overlay hidden flex items-center justify-center p-4 z-[9999]">
         <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full overflow-hidden">
@@ -364,7 +364,7 @@
 
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">Identifiant (Votre prénom en majuscules)</label>
-                    <input type="text" id="login-id" required class="w-full border rounded p-2 text-sm uppercase focus:border-dixgreen focus:outline-none" placeholder="Ex: FLORIAN, CATHERINE...">
+                    <input type="text" id="login-id" required class="w-full border rounded p-2 text-sm uppercase focus:border-dixgreen focus:outline-none" placeholder="Identifiant">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">Mot de passe</label>
@@ -388,7 +388,7 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-600 mb-1">Identifiant (Prénom)</label>
-                        <input type="text" id="admin-new-id" required class="w-full border rounded p-2 text-sm uppercase" placeholder="Ex: JEAN">
+                        <input type="text" id="admin-new-id" required class="w-full border rounded p-2 text-sm uppercase" placeholder="Identifiant">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-600 mb-1">Mot de passe</label>
@@ -397,11 +397,11 @@
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">Nom de l'exploitation / structure</label>
-                    <input type="text" id="admin-new-nom" required class="w-full border rounded p-2 text-sm" placeholder="Ex: GAEC Les Oliviers">
+                    <input type="text" id="admin-new-nom" required class="w-full border rounded p-2 text-sm" placeholder="Nom structure">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">Prénom & Nom du Contact</label>
-                    <input type="text" id="admin-new-contact" required class="w-full border rounded p-2 text-sm" placeholder="Ex: Jean Dupont">
+                    <input type="text" id="admin-new-contact" required class="w-full border rounded p-2 text-sm" placeholder="Contact">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">Rôle Principal</label>
@@ -688,7 +688,7 @@
             ]
         };
 
-        const API_URL = "https://script.google.com/macros/s/AKfycbyzrChIKQ4as4xsUzHnL5CRr4-iX4Vwt_89sYbzbGF4oyZ2EtT_cy-pLowrMQZCCph_/exec"; 
+        const API_URL = "https://script.google.com/macros/s/AKfycbxegB2Chnlw81eH61tc00jWJHdPBf_Ntt9-zwgksiQYx5P_VjiirvSIXjKDTbSRd5Kn/exec"; 
         
         let db = {
             acteurs: [],
@@ -724,19 +724,16 @@
                 'cereales': 'Céréales & Pain'
             },
 
-            // MÉTHODE INIT MISE À JOUR POUR FETCH (GOOGLE SHEETS)
+            // MÉTHODE INIT
             init: async function() {
                 populateIconSelect();
                 
-                // Afficher un message de chargement
                 this.showToast("Synchronisation avec la base de données en cours...", "amber");
                 
                 try {
-                    // Ajout d'un horodatage (cache-buster) pour forcer le navigateur à télécharger les nouvelles données
                     const response = await fetch(API_URL + "?action=getData&t=" + new Date().getTime());
                     const textData = await response.text(); 
                     
-                    // Vérification si Google a renvoyé une page HTML (Erreur de droits d'accès au lieu du JSON)
                     if (textData.trim().startsWith("<") || textData.includes("<!DOCTYPE html>")) {
                         throw new Error("Droits d'accès insuffisants. Le script Google n'est pas réglé sur 'Tout le monde'.");
                     }
@@ -747,9 +744,8 @@
                         throw new Error("Erreur serveur Apps Script : " + data.error);
                     }
                     
-                    // Remplacer les données locales par celles du Google Sheet si elles existent
+                    // Remplacer les données locales par celles du Google Sheet
                     if(data && Object.keys(data).length > 0) {
-                        // IMPORTANT : On utilise !== undefined pour écraser les données même si vos onglets sont VIDES !
                         if(data.acteurs !== undefined) db.acteurs = data.acteurs;
                         if(data.familles !== undefined) db.familles = data.familles;
                         if(data.produits !== undefined) db.produits = data.produits;
@@ -766,7 +762,6 @@
                         
                         this.showToast("Synchronisation réussie !", "success");
                         
-                        // Message de validation dans la modale
                         const msg = document.getElementById('login-status-msg');
                         if (msg) {
                             msg.innerHTML = "<span class='text-green-600 font-bold'><i class='fa-solid fa-wifi'></i> Connecté à la base de données.</span>";
@@ -805,15 +800,15 @@
                 const idInput = document.getElementById('login-id').value.trim().toUpperCase();
                 const mdpInput = document.getElementById('login-mdp').value;
                 
-                // On cherche l'utilisateur (y compris l'ADMIN) directement et uniquement dans la base de données
+                // On cherche l'utilisateur directement et uniquement dans la base de données (zéro porte de secours)
                 const user = db.acteurs.find(a => a.id === idInput && a.mdp === mdpInput && a.statut === 'Validé');
                 
                 if (user) {
                     this.closeModal('modal-login');
                     
-                    if (user.id === 'ADMIN') {
+                    if (user.id === 'ADMIN' || user.role === 'Admin' || user.role === 'Super-Admin') {
                         this.isAdmin = true;
-                        this.switchRole('ADMIN');
+                        this.switchRole(user.id);
                         this.showToast('Connecté en tant que Super-Admin.');
                     } else {
                         this.isAdmin = false;
@@ -869,11 +864,11 @@
                     userMenu.classList.add('hidden');
                     document.getElementById('view-client').classList.add('active');
                     this.renderClientView();
-                } else if (roleId === 'ADMIN') {
-                    this.currentUser = { id: "ADMIN", nom: "Super-Admin PNR", role: "Admin" };
+                } else if (roleId === 'ADMIN' || (this.currentUser && this.currentUser.id === roleId && this.currentUser.role === 'Admin')) {
+                    this.currentUser = db.acteurs.find(a => a.id === roleId) || { id: "ADMIN", nom: "Super-Admin PNR", role: "Admin" };
                     btnLogin.classList.add('hidden');
                     userMenu.classList.remove('hidden');
-                    headerName.textContent = "Super-Admin PNR";
+                    headerName.textContent = this.currentUser.nom;
                     btnRetourAdmin.classList.add('hidden');
                     document.getElementById('view-admin').classList.add('active');
                     this.renderAdminView();
@@ -902,7 +897,7 @@
             // --- ADMIN VIEW (Gestion des Comptes) ---
             renderAdminView: function() {
                 const tbody = document.getElementById('admin-users-table');
-                const allUsers = db.acteurs.filter(a => a.id !== "ADMIN");
+                const allUsers = db.acteurs.filter(a => a.id !== "ADMIN" && a.role !== "Admin");
                 
                 if(allUsers.length === 0) {
                     tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-500 italic">Aucun utilisateur.</td></tr>`;
@@ -1365,6 +1360,7 @@
                 recuText += `(Espèces ou Chèque sans ordre)\n\n`;
                 recuText += `Merci pour votre confiance !`;
 
+                // Correction majeure anti-écrasement
                 const newCmd = {
                     id: `CMD-${Date.now()}`,
                     date: new Date().toLocaleDateString('fr-FR'),
@@ -1898,6 +1894,7 @@
                     histContainer.innerHTML = histHtml || '<tr><td colspan="5" class="p-4 text-center text-slate-400 italic">Aucun incident enregistré.</td></tr>';
                 }
             },
+            
             renderMatrice: function() {
                 let caProducteurs = {};
                 let totalEspeces = 0;
@@ -1955,6 +1952,7 @@
                     }
                 });
 
+                // Tri décroissant pour s'assurer que le plus gros vendeur est en premier
                 reversements.sort((a,b) => b.net - a.net);
                 listeCheques.sort((a,b) => b.montant - a.montant);
 
@@ -1967,10 +1965,11 @@
                         allocations[cible.id].cheques.push(chq);
                         allocations[cible.id].reste -= chq.montant;
                     } else {
-                        let coord = reversements.find(r => r.estCoord);
-                        if(coord) {
-                            allocations[coord.id].cheques.push(chq);
-                            allocations[coord.id].reste -= chq.montant;
+                        // Correction: Attribuer au plus gros vendeur et exiger un rendu monnaie
+                        let grosVendeur = reversements[0];
+                        if(grosVendeur) {
+                            allocations[grosVendeur.id].cheques.push(chq);
+                            allocations[grosVendeur.id].reste -= chq.montant;
                         }
                     }
                 });
