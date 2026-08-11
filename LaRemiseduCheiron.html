@@ -392,7 +392,7 @@
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-600 mb-1">Mot de passe</label>
-                        <input type="text" id="admin-new-mdp" class="w-full border rounded p-2 text-sm" placeholder="Défaut: PNR2026">
+                        <input type="text" id="admin-new-mdp" class="w-full border rounded p-2 text-sm" placeholder="Défaut: NouveauMDP2026">
                     </div>
                 </div>
                 <div>
@@ -599,6 +599,33 @@
         </div>
     </div>
 
+    <!-- Nouveau Footer Officiel -->
+    <footer class="bg-white border-t border-slate-200 mt-auto py-6 relative z-40">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left">
+            <!-- Logos -->
+            <div class="flex items-center gap-6 shrink-0">
+                <a href="https://www.parc-prealpesdazur.fr/" target="_blank" class="hover:opacity-80 transition" title="Visiter le site du PNR">
+                    <img src="https://www.parcs-naturels-regionaux.fr/sites/federationpnr/files/styles/contenu/public/image/parc/sans_titre.png?itok=z_7I7Msh" alt="Logo PNR" class="h-12 object-contain">
+                </a>
+                <div class="w-px h-10 bg-slate-300 hidden sm:block"></div>
+                <a href="https://www.dix-autrement.fr/" target="_blank" class="hover:opacity-80 transition" title="Visiter le site de DIX Solutions">
+                    <img src="https://github.com/pierrealainmory-hue/logistique-data-projet/blob/main/logo%20dix%20solutions.jpg?raw=true" alt="Logo DIX Solutions" class="h-12 object-contain">
+                </a>
+            </div>
+            
+            <!-- Mentions légales -->
+            <div class="text-xs text-slate-500 leading-relaxed md:text-right">
+                <strong class="text-slate-700">&copy; 2026 DIX - La Coopérative des Transitions Agricoles et Alimentaires des Territoires. Tous droits réservés.</strong><br>
+                Entreprise de l'Économie Sociale et Solidaire (ESS) - SAS au SIREN 830 937 710 | Siège social : 6 Grande Rue, 77320 Chartronges<br>
+                Plateforme expérimentale conçue et propulsée pour le PNR des Préalpes d'Azur.<br>
+                <span class="mt-1 block">
+                    Contact : <a href="mailto:contact@dix-autrement.fr" class="text-dixgreen font-bold hover:underline">contact@dix-autrement.fr</a> - 
+                    Web : <a href="https://www.dix-autrement.fr/" target="_blank" class="text-dixgreen font-bold hover:underline">www.dix-autrement.fr</a>
+                </span>
+            </div>
+        </div>
+    </footer>
+
     <script>
         // ==========================================
         // 1. DICTIONNAIRE DES ICÔNES
@@ -661,7 +688,7 @@
             ]
         };
 
-        const API_URL = "https://script.google.com/macros/s/AKfycbxegB2Chnlw81eH61tc00jWJHdPBf_Ntt9-zwgksiQYx5P_VjiirvSIXjKDTbSRd5Kn/exec"; 
+        const API_URL = "https://script.google.com/macros/s/AKfycbyzrChIKQ4as4xsUzHnL5CRr4-iX4Vwt_89sYbzbGF4oyZ2EtT_cy-pLowrMQZCCph_/exec"; 
         
         let db = {
             acteurs: [],
@@ -701,12 +728,15 @@
             init: async function() {
                 populateIconSelect();
                 
+                // Afficher un message de chargement
                 this.showToast("Synchronisation avec la base de données en cours...", "amber");
                 
                 try {
+                    // Ajout d'un horodatage (cache-buster) pour forcer le navigateur à télécharger les nouvelles données
                     const response = await fetch(API_URL + "?action=getData&t=" + new Date().getTime());
                     const textData = await response.text(); 
                     
+                    // Vérification si Google a renvoyé une page HTML (Erreur de droits d'accès au lieu du JSON)
                     if (textData.trim().startsWith("<") || textData.includes("<!DOCTYPE html>")) {
                         throw new Error("Droits d'accès insuffisants. Le script Google n'est pas réglé sur 'Tout le monde'.");
                     }
@@ -717,14 +747,15 @@
                         throw new Error("Erreur serveur Apps Script : " + data.error);
                     }
                     
-                    // Remplacer les données locales par celles du Google Sheet
+                    // Remplacer les données locales par celles du Google Sheet si elles existent
                     if(data && Object.keys(data).length > 0) {
+                        // IMPORTANT : On utilise !== undefined pour écraser les données même si vos onglets sont VIDES !
                         if(data.acteurs !== undefined) db.acteurs = data.acteurs;
                         if(data.familles !== undefined) db.familles = data.familles;
                         if(data.produits !== undefined) db.produits = data.produits;
                         if(data.commandes !== undefined) db.commandes = data.commandes;
                         
-                        // Fusion robuste des paramètres
+                        // Fusion robuste des paramètres pour éviter les "undefined"
                         if(data.settings) {
                             if(data.settings.dateRetrait !== undefined) db.settings.dateRetrait = data.settings.dateRetrait;
                             if(data.settings.dateLimite !== undefined) db.settings.dateLimite = data.settings.dateLimite;
@@ -735,6 +766,7 @@
                         
                         this.showToast("Synchronisation réussie !", "success");
                         
+                        // Message de validation dans la modale
                         const msg = document.getElementById('login-status-msg');
                         if (msg) {
                             msg.innerHTML = "<span class='text-green-600 font-bold'><i class='fa-solid fa-wifi'></i> Connecté à la base de données.</span>";
@@ -773,20 +805,21 @@
                 const idInput = document.getElementById('login-id').value.trim().toUpperCase();
                 const mdpInput = document.getElementById('login-mdp').value;
                 
-                if (idInput === 'ADMIN' && mdpInput === 'PNR2026') {
-                    this.isAdmin = true;
-                    this.closeModal('modal-login');
-                    this.switchRole('ADMIN');
-                    this.showToast('Connecté en tant que Super-Admin.');
-                    return;
-                }
-
+                // On cherche l'utilisateur (y compris l'ADMIN) directement et uniquement dans la base de données
                 const user = db.acteurs.find(a => a.id === idInput && a.mdp === mdpInput && a.statut === 'Validé');
+                
                 if (user) {
-                    this.isAdmin = false;
                     this.closeModal('modal-login');
-                    this.switchRole(user.id);
-                    this.showToast(`Bienvenue ${user.contact || user.nom}`);
+                    
+                    if (user.id === 'ADMIN') {
+                        this.isAdmin = true;
+                        this.switchRole('ADMIN');
+                        this.showToast('Connecté en tant que Super-Admin.');
+                    } else {
+                        this.isAdmin = false;
+                        this.switchRole(user.id);
+                        this.showToast(`Bienvenue ${user.contact || user.nom}`);
+                    }
                 } else {
                     this.showToast('Identifiants incorrects.', 'error');
                 }
@@ -897,7 +930,6 @@
             adminCreateAccount: function(e) {
                 e.preventDefault();
                 const newIdInput = document.getElementById('admin-new-id').value.trim().toUpperCase();
-                // FIX ID : Utilisation de Date.now() pour garantir l'unicité
                 const newId = newIdInput || `A-${Date.now()}`;
                 
                 const newActeur = {
@@ -905,7 +937,7 @@
                     nom: document.getElementById('admin-new-nom').value,
                     contact: document.getElementById('admin-new-contact').value,
                     role: document.getElementById('admin-new-role').value,
-                    mdp: document.getElementById('admin-new-mdp').value || "PNR2026",
+                    mdp: document.getElementById('admin-new-mdp').value || "NouveauMDP2026",
                     statut: "Validé",
                     dedommagement: 0, adresse: "", tel: "", email: "", metiers: []
                 };
@@ -1334,7 +1366,6 @@
                 recuText += `Merci pour votre confiance !`;
 
                 const newCmd = {
-                    // FIX ID : Horodatage à la milliseconde pour empêcher l'écrasement des commandes clients
                     id: `CMD-${Date.now()}`,
                     date: new Date().toLocaleDateString('fr-FR'),
                     clientNom: nom,
@@ -1416,8 +1447,7 @@
                     this.showToast("Famille modifiée avec succès.");
                 } else {
                     const newF = {
-                        // FIX ID Famille
-                        id: `F-${Date.now()}`,
+                        id: `F-${Date.now()}-${Math.floor(Math.random()*10000)}`,
                         producteurId: this.currentUser.id,
                         nom: document.getElementById('fam-nom').value,
                         iconKey: document.getElementById('fam-icon').value,
@@ -1433,8 +1463,7 @@
             },
             addProduit: function(familleId) {
                 const newP = {
-                    // FIX ID Produit
-                    id: `P-${Date.now()}`,
+                    id: `P-${Date.now()}-${Math.floor(Math.random()*10000)}`,
                     familleId: familleId,
                     nom: "Nouveau produit",
                     prixTTC: 0,
@@ -1448,8 +1477,7 @@
             duplicateProduit: function(pId) {
                 const p = db.produits.find(x => x.id === pId);
                 const newP = {
-                    // FIX ID Duplication Produit
-                    id: `P-${Date.now()}`,
+                    id: `P-${Date.now()}-${Math.floor(Math.random()*10000)}`,
                     familleId: p.familleId,
                     nom: p.nom + " (Copie)",
                     prixTTC: p.prixTTC,
@@ -1526,14 +1554,12 @@
 
                 for(let fName in familiesToAdd) {
                     const fData = familiesToAdd[fName];
-                    // FIX ID : Ajout d'un random en plus du timestamp car la boucle est trop rapide (même milliseconde)
                     const fId = `F-${Date.now()}-${Math.floor(Math.random()*10000)}`;
                     const newF = { id: fId, producteurId: this.currentUser.id, nom: fName, iconKey: fData.icon, tva: 5.5, enLigne: true };
                     db.familles.push(newF);
                     this.apiSync('upsertFamille', newF);
                     
                     fData.prods.forEach(p => {
-                        // FIX ID Produit dans la boucle
                         const newP = { id: `P-${Date.now()}-${Math.floor(Math.random()*10000)}`, familleId: fId, nom: p.n, prixTTC: p.p, stock: 0, enLigne: true };
                         db.produits.push(newP);
                         this.apiSync('upsertProduit', newP);
@@ -1936,17 +1962,16 @@
                 reversements.forEach(r => allocations[r.id] = { cheques: [], especes: 0, reste: r.net });
 
                 listeCheques.forEach(chq => {
-                    // On cherche d'abord quelqu'un qui a un reste suffisant pour absorber le chèque
                     let cible = reversements.find(r => allocations[r.id].reste >= (chq.montant - 0.01));
-                    
-                    // Si personne ne peut l'absorber, on force l'attribution à celui qui a le plus gros reste à l'instant T
-                    if(!cible && reversements.length > 0) {
-                        cible = [...reversements].sort((a,b) => allocations[b.id].reste - allocations[a.id].reste)[0];
-                    }
-
                     if(cible) {
                         allocations[cible.id].cheques.push(chq);
                         allocations[cible.id].reste -= chq.montant;
+                    } else {
+                        let coord = reversements.find(r => r.estCoord);
+                        if(coord) {
+                            allocations[coord.id].cheques.push(chq);
+                            allocations[coord.id].reste -= chq.montant;
+                        }
                     }
                 });
 
