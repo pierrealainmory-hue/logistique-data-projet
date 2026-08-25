@@ -69,7 +69,6 @@
             </button>
             <div id="user-menu" class="hidden items-center gap-3 bg-slate-800/90 backdrop-blur-sm px-3 py-1.5 rounded-full border border-slate-600 shadow-lg">
                 <span id="header-user-name" class="text-xs font-bold text-slate-200 hidden sm:inline"></span>
-                <!-- Le bouton retour admin géré par JS -->
                 <button id="btn-retour-admin" onclick="app.switchRole('ADMIN')" class="hidden bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 rounded text-[10px] font-bold transition shadow-sm items-center gap-1"><i class="fa-solid fa-shield-halved"></i> Admin</button>
                 <button onclick="app.logout()" class="text-red-400 hover:text-red-300 transition" title="Déconnexion"><i class="fa-solid fa-power-off"></i></button>
             </div>
@@ -97,7 +96,7 @@
             <div class="flex flex-col md:flex-row gap-6 items-start">
                 
                 <!-- Colonne Gauche : Producteurs -->
-                <div class="w-full md:w-1/4 shrink-0 flex flex-col">
+                <div id="col-producers" class="flex w-full md:w-1/4 shrink-0 flex-col">
                     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sticky top-6">
                         <h2 class="font-bold text-slate-500 uppercase text-xs tracking-wider mb-3 px-2 border-b pb-2">1. Choisissez un producteur</h2>
                         <div id="client-producteurs-list" class="space-y-2">
@@ -106,16 +105,15 @@
                     </div>
                 </div>
 
-                <!-- Colonne Centrale : Catalogue Accordéon -->
-                <div class="w-full md:w-2/4 flex flex-col bg-white border border-slate-200 rounded-xl shadow-sm">
+                <!-- Colonne Centrale : Catalogue Accordéon (Cachée sur mobile par défaut) -->
+                <div id="col-products" class="hidden md:flex w-full md:w-2/4 flex-col bg-white border border-slate-200 rounded-xl shadow-sm">
                     <div class="bg-slate-50 px-4 py-3 border-b border-slate-200 rounded-t-xl" id="client-catalog-title">
                         <h2 class="font-bold text-slate-800">2. Les Produits</h2>
                     </div>
                     <div id="client-catalogue-list" class="p-4 space-y-3 bg-slate-50/50 rounded-b-xl min-h-[300px]">
                         <div class="text-center text-slate-400 italic py-10 flex flex-col items-center justify-center h-full">
                             <i class="fa-solid fa-arrow-left text-3xl mb-3 text-slate-300 hidden md:block"></i>
-                            <i class="fa-solid fa-arrow-up text-3xl mb-3 text-slate-300 block md:hidden"></i>
-                            Sélectionnez un producteur pour voir ses produits.
+                            Sélectionnez un producteur à gauche pour voir ses produits.
                         </div>
                     </div>
                 </div>
@@ -349,6 +347,7 @@
     </main>
 
     <!-- ================= MODALES ================= -->
+
     <!-- Modale Connexion -->
     <div id="modal-login" class="fixed inset-0 bg-slate-900/80 modal-overlay hidden flex items-center justify-center p-4 z-[9999]">
         <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full overflow-hidden">
@@ -364,7 +363,7 @@
 
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">Identifiant (Votre prénom en majuscules)</label>
-                    <input type="text" id="login-id" required class="w-full border rounded p-2 text-sm uppercase focus:border-dixgreen focus:outline-none" placeholder="Identifiant">
+                    <input type="text" id="login-id" required class="w-full border rounded p-2 text-sm uppercase focus:border-dixgreen focus:outline-none" placeholder="Ex: FLORIAN, CATHERINE...">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">Mot de passe</label>
@@ -388,7 +387,7 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-600 mb-1">Identifiant (Prénom)</label>
-                        <input type="text" id="admin-new-id" required class="w-full border rounded p-2 text-sm uppercase" placeholder="Identifiant">
+                        <input type="text" id="admin-new-id" required class="w-full border rounded p-2 text-sm uppercase" placeholder="Ex: JEAN">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-600 mb-1">Mot de passe</label>
@@ -397,11 +396,11 @@
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">Nom de l'exploitation / structure</label>
-                    <input type="text" id="admin-new-nom" required class="w-full border rounded p-2 text-sm" placeholder="Nom structure">
+                    <input type="text" id="admin-new-nom" required class="w-full border rounded p-2 text-sm" placeholder="Ex: GAEC Les Oliviers">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">Prénom & Nom du Contact</label>
-                    <input type="text" id="admin-new-contact" required class="w-full border rounded p-2 text-sm" placeholder="Contact">
+                    <input type="text" id="admin-new-contact" required class="w-full border rounded p-2 text-sm" placeholder="Ex: Jean Dupont">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">Rôle Principal</label>
@@ -724,16 +723,19 @@
                 'cereales': 'Céréales & Pain'
             },
 
-            // MÉTHODE INIT
+            // MÉTHODE INIT MISE À JOUR POUR FETCH (GOOGLE SHEETS)
             init: async function() {
                 populateIconSelect();
                 
+                // Afficher un message de chargement
                 this.showToast("Synchronisation avec la base de données en cours...", "amber");
                 
                 try {
+                    // Ajout d'un horodatage (cache-buster) pour forcer le navigateur à télécharger les nouvelles données
                     const response = await fetch(API_URL + "?action=getData&t=" + new Date().getTime());
                     const textData = await response.text(); 
                     
+                    // Vérification si Google a renvoyé une page HTML (Erreur de droits d'accès au lieu du JSON)
                     if (textData.trim().startsWith("<") || textData.includes("<!DOCTYPE html>")) {
                         throw new Error("Droits d'accès insuffisants. Le script Google n'est pas réglé sur 'Tout le monde'.");
                     }
@@ -744,8 +746,9 @@
                         throw new Error("Erreur serveur Apps Script : " + data.error);
                     }
                     
-                    // Remplacer les données locales par celles du Google Sheet
+                    // Remplacer les données locales par celles du Google Sheet si elles existent
                     if(data && Object.keys(data).length > 0) {
+                        // IMPORTANT : On utilise !== undefined pour écraser les données même si vos onglets sont VIDES !
                         if(data.acteurs !== undefined) db.acteurs = data.acteurs;
                         if(data.familles !== undefined) db.familles = data.familles;
                         if(data.produits !== undefined) db.produits = data.produits;
@@ -762,6 +765,7 @@
                         
                         this.showToast("Synchronisation réussie !", "success");
                         
+                        // Message de validation dans la modale
                         const msg = document.getElementById('login-status-msg');
                         if (msg) {
                             msg.innerHTML = "<span class='text-green-600 font-bold'><i class='fa-solid fa-wifi'></i> Connecté à la base de données.</span>";
@@ -800,13 +804,13 @@
                 const idInput = document.getElementById('login-id').value.trim().toUpperCase();
                 const mdpInput = document.getElementById('login-mdp').value;
                 
-                // On cherche l'utilisateur directement et uniquement dans la base de données (zéro porte de secours)
+                // On cherche l'utilisateur directement et uniquement dans la base de données
                 const user = db.acteurs.find(a => a.id === idInput && a.mdp === mdpInput && a.statut === 'Validé');
                 
                 if (user) {
                     this.closeModal('modal-login');
                     
-                    if (user.id === 'ADMIN' || user.role === 'Admin' || user.role === 'Super-Admin') {
+                    if (user.role === 'Super-Admin' || user.id === 'ADMIN') {
                         this.isAdmin = true;
                         this.switchRole(user.id);
                         this.showToast('Connecté en tant que Super-Admin.');
@@ -860,6 +864,9 @@
 
                 if (roleId === 'CLIENT') {
                     this.currentUser = null;
+                    this.selectedClientProdId = null; // Réinitialiser la sélection
+                    document.getElementById('col-producers').className = "flex w-full md:w-1/4 shrink-0 flex-col";
+                    document.getElementById('col-products').className = "hidden md:flex w-full md:w-2/4 flex-col bg-white border border-slate-200 rounded-xl shadow-sm";
                     btnLogin.classList.remove('hidden');
                     userMenu.classList.add('hidden');
                     document.getElementById('view-client').classList.add('active');
@@ -1149,6 +1156,29 @@
             },
 
             // ================= VUE CLIENT =================
+            backToProducers: function() {
+                this.selectedClientProdId = null;
+                document.getElementById('col-producers').className = "flex w-full md:w-1/4 shrink-0 flex-col";
+                document.getElementById('col-products').className = "hidden md:flex w-full md:w-2/4 flex-col bg-white border border-slate-200 rounded-xl shadow-sm";
+                this.renderClientView();
+            },
+
+            selectClientProd: function(id) {
+                this.selectedClientProdId = id;
+                this.expandedFamilies.clear(); 
+                
+                // Masquer producteurs, afficher produits sur mobile
+                document.getElementById('col-producers').className = "hidden md:flex w-full md:w-1/4 shrink-0 flex-col";
+                document.getElementById('col-products').className = "flex w-full md:w-2/4 flex-col bg-white border border-slate-200 rounded-xl shadow-sm";
+                
+                this.renderClientView();
+                
+                // Scroll doux vers le haut des produits sur mobile
+                if(window.innerWidth < 768) {
+                    window.scrollTo({ top: document.getElementById('view-client').offsetTop - 20, behavior: 'smooth' });
+                }
+            },
+
             renderClientView: function() {
                 const prodContainer = document.getElementById('client-producteurs-list');
                 const catContainer = document.getElementById('client-catalogue-list');
@@ -1186,7 +1216,7 @@
                 // Colonne Centrale
                 if(!this.selectedClientProdId) {
                     titleCat.innerHTML = "2. Les Produits";
-                    catContainer.innerHTML = '<div class="text-center text-slate-400 italic py-10 flex flex-col items-center justify-center h-full"><i class="fa-solid fa-arrow-left text-3xl mb-3 text-slate-300 hidden md:block"></i><i class="fa-solid fa-arrow-up text-3xl mb-3 text-slate-300 block md:hidden"></i> Sélectionnez un producteur à gauche pour voir ses produits.</div>';
+                    catContainer.innerHTML = '<div class="text-center text-slate-400 italic py-10 flex flex-col items-center justify-center h-full"><i class="fa-solid fa-arrow-left text-3xl mb-3 text-slate-300 hidden md:block"></i> Sélectionnez un producteur à gauche pour voir ses produits.</div>';
                 } else {
                     const prod = db.acteurs.find(a => a.id === this.selectedClientProdId);
                     
@@ -1199,8 +1229,11 @@
                     if(prod.adresse) contactHtml += `<span title="Adresse" class="flex items-center gap-1"><i class="fa-solid fa-location-dot text-slate-400"></i> ${prod.adresse}</span>`;
                     if(prod.tel) contactHtml += `<span title="Téléphone" class="flex items-center gap-1"><i class="fa-solid fa-phone text-slate-400"></i> ${prod.tel}</span>`;
                     
+                    let backBtnMobile = `<button onclick="app.backToProducers()" class="md:hidden text-slate-600 font-bold text-xs mb-3 flex items-center gap-2 hover:text-dixdark transition bg-slate-200 hover:bg-slate-300 px-3 py-2 rounded-lg w-fit shadow-sm"><i class="fa-solid fa-arrow-left"></i> Retour aux producteurs</button>`;
+
                     titleCat.innerHTML = `
                         <div class="flex flex-col gap-2">
+                            ${backBtnMobile}
                             <span class="text-xl font-bold text-slate-800">Produits de : ${prod.nom}</span>
                             <div class="flex flex-wrap gap-1">${metiersHtml}</div>
                             ${contactHtml ? `<div class="text-xs text-slate-500 mt-1 flex flex-wrap gap-4 font-normal bg-white p-2 rounded border border-slate-200">${contactHtml}</div>` : ''}
@@ -1249,11 +1282,6 @@
                 this.renderCart();
             },
             
-            selectClientProd: function(id) {
-                this.selectedClientProdId = id;
-                this.expandedFamilies.clear(); 
-                this.renderClientView();
-            },
             toggleFamilyAccordion: function(fId) {
                 if(this.expandedFamilies.has(fId)) this.expandedFamilies.delete(fId);
                 else this.expandedFamilies.add(fId);
@@ -1360,7 +1388,6 @@
                 recuText += `(Espèces ou Chèque sans ordre)\n\n`;
                 recuText += `Merci pour votre confiance !`;
 
-                // Correction majeure anti-écrasement
                 const newCmd = {
                     id: `CMD-${Date.now()}`,
                     date: new Date().toLocaleDateString('fr-FR'),
@@ -1894,7 +1921,6 @@
                     histContainer.innerHTML = histHtml || '<tr><td colspan="5" class="p-4 text-center text-slate-400 italic">Aucun incident enregistré.</td></tr>';
                 }
             },
-            
             renderMatrice: function() {
                 let caProducteurs = {};
                 let totalEspeces = 0;
@@ -1952,7 +1978,6 @@
                     }
                 });
 
-                // Tri décroissant pour s'assurer que le plus gros vendeur est en premier
                 reversements.sort((a,b) => b.net - a.net);
                 listeCheques.sort((a,b) => b.montant - a.montant);
 
@@ -1965,11 +1990,10 @@
                         allocations[cible.id].cheques.push(chq);
                         allocations[cible.id].reste -= chq.montant;
                     } else {
-                        // Correction: Attribuer au plus gros vendeur et exiger un rendu monnaie
-                        let grosVendeur = reversements[0];
-                        if(grosVendeur) {
-                            allocations[grosVendeur.id].cheques.push(chq);
-                            allocations[grosVendeur.id].reste -= chq.montant;
+                        let coord = reversements.find(r => r.estCoord);
+                        if(coord) {
+                            allocations[coord.id].cheques.push(chq);
+                            allocations[coord.id].reste -= chq.montant;
                         }
                     }
                 });
