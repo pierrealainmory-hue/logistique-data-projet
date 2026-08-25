@@ -1520,12 +1520,26 @@
                 this.showToast("Produit supprimé.");
                 this.renderProdView();
             },
+
+            // On ajoute notre "mémoire" pour le temporisateur
+            updateTimeouts: {},
+            
             updateProduct: function(pId, field, value) {
                 const p = db.produits.find(x => x.id === pId);
                 if(field === 'nom') p.nom = value;
                 else p[field] = parseFloat(value) || 0;
-                this.apiSync('upsertProduit', p);
+                
+                // On annule l'envoi précédent si on est en train de glisser le curseur
+                if (this.updateTimeouts[pId]) {
+                    clearTimeout(this.updateTimeouts[pId]);
+                }
+                
+                // On attend 0.6 seconde d'inactivité avant d'envoyer la donnée finale à Google
+                this.updateTimeouts[pId] = setTimeout(() => {
+                    this.apiSync('upsertProduit', p);
+                }, 600);
             },
+
             openCatalogueModal: function() {
                 const container = document.getElementById('catalogue-lists-container');
                 let html = '';
