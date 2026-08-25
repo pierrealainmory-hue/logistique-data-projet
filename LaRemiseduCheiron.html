@@ -1621,7 +1621,7 @@
                                 </label>
                                 <!-- Nom -->
                                 <div class="flex-grow w-full sm:w-auto ml-2">
-                                    <input type="text" value="${p.nom}" onchange="app.updateProduct('${p.id}', 'nom', this.value)" class="w-full border-none bg-transparent font-bold text-sm focus:ring-1 focus:ring-dixgreen rounded px-1" placeholder="Nom du produit">
+                                    <input type="text" value="${p.nom.replace(/"/g, '&quot;')}" onchange="app.updateProduct('${p.id}', 'nom', this.value)" class="w-full border-none bg-transparent font-bold text-sm focus:ring-1 focus:ring-dixgreen rounded px-1" placeholder="Nom du produit">
                                     ${alertText}
                                 </div>
                                 <!-- Prix, Stock & Actions -->
