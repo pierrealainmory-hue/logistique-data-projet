@@ -791,13 +791,19 @@
             },
             
             // Fonction de synchronisation en arrière-plan vers Google Sheets
-            apiSync: function(actionName, payload) {
-                if(!API_URL || API_URL === "URL_DE_VOTRE_SCRIPT_DEPLOYE_ICI") return;
-                fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: actionName, data: payload })
-                }).catch(err => console.error("Erreur Sync:", err));
+            apiSync: async function(actionName, payload) {
+                if(!API_URL || API_URL === "URL_DE_VOTRE_SCRIPT_DEPLOYE_ICI") return false;
+                try {
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ action: actionName, data: payload })
+                    });
+                    return await response.json();
+                } catch(err) {
+                    console.error("Erreur Sync:", err);
+                    return { error: err.message };
+                }
             },
 
             handleLogin: function(e) {
@@ -1341,7 +1347,7 @@
                 totalEl.textContent = total.toFixed(2) + " €";
             },
 
-            submitOrder: function() {
+            submitOrder: async function() {
                 if(!db.settings.driveOuvert) return this.showToast("Les commandes sont clôturées.", "error");
 
                 const nom = document.getElementById('client-name').value;
@@ -1349,6 +1355,11 @@
                 
                 if (Object.keys(this.cart).length === 0) return this.showToast("Votre panier est vide.", "error");
                 if (!nom || !tel) return this.showToast("Merci de renseigner votre nom et téléphone.", "error");
+
+                // On bloque le bouton pour empêcher le client de partir tout de suite
+                const btnContainer = document.getElementById('client-order-btn-container');
+                const originalBtnHtml = btnContainer.innerHTML;
+                btnContainer.innerHTML = `<button disabled class="w-full bg-slate-500 text-white font-bold py-2.5 rounded-lg shadow cursor-wait text-sm"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Transmission en cours...</button>`;
 
                 let total = 0;
                 let items = [];
@@ -1366,7 +1377,6 @@
                     total += lineTotal;
                     items.push({ prodId: pId, qte: qty, prixTTC: p.prixTTC });
                     p.stock -= qty; 
-                    this.apiSync('upsertProduit', p);
                     
                     if (!groupedCart[prod.nom]) groupedCart[prod.nom] = [];
                     groupedCart[prod.nom].push({ p, qty, lineTotal });
@@ -1398,28 +1408,47 @@
                     statut: "En attente",
                     paiement: null,
                     items: items,
-                    recuTexte: recuText // Envoi du texte du reçu pour l'email
+                    recuTexte: recuText
                 };
 
-                db.commandes.push(newCmd);
-                this.apiSync('upsertCommande', newCmd);
+                try {
+                    // On ATTEND la réponse de Google avant de continuer
+                    const result = await this.apiSync('upsertCommande', newCmd);
+                    
+                    if (result && result.error) throw new Error(result.error);
 
-                const blob = new Blob([recuText], { type: 'text/plain' });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `Recu_LaRemise_${nom.replace(/\s+/g, '_')}.txt`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-                
-                this.cart = {};
-                document.getElementById('client-name').value = '';
-                document.getElementById('client-tel').value = '';
-                
-                this.showToast("Commande enregistrée ! Votre reçu a été téléchargé.");
-                this.renderClientView();
+                    // Si on arrive ici, Google a bien enregistré la commande
+                    db.commandes.push(newCmd);
+                    
+                    // On met aussi à jour les stocks des produits en arrière-plan
+                    for (let [pId, qty] of Object.entries(this.cart)) {
+                        const p = db.produits.find(x => x.id === pId);
+                        if(p) this.apiSync('upsertProduit', p);
+                    }
+
+                    const blob = new Blob([recuText], { type: 'text/plain' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `Recu_LaRemise_${nom.replace(/\s+/g, '_')}.txt`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                    
+                    this.cart = {};
+                    document.getElementById('client-name').value = '';
+                    document.getElementById('client-tel').value = '';
+                    
+                    this.showToast("Commande enregistrée ! Votre reçu a été téléchargé.");
+                } catch(e) {
+                    // En cas d'échec (micro-coupure), on prévient le client !
+                    this.showToast("Erreur de connexion. Votre commande n'a pas pu être envoyée. Réessayez.", "error");
+                } finally {
+                    // Quoi qu'il arrive, on remet le bouton à son état normal
+                    btnContainer.innerHTML = originalBtnHtml;
+                    this.renderClientView();
+                }
             },
 
             // ================= VUE PRODUCTEUR =================
