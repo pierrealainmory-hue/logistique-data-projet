@@ -708,6 +708,7 @@
             selectedClientProdId: null,
             cmdToPay: null,
             cmdToAction: null,
+            pendingCmdId: null, // NOUVEAU : Mémoire pour éviter les doublons en cas de bug réseau
 
             metierIcons: {
                 'maraichage': 'salade',
@@ -1399,8 +1400,13 @@
                 recuText += `(Espèces ou Chèque sans ordre)\n\n`;
                 recuText += `Merci pour votre confiance !`;
 
+                // Si on a déjà essayé d'envoyer cette commande, on garde le même ID, sinon on en crée un nouveau
+                if (!this.pendingCmdId) {
+                    this.pendingCmdId = `CMD-${Date.now()}`;
+                }
+
                 const newCmd = {
-                    id: `CMD-${Date.now()}`,
+                    id: this.pendingCmdId,
                     date: new Date().toLocaleDateString('fr-FR'),
                     clientNom: nom,
                     clientTel: tel,
@@ -1437,13 +1443,14 @@
                     window.URL.revokeObjectURL(url);
                     
                     this.cart = {};
+                    this.pendingCmdId = null; // ON VIDE LA MÉMOIRE APRÈS UN SUCCÈS
                     document.getElementById('client-name').value = '';
                     document.getElementById('client-tel').value = '';
                     
                     this.showToast("Commande enregistrée ! Votre reçu a été téléchargé.");
                 } catch(e) {
-                    // En cas d'échec (micro-coupure), on prévient le client !
-                    this.showToast("Erreur de connexion. Votre commande n'a pas pu être envoyée. Réessayez.", "error");
+                    // En cas d'échec (micro-coupure ou bloqueur de pub), on prévient le client !
+                    this.showToast("Erreur. Vérifiez votre connexion. Si le problème persiste, désactivez votre bloqueur de publicités (AdBlock/Brave) ou changez de navigateur.", "error");
                 } finally {
                     // Quoi qu'il arrive, on remet le bouton à son état normal
                     btnContainer.innerHTML = originalBtnHtml;
