@@ -57,6 +57,14 @@
 </head>
 <body class="text-slate-800 flex flex-col min-h-screen bg-slate-50">
 
+    <!-- Overlay de chargement API -->
+    <div id="api-loader" class="fixed inset-0 bg-slate-900/80 flex flex-col items-center justify-center text-white hidden z-[10000]">
+        <i class="fa-solid fa-cloud-arrow-down fa-bounce text-6xl text-dixgreen mb-6"></i>
+        <h2 class="font-heading text-3xl tracking-wide text-center">Synchronisation en cours...</h2>
+        <p class="text-slate-300 text-sm mt-2 text-center">Connexion à la base de données du PNR</p>
+        <p class="text-amber-400 text-[10px] mt-4 italic text-center max-w-xs">(Le premier réveil du serveur peut prendre 10 à 15 secondes. Merci de votre patience.)</p>
+    </div>
+
     <div id="toast-container" class="fixed top-20 right-4 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
 
     <!-- En-tête Principal -->
@@ -708,6 +716,7 @@
             selectedClientProdId: null,
             cmdToPay: null,
             cmdToAction: null,
+            pendingCmdId: null, // NOUVEAU : Mémoire pour éviter les doublons en cas de bug réseau
 
             metierIcons: {
                 'maraichage': 'salade',
@@ -1356,7 +1365,6 @@
                 if (Object.keys(this.cart).length === 0) return this.showToast("Votre panier est vide.", "error");
                 if (!nom || !tel) return this.showToast("Merci de renseigner votre nom et téléphone.", "error");
 
-                // On bloque le bouton pour empêcher le client de partir tout de suite
                 const btnContainer = document.getElementById('client-order-btn-container');
                 const originalBtnHtml = btnContainer.innerHTML;
                 btnContainer.innerHTML = `<button disabled class="w-full bg-slate-500 text-white font-bold py-2.5 rounded-lg shadow cursor-wait text-sm"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Transmission en cours...</button>`;
@@ -1376,7 +1384,6 @@
                     const lineTotal = qty * p.prixTTC;
                     total += lineTotal;
                     items.push({ prodId: pId, qte: qty, prixTTC: p.prixTTC });
-                    p.stock -= qty; 
                     
                     if (!groupedCart[prod.nom]) groupedCart[prod.nom] = [];
                     groupedCart[prod.nom].push({ p, qty, lineTotal });
@@ -1399,8 +1406,14 @@
                 recuText += `(Espèces ou Chèque sans ordre)\n\n`;
                 recuText += `Merci pour votre confiance !`;
 
+                // --- DÉBUT DE LA SÉCURITÉ ANTI-DOUBLON ---
+                // Si la commande a échoué juste avant, on réutilise le même numéro pour éviter les doublons
+                if (!this.cmdEnCoursId) {
+                    this.cmdEnCoursId = `CMD-${Date.now()}`;
+                }
+
                 const newCmd = {
-                    id: `CMD-${Date.now()}`,
+                    id: this.cmdEnCoursId,
                     date: new Date().toLocaleDateString('fr-FR'),
                     clientNom: nom,
                     clientTel: tel,
@@ -1412,40 +1425,48 @@
                 };
 
                 try {
-                    // On ATTEND la réponse de Google avant de continuer
                     const result = await this.apiSync('upsertCommande', newCmd);
-                    
                     if (result && result.error) throw new Error(result.error);
 
-                    // Si on arrive ici, Google a bien enregistré la commande
+                    // SUCCÈS : Google a confirmé. On déduit les stocks.
                     db.commandes.push(newCmd);
-                    
-                    // On met aussi à jour les stocks des produits en arrière-plan
                     for (let [pId, qty] of Object.entries(this.cart)) {
                         const p = db.produits.find(x => x.id === pId);
-                        if(p) this.apiSync('upsertProduit', p);
+                        if(p) {
+                            p.stock -= qty;
+                            this.apiSync('upsertProduit', p);
+                        }
                     }
 
-                    const blob = new Blob([recuText], { type: 'text/plain' });
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `Recu_LaRemise_${nom.replace(/\s+/g, '_')}.txt`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    window.URL.revokeObjectURL(url);
+                    // On vide la mémoire anti-doublon pour le prochain client
+                    this.cmdEnCoursId = null; 
                     
+                    // On vide le panier visuellement
                     this.cart = {};
                     document.getElementById('client-name').value = '';
                     document.getElementById('client-tel').value = '';
                     
-                    this.showToast("Commande enregistrée ! Votre reçu a été téléchargé.");
+                    // Téléchargement sécurisé du PDF
+                    try {
+                        const blob = new Blob([recuText], { type: 'text/plain' });
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `Recu_LaRemise_${nom.replace(/\s+/g, '_')}.txt`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(url);
+                    } catch(pdfErr) {
+                        console.warn("Téléchargement bloqué par le navigateur", pdfErr);
+                    }
+                    
+                    this.showToast("Commande validée avec succès !");
                 } catch(e) {
-                    // En cas d'échec (micro-coupure), on prévient le client !
-                    this.showToast("Erreur de connexion. Votre commande n'a pas pu être envoyée. Réessayez.", "error");
+                    // EN CAS DE LENTEUR : On rassure le client, mais son panier n'est pas vidé
+                    this.showToast("Réseau instable. La commande met du temps à passer, vérifiez auprès de la coordinatrice ou réessayez.", "error");
                 } finally {
-                    // Quoi qu'il arrive, on remet le bouton à son état normal
+                    // On remet le bouton à son état normal
                     btnContainer.innerHTML = originalBtnHtml;
                     this.renderClientView();
                 }
