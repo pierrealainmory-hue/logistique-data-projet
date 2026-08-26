@@ -793,6 +793,17 @@
                     }
                     
                     this.showToast("Échec de la synchronisation.", "error");
+
+                    // NOUVEAU : Message convivial pour le client si Google est bloqué ou lent
+                    db.settings.dateRetrait = "Réseau indisponible";
+                    db.settings.dateLimite = "Rafraîchissez la page";
+                    document.getElementById('client-catalogue-list').innerHTML = `
+                        <div class="text-center text-red-500 py-10 flex flex-col items-center justify-center h-full">
+                            <i class="fa-solid fa-tower-broadcast text-5xl mb-4 opacity-50"></i>
+                            <h3 class="font-bold text-xl text-slate-700">Serveur temporairement injoignable</h3>
+                            <p class="text-sm mt-2 text-slate-500 max-w-md">Le réseau de la coopérative subit un ralentissement ou une coupure de connexion.<br>Merci de patienter quelques minutes et de <strong>recharger la page</strong>.</p>
+                        </div>
+                    `;
                 }
 
                 this.updateGlobalUI();
